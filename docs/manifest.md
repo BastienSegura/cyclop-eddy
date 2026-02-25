@@ -24,6 +24,7 @@ Users move across a connected graph of concepts, stop on any node, and copy a re
 In scope now:
 - Python engine to generate concept relationships.
 - Python cleaner to normalize generated concept files.
+- Next.js GUI prototype for constellation-style concept navigation.
 - Repository organization and documentation.
 
 Out of scope now:
