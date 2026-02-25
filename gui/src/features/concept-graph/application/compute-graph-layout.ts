@@ -214,14 +214,14 @@ function runForceLayout(
     })
     .filter((value): value is [number, number] => Boolean(value));
 
-  const idealLength = nodeCount > 260 ? 120 : nodeCount > 130 ? 138 : 158;
+  const idealLength = nodeCount > 260 ? 145 : nodeCount > 130 ? 160 : 178;
   const iterations = nodeCount > 260 ? 220 : nodeCount > 130 ? 300 : 360;
   const gravityStrength = 0.022;
-  const repulsionStrength = 0.6;
-  const attractionStrength = 0.2;
-  const repulsionCutoff = idealLength * 4.2;
-  const minEdgeLength = idealLength * 0.58;
-  const maxEdgeLength = idealLength * 1.7;
+  const repulsionStrength = 0.9;
+  const attractionStrength = 0.24;
+  const repulsionCutoff = idealLength * 5.0;
+  const minEdgeLength = idealLength * 0.68;
+  const maxEdgeLength = idealLength * 1.52;
 
   // Faster direct degree lookup for current component.
   const degreeByIndex = new Array<number>(nodeCount).fill(0);
