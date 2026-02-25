@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Clean and restructure concept graph edges produced by build_concept_list.py.
+"""Clean and restructure concept graph edges produced by brain/build_concept_list.py.
 
 Input lines are expected in the shape:
     Parent Concept: Child Concept
@@ -180,6 +180,7 @@ def clean_concept_file(
     if output_text:
         output_text += "\n"
 
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(output_text, encoding="utf-8")
     return len(raw_lines), len(output_lines)
 
@@ -188,13 +189,13 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Clean concept graph edge list.")
     parser.add_argument(
         "--input",
-        default="concept_list.txt",
-        help="Input edge list file (default: concept_list.txt)",
+        default="memory/concept_list.txt",
+        help="Input edge list file (default: memory/concept_list.txt)",
     )
     parser.add_argument(
         "--output",
-        default="concept_list_cleaned.txt",
-        help="Output cleaned edge list file (default: concept_list_cleaned.txt)",
+        default="memory/concept_list_cleaned.txt",
+        help="Output cleaned edge list file (default: memory/concept_list_cleaned.txt)",
     )
     parser.add_argument(
         "--root",

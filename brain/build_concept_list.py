@@ -4,15 +4,15 @@ Build a concept graph with Ollama.
 How to run
 ----------
 1. Start a new generation:
-   python src/build_concept_list.py \
+   python brain/build_concept_list.py \
      --root-concept "Computer Science" \
      --concept-list-length 25 \
      --max-depth 3 \
-     --output src/concept_list.txt \
-     --state-file src/concept_list_state.json
+     --output memory/concept_list.txt \
+     --state-file memory/concept_list_state.json
 
 2. Resume after interruption (Ctrl+C):
-   python src/build_concept_list.py --resume --state-file src/concept_list_state.json
+   python brain/build_concept_list.py --resume --state-file memory/concept_list_state.json
 
 What this script provides
 -------------------------
@@ -210,8 +210,8 @@ def generate_concept_graph(
     root_concept: str,
     concept_list_length: int,
     max_depth: int,
-    output_path: str = "concept_list.txt",
-    state_file: str = "concept_list_state.json",
+    output_path: str = "memory/concept_list.txt",
+    state_file: str = "memory/concept_list_state.json",
     resume: bool = False,
 ) -> None:
     if max_depth < 1:
@@ -228,12 +228,21 @@ def generate_concept_graph(
             raise SystemExit("Unsupported state file version.")
         state.setdefault("edges", [])
         state["version"] = 2
-        output_path = state["output_path"]
-        if not Path(output_path).exists():
-            raise SystemExit(f"Cannot resume: output file '{output_path}' is missing.")
+
+        resumed_output_path = state.get("output_path", output_path)
+        if resumed_output_path.startswith("src/"):
+            migrated_output_path = resumed_output_path.replace("src/", "memory/", 1)
+            if Path(migrated_output_path).exists() or not Path(resumed_output_path).exists():
+                resumed_output_path = migrated_output_path
+
+        output_path = resumed_output_path
+        state["output_path"] = output_path
+        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
         print(f"Resuming generation from '{state_file}'", flush=True)
     else:
         state = build_new_state(root_concept, concept_list_length, max_depth, output_path)
+        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+        Path(state_file).parent.mkdir(parents=True, exist_ok=True)
         save_generation_state(state_file, state)
         print(f"Starting generation. Checkpoint file: '{state_file}'", flush=True)
 
@@ -300,7 +309,7 @@ def generate_concept_graph(
         persist_state()
         print(
             "\nGeneration paused by user. "
-            f"Resume with: python src/build_concept_list.py --resume --state-file {state_file}",
+            f"Resume with: python brain/build_concept_list.py --resume --state-file {state_file}",
             flush=True,
         )
         return
@@ -319,8 +328,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--root-concept", default="Computer Science")
     parser.add_argument("--concept-list-length", type=int, default=25)
     parser.add_argument("--max-depth", type=int, default=3)
-    parser.add_argument("--output", default="concept_list.txt")
-    parser.add_argument("--state-file", default="concept_list_state.json")
+    parser.add_argument("--output", default="memory/concept_list.txt")
+    parser.add_argument("--state-file", default="memory/concept_list_state.json")
     parser.add_argument("--resume", action="store_true")
     return parser.parse_args()
 
