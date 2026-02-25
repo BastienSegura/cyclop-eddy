@@ -40,8 +40,9 @@ You can replace this file with newer generated data from `memory/concept_list_cl
 ## Current UX
 
 - Loads concept graph from cleaned text file
-- Displays a central concept and directly connected concepts in a constellation-like layout
-- Supports node-to-node navigation
+- Renders a larger graph field (not only one parent + children snapshot)
+- Supports smooth camera travel when selecting a node
+- Highlights local neighborhood while keeping distant stars visible
 - Generates and copies a learning prompt template for the selected node
 
 ## Next Iterations
