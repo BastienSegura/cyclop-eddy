@@ -34,6 +34,18 @@ function getDirectNeighborIds(graph: ConceptGraph, nodeId: NodeId): NodeId[] {
   return Array.from(new Set<NodeId>([...outgoing, ...incoming]));
 }
 
+function getLeafNodeIds(graph: ConceptGraph): Set<NodeId> {
+  const leafNodeIds = new Set<NodeId>();
+
+  for (const nodeId of Object.keys(graph.nodes)) {
+    if (getDirectNeighborIds(graph, nodeId).length <= 1) {
+      leafNodeIds.add(nodeId);
+    }
+  }
+
+  return leafNodeIds;
+}
+
 function expandVisibleNodes(
   graph: ConceptGraph,
   currentVisible: Set<NodeId>,
@@ -230,6 +242,14 @@ export function GraphExplorer() {
     return getNeighborhoodDepths(graph, currentNodeId, 1);
   }, [graph, currentNodeId]);
 
+  const leafNodeIds = useMemo(() => {
+    if (!graph) {
+      return new Set<NodeId>();
+    }
+
+    return getLeafNodeIds(graph);
+  }, [graph]);
+
   const outgoingNeighborIds = useMemo(() => {
     if (!graph || !currentNodeId) {
       return [] as NodeId[];
@@ -358,6 +378,7 @@ export function GraphExplorer() {
         <div className="meta-stats">
           <span>{totalNodes} nodes</span>
           <span>{totalEdges} edges</span>
+          <span>{leafNodeIds.size} dead ends</span>
           <span>zoom {camera.zoom.toFixed(2)}x</span>
         </div>
       </header>
@@ -397,6 +418,7 @@ export function GraphExplorer() {
             selectedNodeId={currentNodeId}
             neighborhoodDepths={neighborhoodDepths}
             visibleNodeIds={visibleNodeIds}
+            leafNodeIds={leafNodeIds}
             camera={camera}
             onSelectNode={(nodeId) => focusNode(nodeId)}
             onPan={panCamera}
