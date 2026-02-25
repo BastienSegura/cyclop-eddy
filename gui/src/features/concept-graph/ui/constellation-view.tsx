@@ -6,6 +6,8 @@ import type { ConceptGraph, NodeId } from "../domain/types";
 import type { GraphLayout } from "../application/compute-graph-layout";
 import { VIEWPORT_HEIGHT, VIEWPORT_WIDTH } from "./viewport-constants";
 
+const DRAG_THRESHOLD_PX = 6;
+
 interface CameraState {
   x: number;
   y: number;
@@ -87,7 +89,6 @@ export function ConstellationView({
     lastClientY: 0,
     dragDistance: 0,
   });
-  const suppressNodeClickRef = useRef(false);
 
   const edges: Array<{ from: NodeId; to: NodeId }> = [];
 
@@ -104,14 +105,18 @@ export function ConstellationView({
       return;
     }
 
+    if (interactionRef.current.pointerId !== -1) {
+      return;
+    }
+
     event.currentTarget.setPointerCapture(event.pointerId);
+    setIsDragging(false);
     interactionRef.current = {
       pointerId: event.pointerId,
       lastClientX: event.clientX,
       lastClientY: event.clientY,
       dragDistance: 0,
     };
-    setIsDragging(true);
   }
 
   function handlePointerMove(event: React.PointerEvent<HTMLDivElement>): void {
@@ -126,36 +131,45 @@ export function ConstellationView({
     interactionRef.current.lastClientY = event.clientY;
 
     const stepDistance = Math.hypot(deltaScreenX, deltaScreenY);
-    interactionRef.current.dragDistance += stepDistance;
-
-    if (interactionRef.current.dragDistance > 4) {
-      suppressNodeClickRef.current = true;
-    }
+    const nextDragDistance = interactionRef.current.dragDistance + stepDistance;
+    interactionRef.current.dragDistance = nextDragDistance;
 
     if (stepDistance === 0) {
       return;
     }
 
+    if (nextDragDistance <= DRAG_THRESHOLD_PX) {
+      return;
+    }
+
+    setIsDragging(true);
     event.preventDefault();
     onPan(-deltaScreenX / camera.zoom, -deltaScreenY / camera.zoom);
   }
 
-  function handlePointerEnd(event: React.PointerEvent<HTMLDivElement>): void {
+  function finishPointerInteraction(event: React.PointerEvent<HTMLDivElement>): void {
     if (interactionRef.current.pointerId !== event.pointerId) {
       return;
     }
 
-    interactionRef.current.pointerId = -1;
-    setIsDragging(false);
+    const dragDistance = interactionRef.current.dragDistance;
 
-    if (interactionRef.current.dragDistance <= 4) {
-      suppressNodeClickRef.current = false;
-      return;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
     }
 
-    window.setTimeout(() => {
-      suppressNodeClickRef.current = false;
-    }, 0);
+    interactionRef.current.pointerId = -1;
+    interactionRef.current.dragDistance = 0;
+    setIsDragging(false);
+
+    if (dragDistance <= DRAG_THRESHOLD_PX) {
+      const element = document.elementFromPoint(event.clientX, event.clientY) as HTMLElement | null;
+      const nodeElement = element?.closest("[data-node-id]") as HTMLElement | null;
+      const nodeId = nodeElement?.dataset.nodeId;
+      if (nodeId) {
+        onSelectNode(nodeId);
+      }
+    }
   }
 
   function handleWheel(event: React.WheelEvent<HTMLDivElement>): void {
@@ -182,8 +196,9 @@ export function ConstellationView({
       aria-label="Concept constellation map"
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerEnd}
-      onPointerCancel={handlePointerEnd}
+      onPointerUp={finishPointerInteraction}
+      onPointerCancel={finishPointerInteraction}
+      onLostPointerCapture={finishPointerInteraction}
       onWheel={handleWheel}
     >
       <svg className="constellation-lines" viewBox={`0 0 ${VIEWPORT_WIDTH} ${VIEWPORT_HEIGHT}`} preserveAspectRatio="xMidYMid meet">
@@ -220,14 +235,9 @@ export function ConstellationView({
             return (
               <g
                 key={`node-${node.id}`}
+                data-node-id={node.id}
                 className={`constellation-node-group ${classes}`}
                 transform={`translate(${position.x} ${position.y})`}
-                onClick={() => {
-                  if (suppressNodeClickRef.current) {
-                    return;
-                  }
-                  onSelectNode(node.id);
-                }}
                 role="button"
                 tabIndex={0}
                 onKeyDown={(event) => {
