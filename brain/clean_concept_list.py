@@ -1,6 +1,17 @@
 #!/usr/bin/env python3
 """Clean and restructure concept graph edges produced by brain/build_concept_list.py.
 
+How to run
+----------
+1. Clean with defaults:
+   python brain/clean_concept_list.py
+
+2. Clean with explicit paths and root override:
+   python brain/clean_concept_list.py \
+     --input memory/concept_list.txt \
+     --output memory/concept_list_cleaned.txt \
+     --root "Computer Science"
+
 Input lines are expected in the shape:
     Parent Concept: Child Concept
 
