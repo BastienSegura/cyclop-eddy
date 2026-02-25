@@ -162,7 +162,7 @@ function initializeComponentPositions(
     }
 
     index += 1;
-    const radius = 125 * Math.sqrt(index);
+    const radius = 105 * Math.sqrt(index);
     const angle = index * goldenAngle;
 
     positions[nodeId] = {
@@ -214,14 +214,24 @@ function runForceLayout(
     })
     .filter((value): value is [number, number] => Boolean(value));
 
-  const idealLength = nodeCount > 260 ? 140 : nodeCount > 130 ? 160 : 185;
-  const iterations = nodeCount > 260 ? 170 : nodeCount > 130 ? 220 : 280;
-  const gravityStrength = 0.015;
-  const repulsionStrength = 1.0;
-  const attractionStrength = 0.78;
+  const idealLength = nodeCount > 260 ? 120 : nodeCount > 130 ? 138 : 158;
+  const iterations = nodeCount > 260 ? 220 : nodeCount > 130 ? 300 : 360;
+  const gravityStrength = 0.022;
+  const repulsionStrength = 0.6;
+  const attractionStrength = 0.2;
+  const repulsionCutoff = idealLength * 4.2;
+  const minEdgeLength = idealLength * 0.58;
+  const maxEdgeLength = idealLength * 1.7;
+
+  // Faster direct degree lookup for current component.
+  const degreeByIndex = new Array<number>(nodeCount).fill(0);
+  for (const [fromIndex, toIndex] of edgeIndexes) {
+    degreeByIndex[fromIndex] += 1;
+    degreeByIndex[toIndex] += 1;
+  }
 
   let temperature = idealLength * 2.4;
-  const cooling = 0.965;
+  const cooling = 0.972;
   const anchorIndex = anchorNodeId ? nodeIndexes.get(anchorNodeId) ?? -1 : -1;
 
   for (let iteration = 0; iteration < iterations; iteration += 1) {
@@ -234,8 +244,11 @@ function runForceLayout(
         const dy = y[i] - y[j];
         const distanceSquared = dx * dx + dy * dy + 0.01;
         const distance = Math.sqrt(distanceSquared);
+        if (distance > repulsionCutoff) {
+          continue;
+        }
 
-        const force = (idealLength * idealLength * repulsionStrength) / distance;
+        const force = (idealLength * idealLength * repulsionStrength) / distanceSquared;
         const forceX = (dx / distance) * force;
         const forceY = (dy / distance) * force;
 
@@ -251,7 +264,9 @@ function runForceLayout(
       const dy = y[fromIndex] - y[toIndex];
       const distance = Math.sqrt(dx * dx + dy * dy + 0.01);
 
-      const force = ((distance * distance) / idealLength) * attractionStrength;
+      const isLeafEdge = degreeByIndex[fromIndex] <= 1 || degreeByIndex[toIndex] <= 1;
+      const localAttraction = isLeafEdge ? attractionStrength * 1.28 : attractionStrength;
+      const force = (distance - idealLength) * localAttraction;
       const forceX = (dx / distance) * force;
       const forceY = (dy / distance) * force;
 
@@ -281,6 +296,31 @@ function runForceLayout(
       const step = Math.min(temperature, displacement);
       x[i] += (dispX[i] / displacement) * step;
       y[i] += (dispY[i] / displacement) * step;
+    }
+
+    // Edge-length harmonization pass: keeps linked nodes in a tighter, more readable range.
+    for (const [fromIndex, toIndex] of edgeIndexes) {
+      const dx = x[toIndex] - x[fromIndex];
+      const dy = y[toIndex] - y[fromIndex];
+      const distance = Math.sqrt(dx * dx + dy * dy + 0.01);
+
+      if (distance >= minEdgeLength && distance <= maxEdgeLength) {
+        continue;
+      }
+
+      const targetDistance = Math.min(maxEdgeLength, Math.max(minEdgeLength, distance));
+      const correction = (distance - targetDistance) * 0.5;
+      const correctionX = (dx / distance) * correction;
+      const correctionY = (dy / distance) * correction;
+
+      if (fromIndex !== anchorIndex) {
+        x[fromIndex] += correctionX;
+        y[fromIndex] += correctionY;
+      }
+      if (toIndex !== anchorIndex) {
+        x[toIndex] -= correctionX;
+        y[toIndex] -= correctionY;
+      }
     }
 
     if (anchorIndex >= 0) {
