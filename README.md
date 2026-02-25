@@ -11,6 +11,7 @@ Cyclop Eddy is a concept-universe project focused on making learning feel engagi
 ## Repository layout
 
 - `brain/`: active Python engine (`build_concept_list.py`, `clean_concept_list.py`).
+- `gui/`: Next.js App Router prototype for concept constellation exploration.
 - `memory/`: generated runtime data and checkpoint/save files.
 - `archive/`: old experiments, historical snapshots, deprecated material.
 - `docs/`: active project documentation.
@@ -38,4 +39,12 @@ Clean generated graph data:
 
 ```bash
 python brain/clean_concept_list.py
+```
+
+Run GUI prototype:
+
+```bash
+cd gui
+npm install
+npm run dev
 ```
