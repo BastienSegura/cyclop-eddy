@@ -116,10 +116,17 @@ body {
   border-radius: 16px;
   border: 1px solid rgba(80, 201, 255, 0.18);
   overflow: hidden;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
   background:
     radial-gradient(circle at center, rgba(255, 255, 255, 0.05), transparent 36%),
     radial-gradient(circle at 35% 25%, rgba(80, 201, 255, 0.15), transparent 40%),
     #030c18;
+}
+
+.constellation-shell.is-dragging {
+  cursor: grabbing;
 }
 
 .constellation-lines {
