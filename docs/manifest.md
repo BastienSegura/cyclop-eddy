@@ -1,56 +1,73 @@
-# Manifeste du Projet : Cyclop Eddy - Visualisation des Connaissances
+# Cyclop Eddy Manifest
 
-## 1. La Vision
+## Mission
+Make learning fun and engaging.
+The target feeling is close to gaining XP in an MMORPG: curiosity, progression, and exploration.
 
-Ce projet vise à transformer une liste linéaire et aride de concepts informatiques en une **constellation navigable et organique**. L'objectif n'est pas seulement de définir des termes, mais de révéler les liens invisibles qui les unissent, permettant à l'utilisateur de "voyager" de concept en concept par proximité sémantique.
+## Product Vision
+Cyclop Eddy is a concept-universe explorer.
+Users move across a connected graph of concepts, stop on any node, and copy a ready-to-use prompt template to continue learning with their preferred LLM.
 
-## 2. Philosophie de Développement : Le Kaizen
+## User Experience Goals
+- Anyone can use it.
+- You log in, enter a visible portion of the concept universe, and travel node by node.
+- Every node is actionable: open details, understand local context, and copy a learning prompt.
+- Navigation should feel rewarding, not academic or static.
 
-Nous rejetons la complexité monolithique. Ce projet se construit brique par brique.
+## Visual Direction (Upcoming GUI)
+- Skyrim-like skill-tree mood.
+- Concepts represented like stars.
+- Links represented like constellations.
+- Exploration-first interface, with smooth movement between connected concepts.
 
-* **Petits pas :** Chaque fonctionnalité est atomique (User Stories granulaires).
-* **Validation immédiate :** Chaque étape doit produire un résultat tangible (un fichier texte, un log console, un point sur un écran) avant de passer à la suivante.
-* **Pragmatisme :** On ne réinvente pas la roue (utilisation de Wikipédia, `sentence-transformers`, GitHub Pages).
+## Current Scope
+In scope now:
+- Python engine to generate concept relationships.
+- Python cleaner to normalize generated concept files.
+- Repository organization and documentation.
 
-## 3. Architecture Technique : "Static Intelligence"
+Out of scope now:
+- Full GUI implementation (planned next).
+- Long-term roadmap planning (project is intentionally iterative / vibe-coded).
 
-Nous adoptons une architecture asymétrique pour garantir la performance web.
+## Repository Responsibilities
+- `brain/`: Python engine (generation + cleaning scripts).
+- `memory/`: generated artifacts and runtime state (concept files, checkpoint/save files).
+- `archive/`: legacy experiments, historical snapshots, and deprecated material.
 
-### A. Le "Cerveau" (Backend / Python) - *Offline*
+## Engine Workflow
+Generate graph data:
 
-L'intelligence lourde ne tourne pas dans le navigateur de l'utilisateur. Elle est pré-calculée.
+```bash
+python brain/build_concept_list.py \
+  --root-concept "Computer Science" \
+  --concept-list-length 25 \
+  --max-depth 3 \
+  --output memory/concept_list.txt \
+  --state-file memory/concept_list_state.json
+```
 
-* **Rôle :** Extraction, nettoyage et calcul mathématique.
-* **Mécanique :** Scraping de Wikipédia -> NLP (Embeddings) -> Calcul de similarité (Cosinus).
-* **Livrable :** Un artefact statique unique et optimisé (`graph_data.json`).
+Pause and resume generation:
 
-### B. Le "Visage" (Frontend / JS) - *Online*
+```bash
+python brain/build_concept_list.py --resume --state-file memory/concept_list_state.json
+```
 
-Le client est léger, rapide et agnostique.
+Clean generated graph edges:
 
-* **Rôle :** Rendu graphique et interaction.
-* **Mécanique :** Pas de base de données, pas d'API serveur complexe. Le navigateur charge le JSON et dessine la constellation.
-* **Expérience :** Fluidité maximale, hébergement gratuit (Static Hosting).
+```bash
+python brain/clean_concept_list.py \
+  --input memory/concept_list.txt \
+  --output memory/concept_list_cleaned.txt \
+  --root "Computer Science"
+```
 
-## 4. Les Piliers Fonctionnels
+## Resume / Save Behavior
+Current behavior is the expected behavior:
+- Progress is checkpointed to the state file.
+- `Ctrl+C` pauses safely without losing progress.
+- Resume continues from checkpoint state.
+- On successful completion, checkpoint is removed automatically.
 
-### Le Mining (La Récolte)
-
-La vérité se trouve dans les données brutes. Nous constituons un corpus "propre" en filtrant le bruit (pages techniques Wikipédia) et en enrichissant les données avec les standards de l'industrie (TIOBE, GitHub).
-
-### La Vectorisation (Le Sens)
-
-Le lien entre deux concepts n'est pas manuel, il est mathématique. Nous transformons les mots en vecteurs pour laisser les mathématiques décider que "Python" est proche de "Django" mais loin de "Microprocesseur".
-
-### La Navigation (Le Voyage)
-
-L'interface est une invitation à la sérendipité. L'utilisateur entre par un mot-clé (Recherche) mais reste pour le voyage (Navigation de nœud en nœud). L'interface s'efface au profit du graphe.
-
-## 5. Feuille de Route Macro
-
-1. **Extraction :** Obtenir la matière première (`concepts_list.txt`).
-2. **Enrichissement :** Associer définitions et vecteurs (`raw_data.json`).
-3. **Topologie :** Calculer le graphe des voisins (`graph_data.json`).
-4. **Squelette Web :** Afficher les données brutes dans le navigateur.
-5. **Constellation :** Remplacer le texte par des nœuds et des liens graphiques.
-6. **Interaction :** Ajouter la recherche, le zoom et le détail au clic.
+## Documentation Language
+All active documentation is English.
