@@ -161,6 +161,13 @@ body {
   stroke-width: 1.4;
 }
 
+.constellation-line-hitzone {
+  stroke: rgba(0, 0, 0, 0);
+  stroke-width: 14;
+  pointer-events: stroke;
+  cursor: pointer;
+}
+
 .constellation-node-group {
   cursor: pointer;
   transition: opacity 180ms ease;
