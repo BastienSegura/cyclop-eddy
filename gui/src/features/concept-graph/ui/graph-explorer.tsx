@@ -227,7 +227,7 @@ export function GraphExplorer() {
       return new Map<NodeId, number>();
     }
 
-    return getNeighborhoodDepths(graph, currentNodeId, 3);
+    return getNeighborhoodDepths(graph, currentNodeId, 1);
   }, [graph, currentNodeId]);
 
   const outgoingNeighborIds = useMemo(() => {
