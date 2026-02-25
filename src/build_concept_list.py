@@ -259,15 +259,20 @@ def list_models() -> list[str]:
 def slugify(string: str) -> str:
     return string.lower().replace(' ','-')
 
-def write_to_file(string: str, mode: str="truncate"):
+def write_to_file(string: str, mode: str = "truncate"):
+    with open("concept_list.txt", "w" if mode == "truncate" else "a", encoding="utf-8") as file:
+        file.write(string)
 
-    file = open("concept_list.txt","w" if mode == "truncate" else "a")
 
-    file.write(string)
+def build_prompt(root_concept: str, concept_list_length: int, exclude_list: list[str] | None = None):
+    exclude_block = ""
+    if exclude_list:
+        formatted_excludes = "\n".join([f"  - {concept}" for concept in exclude_list])
+        exclude_block = f"""
+    * Exclude any concept already listed below:
+{formatted_excludes}
+    """
 
-    file.close()
-
-def build_prompt(root_concept:str, concept_list_length:int):
     prompt = f"""
     You are an expert knowledge cartographer.
     
@@ -282,6 +287,7 @@ def build_prompt(root_concept:str, concept_list_length:int):
     * Avoid duplicates or near-synonyms of the same idea.
     * Prefer canonical academic or industry-standard concept names.
     * Each concept must be 1–4 words maximum.
+    {exclude_block}
     
     Output format:
     * Return ONLY a plain list.
@@ -293,6 +299,81 @@ def build_prompt(root_concept:str, concept_list_length:int):
     return prompt
 
 
+def _normalize_concept(concept: str) -> str:
+    return concept.strip().casefold()
+
+
+def parse_concepts(response: str) -> list[str]:
+    concepts: list[str] = []
+    seen: set[str] = set()
+
+    for raw_concept in response.split("\n"):
+        concept = raw_concept.strip()
+        if not concept:
+            continue
+
+        normalized = _normalize_concept(concept)
+        if normalized in seen:
+            continue
+
+        seen.add(normalized)
+        concepts.append(concept)
+
+    return concepts
+
+
+def generate_concept_graph(root_concept: str, concept_list_length: int, max_depth: int) -> None:
+    if max_depth < 1:
+        raise ValueError("max_depth must be >= 1")
+
+    seen_normalized: set[str] = set()
+    exclude_list: list[str] = []
+
+    def mark_seen(concept: str) -> bool:
+        normalized = _normalize_concept(concept)
+        if not normalized or normalized in seen_normalized:
+            return False
+
+        seen_normalized.add(normalized)
+        exclude_list.append(concept)
+        return True
+
+    mark_seen(root_concept)
+    current_frontier = [root_concept]
+    write_to_file("", mode="truncate")
+    should_truncate = True
+
+    for _ in range(max_depth):
+        next_frontier: list[str] = []
+
+        for concept in current_frontier:
+            prompt = build_prompt(concept, concept_list_length, exclude_list)
+            response = simple_prompt(prompt)
+            response_concepts = parse_concepts(response)
+
+            fresh_concepts: list[str] = []
+            for candidate in response_concepts:
+                if not mark_seen(candidate):
+                    continue
+                fresh_concepts.append(candidate)
+
+            if not fresh_concepts:
+                continue
+
+            formatted_response = "\n".join([f"{concept}: {child}" for child in fresh_concepts])
+            write_to_file(
+                formatted_response + "\n",
+                mode="truncate" if should_truncate else "append"
+            )
+            should_truncate = False
+            next_frontier.extend(fresh_concepts)
+
+        if not next_frontier:
+            break
+
+        current_frontier = next_frontier
+
+
 # ── Main — quick demo of each function ────────────────────────────────────────
 
 if __name__ == "__main__":
@@ -300,23 +381,9 @@ if __name__ == "__main__":
     # root_concept = slugify(input("[root-concept]: "))
     root_concept = "Computer Science"
     concept_list_length = 25
-    exclude_list = [root_concept]
+    max_depth = 2
 
-    prompt = build_prompt(root_concept, concept_list_length, exclude_list)
-    response = simple_prompt(prompt)
-    formatted_response = '\n'.join([root_concept + ": " + e for e in response.split('\n')])
-    write_to_file(formatted_response+"\n")
-
-    for concept in response.split('\n'):
-        exclude_list.append(concept)
-
-    for concept in response.split('\n'):
-        prompt = build_prompt(concept, concept_list_length, exclude_list)
-        response_loop = simple_prompt(prompt)
-        formatted_response = '\n'.join([concept + ": " + e for e in response_loop.split('\n')])
-        write_to_file(formatted_response, "append")
-        for concept in response_loop.split('\n'):
-            exclude_list.append(concept)
+    generate_concept_graph(root_concept, concept_list_length, max_depth)
 
     # Loop Iteration 2
 
