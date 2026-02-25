@@ -2,13 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { buildConceptGraph } from "../application/build-concept-graph";
 import { computeGraphLayout } from "../application/compute-graph-layout";
 import { getNeighborhoodDepths } from "../application/get-neighborhood-depths";
 import { buildLearningPrompt } from "../application/build-learning-prompt";
 import { loadConceptGraphFromPublicFile } from "../infrastructure/load-graph";
 import type { ConceptGraph, NodeId } from "../domain/types";
-import { parseEdgeList } from "../domain/parse-edge-list";
 import { ConstellationView } from "./constellation-view";
 
 type LoadStatus = "loading" | "ready" | "error";
