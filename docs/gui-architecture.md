@@ -40,6 +40,7 @@ This document defines the baseline architecture for the `gui/` frontend.
 4. `compute-graph-layout.ts` generates world coordinates using a force-directed pass to reduce long confusing edges.
 5. `graph-explorer.tsx` animates a camera through that world when users select nodes.
 6. `constellation-view.tsx` handles drag-pan and cursor-centered wheel zoom gestures.
+7. `graph-explorer.tsx` applies progressive reveal (start node + neighbors, then expand on selection).
 
 ## Planned Evolution
 
