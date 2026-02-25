@@ -46,6 +46,7 @@ You can replace this file with newer generated data from `memory/concept_list_cl
 - Supports smooth camera travel when selecting a node
 - Supports drag-to-pan navigation
 - Supports mouse-wheel / trackpad zoom centered on cursor
+- Supports edge click navigation (click a link to move to its target node)
 - Highlights local neighborhood while keeping distant stars visible
 - Generates and copies a learning prompt template for the selected node
 
