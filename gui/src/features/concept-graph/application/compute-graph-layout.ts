@@ -15,6 +15,8 @@ export interface GraphLayout {
   };
 }
 
+type EdgePair = [NodeId, NodeId];
+
 function buildUndirectedNeighbors(graph: ConceptGraph): Record<NodeId, NodeId[]> {
   const undirected: Record<NodeId, NodeId[]> = {};
 
@@ -22,8 +24,8 @@ function buildUndirectedNeighbors(graph: ConceptGraph): Record<NodeId, NodeId[]>
     undirected[nodeId] = [];
   }
 
-  for (const [from, targets] of Object.entries(graph.neighborsByNode)) {
-    for (const to of targets) {
+  for (const [from, neighbors] of Object.entries(graph.neighborsByNode)) {
+    for (const to of neighbors) {
       if (!undirected[from].includes(to)) {
         undirected[from].push(to);
       }
@@ -39,169 +41,322 @@ function buildUndirectedNeighbors(graph: ConceptGraph): Record<NodeId, NodeId[]>
   return undirected;
 }
 
-function chooseComponentSeed(
-  candidates: NodeId[],
-  graph: ConceptGraph,
-  rootNodeId: NodeId | null,
-): NodeId {
-  if (rootNodeId && candidates.includes(rootNodeId)) {
-    return rootNodeId;
-  }
-
-  return [...candidates].sort((a, b) => {
-    const degreeA = (graph.neighborsByNode[a]?.length ?? 0) + (graph.reverseNeighborsByNode[a]?.length ?? 0);
-    const degreeB = (graph.neighborsByNode[b]?.length ?? 0) + (graph.reverseNeighborsByNode[b]?.length ?? 0);
-    if (degreeB !== degreeA) {
-      return degreeB - degreeA;
-    }
-    return graph.nodes[a].label.localeCompare(graph.nodes[b].label);
-  })[0];
-}
-
-function getComponentNodes(seed: NodeId, undirected: Record<NodeId, NodeId[]>): NodeId[] {
-  const queue: NodeId[] = [seed];
-  const visited = new Set<NodeId>([seed]);
-  const component: NodeId[] = [];
-
-  while (queue.length > 0) {
-    const current = queue.shift() as NodeId;
-    component.push(current);
-
-    for (const neighbor of undirected[current] ?? []) {
-      if (visited.has(neighbor)) {
-        continue;
-      }
-      visited.add(neighbor);
-      queue.push(neighbor);
-    }
-  }
-
-  return component;
-}
-
-function assignComponentPositions(
-  componentNodes: NodeId[],
-  seed: NodeId,
+function getConnectedComponents(
   graph: ConceptGraph,
   undirected: Record<NodeId, NodeId[]>,
-  componentCenter: NodePosition,
-): Record<NodeId, NodePosition> {
-  const levels = new Map<NodeId, number>();
-  const queue: NodeId[] = [seed];
-  levels.set(seed, 0);
+): NodeId[][] {
+  const allNodes = Object.keys(graph.nodes).sort((a, b) => graph.nodes[a].label.localeCompare(graph.nodes[b].label));
+  const orderedSeeds: NodeId[] = [];
 
-  while (queue.length > 0) {
-    const current = queue.shift() as NodeId;
-    const currentLevel = levels.get(current) ?? 0;
+  if (graph.rootNodeId && undirected[graph.rootNodeId]) {
+    orderedSeeds.push(graph.rootNodeId);
+  }
 
-    for (const neighbor of undirected[current] ?? []) {
-      if (levels.has(neighbor)) {
-        continue;
-      }
-      levels.set(neighbor, currentLevel + 1);
-      queue.push(neighbor);
+  for (const nodeId of allNodes) {
+    if (!orderedSeeds.includes(nodeId)) {
+      orderedSeeds.push(nodeId);
     }
   }
 
-  const nodesByLevel = new Map<number, NodeId[]>();
-  for (const nodeId of componentNodes) {
-    const level = levels.get(nodeId) ?? 0;
-    if (!nodesByLevel.has(level)) {
-      nodesByLevel.set(level, []);
-    }
-    nodesByLevel.get(level)?.push(nodeId);
-  }
+  const visited = new Set<NodeId>();
+  const components: NodeId[][] = [];
 
-  const positions: Record<NodeId, NodePosition> = {};
-  positions[seed] = { ...componentCenter };
-
-  const maxLevel = Math.max(...Array.from(nodesByLevel.keys()));
-  const levelRadiusStep = 280;
-
-  for (let level = 1; level <= maxLevel; level += 1) {
-    const nodes = (nodesByLevel.get(level) ?? []).sort((a, b) => {
-      const degreeA = (graph.neighborsByNode[a]?.length ?? 0) + (graph.reverseNeighborsByNode[a]?.length ?? 0);
-      const degreeB = (graph.neighborsByNode[b]?.length ?? 0) + (graph.reverseNeighborsByNode[b]?.length ?? 0);
-      if (degreeB !== degreeA) {
-        return degreeB - degreeA;
-      }
-      return graph.nodes[a].label.localeCompare(graph.nodes[b].label);
-    });
-
-    if (nodes.length === 0) {
+  for (const seed of orderedSeeds) {
+    if (visited.has(seed)) {
       continue;
     }
 
-    const radius = level * levelRadiusStep;
-    const angleOffset = level * 0.35;
+    const queue: NodeId[] = [seed];
+    visited.add(seed);
+    const component: NodeId[] = [];
 
-    for (let index = 0; index < nodes.length; index += 1) {
-      const angle = (index / nodes.length) * Math.PI * 2 + angleOffset;
-      positions[nodes[index]] = {
-        x: componentCenter.x + Math.cos(angle) * radius,
-        y: componentCenter.y + Math.sin(angle) * radius,
-      };
+    while (queue.length > 0) {
+      const current = queue.shift() as NodeId;
+      component.push(current);
+
+      for (const neighbor of undirected[current] ?? []) {
+        if (visited.has(neighbor)) {
+          continue;
+        }
+        visited.add(neighbor);
+        queue.push(neighbor);
+      }
     }
+
+    components.push(component);
+  }
+
+  components.sort((a, b) => {
+    const aHasRoot = graph.rootNodeId ? a.includes(graph.rootNodeId) : false;
+    const bHasRoot = graph.rootNodeId ? b.includes(graph.rootNodeId) : false;
+
+    if (aHasRoot && !bHasRoot) {
+      return -1;
+    }
+    if (!aHasRoot && bHasRoot) {
+      return 1;
+    }
+
+    if (b.length !== a.length) {
+      return b.length - a.length;
+    }
+
+    const aFirst = graph.nodes[a[0]]?.label ?? a[0];
+    const bFirst = graph.nodes[b[0]]?.label ?? b[0];
+    return aFirst.localeCompare(bFirst);
+  });
+
+  return components;
+}
+
+function collectComponentEdges(
+  componentNodes: NodeId[],
+  undirected: Record<NodeId, NodeId[]>,
+): EdgePair[] {
+  const nodeSet = new Set(componentNodes);
+  const edges: EdgePair[] = [];
+
+  for (const nodeId of componentNodes) {
+    for (const neighborId of undirected[nodeId] ?? []) {
+      if (!nodeSet.has(neighborId)) {
+        continue;
+      }
+
+      if (nodeId.localeCompare(neighborId) >= 0) {
+        continue;
+      }
+
+      edges.push([nodeId, neighborId]);
+    }
+  }
+
+  return edges;
+}
+
+function degreeOfNode(graph: ConceptGraph, nodeId: NodeId): number {
+  return (graph.neighborsByNode[nodeId]?.length ?? 0) + (graph.reverseNeighborsByNode[nodeId]?.length ?? 0);
+}
+
+function initializeComponentPositions(
+  graph: ConceptGraph,
+  componentNodes: NodeId[],
+  center: NodePosition,
+  anchorNodeId: NodeId | null,
+): Record<NodeId, NodePosition> {
+  const sortedNodes = [...componentNodes].sort((a, b) => {
+    const degreeDelta = degreeOfNode(graph, b) - degreeOfNode(graph, a);
+    if (degreeDelta !== 0) {
+      return degreeDelta;
+    }
+    return graph.nodes[a].label.localeCompare(graph.nodes[b].label);
+  });
+
+  const positions: Record<NodeId, NodePosition> = {};
+  const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+
+  let index = 0;
+  for (const nodeId of sortedNodes) {
+    if (anchorNodeId && nodeId === anchorNodeId) {
+      positions[nodeId] = { ...center };
+      continue;
+    }
+
+    index += 1;
+    const radius = 125 * Math.sqrt(index);
+    const angle = index * goldenAngle;
+
+    positions[nodeId] = {
+      x: center.x + Math.cos(angle) * radius,
+      y: center.y + Math.sin(angle) * radius,
+    };
+  }
+
+  if (anchorNodeId && !positions[anchorNodeId]) {
+    positions[anchorNodeId] = { ...center };
   }
 
   return positions;
 }
 
-function mergeBounds(bounds: GraphLayout["bounds"], position: NodePosition): GraphLayout["bounds"] {
-  return {
-    minX: Math.min(bounds.minX, position.x),
-    maxX: Math.max(bounds.maxX, position.x),
-    minY: Math.min(bounds.minY, position.y),
-    maxY: Math.max(bounds.maxY, position.y),
-  };
+function runForceLayout(
+  componentNodes: NodeId[],
+  componentEdges: EdgePair[],
+  positions: Record<NodeId, NodePosition>,
+  center: NodePosition,
+  anchorNodeId: NodeId | null,
+): void {
+  const nodeCount = componentNodes.length;
+  if (nodeCount <= 1) {
+    return;
+  }
+
+  const nodeIndexes = new Map<NodeId, number>();
+  componentNodes.forEach((nodeId, index) => nodeIndexes.set(nodeId, index));
+
+  const x = new Array<number>(nodeCount);
+  const y = new Array<number>(nodeCount);
+  const dispX = new Array<number>(nodeCount).fill(0);
+  const dispY = new Array<number>(nodeCount).fill(0);
+
+  componentNodes.forEach((nodeId, index) => {
+    x[index] = positions[nodeId].x;
+    y[index] = positions[nodeId].y;
+  });
+
+  const edgeIndexes: Array<[number, number]> = componentEdges
+    .map(([from, to]) => {
+      const fromIndex = nodeIndexes.get(from);
+      const toIndex = nodeIndexes.get(to);
+      if (fromIndex === undefined || toIndex === undefined) {
+        return null;
+      }
+      return [fromIndex, toIndex] as [number, number];
+    })
+    .filter((value): value is [number, number] => Boolean(value));
+
+  const idealLength = nodeCount > 260 ? 140 : nodeCount > 130 ? 160 : 185;
+  const iterations = nodeCount > 260 ? 170 : nodeCount > 130 ? 220 : 280;
+  const gravityStrength = 0.015;
+  const repulsionStrength = 1.0;
+  const attractionStrength = 0.78;
+
+  let temperature = idealLength * 2.4;
+  const cooling = 0.965;
+  const anchorIndex = anchorNodeId ? nodeIndexes.get(anchorNodeId) ?? -1 : -1;
+
+  for (let iteration = 0; iteration < iterations; iteration += 1) {
+    dispX.fill(0);
+    dispY.fill(0);
+
+    for (let i = 0; i < nodeCount; i += 1) {
+      for (let j = i + 1; j < nodeCount; j += 1) {
+        const dx = x[i] - x[j];
+        const dy = y[i] - y[j];
+        const distanceSquared = dx * dx + dy * dy + 0.01;
+        const distance = Math.sqrt(distanceSquared);
+
+        const force = (idealLength * idealLength * repulsionStrength) / distance;
+        const forceX = (dx / distance) * force;
+        const forceY = (dy / distance) * force;
+
+        dispX[i] += forceX;
+        dispY[i] += forceY;
+        dispX[j] -= forceX;
+        dispY[j] -= forceY;
+      }
+    }
+
+    for (const [fromIndex, toIndex] of edgeIndexes) {
+      const dx = x[fromIndex] - x[toIndex];
+      const dy = y[fromIndex] - y[toIndex];
+      const distance = Math.sqrt(dx * dx + dy * dy + 0.01);
+
+      const force = ((distance * distance) / idealLength) * attractionStrength;
+      const forceX = (dx / distance) * force;
+      const forceY = (dy / distance) * force;
+
+      dispX[fromIndex] -= forceX;
+      dispY[fromIndex] -= forceY;
+      dispX[toIndex] += forceX;
+      dispY[toIndex] += forceY;
+    }
+
+    for (let i = 0; i < nodeCount; i += 1) {
+      const dx = x[i] - center.x;
+      const dy = y[i] - center.y;
+      dispX[i] -= dx * gravityStrength;
+      dispY[i] -= dy * gravityStrength;
+    }
+
+    for (let i = 0; i < nodeCount; i += 1) {
+      if (i === anchorIndex) {
+        continue;
+      }
+
+      const displacement = Math.sqrt(dispX[i] * dispX[i] + dispY[i] * dispY[i]);
+      if (displacement === 0) {
+        continue;
+      }
+
+      const step = Math.min(temperature, displacement);
+      x[i] += (dispX[i] / displacement) * step;
+      y[i] += (dispY[i] / displacement) * step;
+    }
+
+    if (anchorIndex >= 0) {
+      x[anchorIndex] = center.x;
+      y[anchorIndex] = center.y;
+    }
+
+    temperature *= cooling;
+  }
+
+  componentNodes.forEach((nodeId, index) => {
+    positions[nodeId] = { x: x[index], y: y[index] };
+  });
 }
 
 export function computeGraphLayout(graph: ConceptGraph): GraphLayout {
   const undirected = buildUndirectedNeighbors(graph);
-  const unassigned = new Set<NodeId>(Object.keys(graph.nodes));
+  const components = getConnectedComponents(graph, undirected);
   const positions: Record<NodeId, NodePosition> = {};
 
-  let componentIndex = 0;
+  const componentSpacing = 3400;
+  const columns = 3;
 
-  while (unassigned.size > 0) {
-    const candidates = Array.from(unassigned);
-    const seed = chooseComponentSeed(candidates, graph, graph.rootNodeId);
-    const componentNodes = getComponentNodes(seed, undirected);
-
-    const componentCenter = {
-      x: (componentIndex % 3) * 2800,
-      y: Math.floor(componentIndex / 3) * 2800,
+  components.forEach((componentNodes, componentIndex) => {
+    const center = {
+      x: (componentIndex % columns) * componentSpacing,
+      y: Math.floor(componentIndex / columns) * componentSpacing,
     };
 
-    const componentPositions = assignComponentPositions(
-      componentNodes,
-      seed,
+    const anchorNodeId = graph.rootNodeId && componentNodes.includes(graph.rootNodeId)
+      ? graph.rootNodeId
+      : null;
+
+    const componentPositions = initializeComponentPositions(
       graph,
-      undirected,
-      componentCenter,
+      componentNodes,
+      center,
+      anchorNodeId,
+    );
+
+    const componentEdges = collectComponentEdges(componentNodes, undirected);
+
+    runForceLayout(
+      componentNodes,
+      componentEdges,
+      componentPositions,
+      center,
+      anchorNodeId,
     );
 
     for (const nodeId of componentNodes) {
-      positions[nodeId] = componentPositions[nodeId] ?? componentCenter;
-      unassigned.delete(nodeId);
+      positions[nodeId] = componentPositions[nodeId];
     }
+  });
 
-    componentIndex += 1;
-  }
-
-  let bounds: GraphLayout["bounds"] = {
-    minX: Number.POSITIVE_INFINITY,
-    maxX: Number.NEGATIVE_INFINITY,
-    minY: Number.POSITIVE_INFINITY,
-    maxY: Number.NEGATIVE_INFINITY,
-  };
-
-  for (const position of Object.values(positions)) {
-    bounds = mergeBounds(bounds, position);
-  }
+  const allPositions = Object.values(positions);
+  const bounds = allPositions.reduce(
+    (accumulator, position) => ({
+      minX: Math.min(accumulator.minX, position.x),
+      maxX: Math.max(accumulator.maxX, position.x),
+      minY: Math.min(accumulator.minY, position.y),
+      maxY: Math.max(accumulator.maxY, position.y),
+    }),
+    {
+      minX: Number.POSITIVE_INFINITY,
+      maxX: Number.NEGATIVE_INFINITY,
+      minY: Number.POSITIVE_INFINITY,
+      maxY: Number.NEGATIVE_INFINITY,
+    },
+  );
 
   if (!Number.isFinite(bounds.minX)) {
-    bounds = { minX: -100, maxX: 100, minY: -100, maxY: 100 };
+    return {
+      positions,
+      bounds: { minX: -100, maxX: 100, minY: -100, maxY: 100 },
+    };
   }
 
   return { positions, bounds };
