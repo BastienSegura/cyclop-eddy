@@ -40,7 +40,8 @@ You can replace this file with newer generated data from `memory/concept_list_cl
 ## Current UX
 
 - Loads concept graph from cleaned text file
-- Renders a larger graph field (not only one parent + children snapshot)
+- Starts with `Computer Science` and its direct neighbors visible
+- Expands visible graph progressively as you select new nodes
 - Uses force-directed positioning so connected nodes stay spatially closer
 - Supports smooth camera travel when selecting a node
 - Supports drag-to-pan navigation
