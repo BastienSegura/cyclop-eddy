@@ -41,6 +41,7 @@ This document defines the baseline architecture for the `gui/` frontend.
 5. `graph-explorer.tsx` animates a camera through that world when users select nodes.
 6. `constellation-view.tsx` handles drag-pan and cursor-centered wheel zoom gestures.
 7. `graph-explorer.tsx` applies progressive reveal (start node + neighbors, then expand on selection).
+8. `constellation-view.tsx` exposes edge-hit interactions so users can navigate by clicking links.
 
 ## Planned Evolution
 
