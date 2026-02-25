@@ -22,6 +22,7 @@ const MIN_ZOOM = 0.07;
 const MAX_ZOOM = 1.3;
 const FOCUS_ZOOM = 0.18;
 const STATIC_ENTRY_NODE_ID = "computer science";
+const INITIAL_MIN_ZOOM = 0.22;
 
 function clampZoom(value: number): number {
   return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, value));
@@ -51,42 +52,37 @@ function expandVisibleNodes(
 function computeFitCameraForNodes(
   positions: Record<NodeId, { x: number; y: number }>,
   nodeIds: Set<NodeId>,
-  fallbackNodeId: NodeId,
+  focusNodeId: NodeId,
 ): CameraState {
-  const candidateIds = nodeIds.size > 0 ? Array.from(nodeIds) : [fallbackNodeId];
+  const candidateIds = nodeIds.size > 0 ? Array.from(nodeIds) : [focusNodeId];
   const visiblePositions = candidateIds
     .map((nodeId) => positions[nodeId])
     .filter((position): position is { x: number; y: number } => Boolean(position));
 
-  if (visiblePositions.length === 0) {
+  const focusPosition = positions[focusNodeId];
+  if (visiblePositions.length === 0 || !focusPosition) {
     return { x: 0, y: 0, zoom: FOCUS_ZOOM };
   }
 
-  const bounds = visiblePositions.reduce(
-    (accumulator, position) => ({
-      minX: Math.min(accumulator.minX, position.x),
-      maxX: Math.max(accumulator.maxX, position.x),
-      minY: Math.min(accumulator.minY, position.y),
-      maxY: Math.max(accumulator.maxY, position.y),
-    }),
-    {
-      minX: Number.POSITIVE_INFINITY,
-      maxX: Number.NEGATIVE_INFINITY,
-      minY: Number.POSITIVE_INFINITY,
-      maxY: Number.NEGATIVE_INFINITY,
-    },
-  );
+  const sortedRadii = visiblePositions
+    .map((position) => {
+      const dx = position.x - focusPosition.x;
+      const dy = position.y - focusPosition.y;
+      return Math.sqrt(dx * dx + dy * dy);
+    })
+    .sort((a, b) => a - b);
 
-  const centerX = (bounds.minX + bounds.maxX) / 2;
-  const centerY = (bounds.minY + bounds.maxY) / 2;
-  const contentWidth = Math.max(280, bounds.maxX - bounds.minX + 320);
-  const contentHeight = Math.max(240, bounds.maxY - bounds.minY + 280);
-  const zoomToFit = Math.min(VIEWPORT_WIDTH / contentWidth, VIEWPORT_HEIGHT / contentHeight);
+  const robustRadiusIndex = Math.max(0, Math.floor((sortedRadii.length - 1) * 0.88));
+  const robustRadius = sortedRadii[robustRadiusIndex] ?? 0;
+  const effectiveRadius = Math.max(180, robustRadius + 70);
+  const fitWidth = VIEWPORT_WIDTH / 2 - 70;
+  const fitHeight = VIEWPORT_HEIGHT / 2 - 70;
+  const zoomToFit = Math.min(fitWidth / effectiveRadius, fitHeight / effectiveRadius);
 
   return {
-    x: centerX,
-    y: centerY,
-    zoom: clampZoom(zoomToFit * 0.94),
+    x: focusPosition.x,
+    y: focusPosition.y,
+    zoom: clampZoom(Math.max(zoomToFit, INITIAL_MIN_ZOOM)),
   };
 }
 
