@@ -37,7 +37,7 @@ This document defines the baseline architecture for the `gui/` frontend.
 1. `load-graph.ts` fetches `public/data/concept_list_cleaned.txt`.
 2. `parse-edge-list.ts` converts raw lines into structured entries.
 3. `build-concept-graph.ts` builds nodes and directional links.
-4. `compute-graph-layout.ts` generates stable world coordinates for all nodes.
+4. `compute-graph-layout.ts` generates world coordinates using a force-directed pass to reduce long confusing edges.
 5. `graph-explorer.tsx` animates a camera through that world when users select nodes.
 6. `constellation-view.tsx` handles drag-pan and cursor-centered wheel zoom gestures.
 
