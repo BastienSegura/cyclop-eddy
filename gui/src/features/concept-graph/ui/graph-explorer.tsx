@@ -47,9 +47,7 @@ export function GraphExplorer() {
           return;
         }
 
-        // Parsing/building stays explicit here so loading can later switch to API payloads.
-        const rawLines = Object.values(loadedGraph.nodes).length > 0 ? loadedGraph : null;
-        if (!rawLines) {
+        if (Object.keys(loadedGraph.nodes).length === 0) {
           throw new Error("Empty graph payload");
         }
 
