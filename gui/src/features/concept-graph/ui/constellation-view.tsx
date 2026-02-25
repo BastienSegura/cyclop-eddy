@@ -181,6 +181,13 @@ export function ConstellationView({
       const nodeId = nodeElement?.dataset.nodeId;
       if (nodeId) {
         onSelectNode(nodeId);
+        return;
+      }
+
+      const edgeTargetElement = element?.closest("[data-target-node-id]") as HTMLElement | null;
+      const targetNodeId = edgeTargetElement?.dataset.targetNodeId;
+      if (targetNodeId) {
+        onSelectNode(targetNodeId);
       }
     }
   }
@@ -225,14 +232,23 @@ export function ConstellationView({
             }
 
             return (
-              <line
-                key={`edge-${edge.from}-${edge.to}`}
-                x1={fromPosition.x}
-                y1={fromPosition.y}
-                x2={toPosition.x}
-                y2={toPosition.y}
-                className={`constellation-line ${edgeClass(edge.from, edge.to, neighborhoodDepths)}`}
-              />
+              <g key={`edge-${edge.from}-${edge.to}`}>
+                <line
+                  x1={fromPosition.x}
+                  y1={fromPosition.y}
+                  x2={toPosition.x}
+                  y2={toPosition.y}
+                  className={`constellation-line ${edgeClass(edge.from, edge.to, neighborhoodDepths)}`}
+                />
+                <line
+                  x1={fromPosition.x}
+                  y1={fromPosition.y}
+                  x2={toPosition.x}
+                  y2={toPosition.y}
+                  data-target-node-id={edge.to}
+                  className="constellation-line-hitzone"
+                />
+              </g>
             );
           })}
 
