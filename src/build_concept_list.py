@@ -63,7 +63,12 @@ INSTALL
 ================================================================================
 """
 
+import argparse
 import json
+import time
+from collections import deque
+from pathlib import Path
+
 import requests
 
 # ── Configuration ─────────────────────────────────────────────────────────────
@@ -259,8 +264,8 @@ def list_models() -> list[str]:
 def slugify(string: str) -> str:
     return string.lower().replace(' ','-')
 
-def write_to_file(string: str, mode: str = "truncate"):
-    with open("concept_list.txt", "w" if mode == "truncate" else "a", encoding="utf-8") as file:
+def write_to_file(string: str, output_path: str = "concept_list.txt", mode: str = "truncate"):
+    with open(output_path, "w" if mode == "truncate" else "a", encoding="utf-8") as file:
         file.write(string)
 
 
@@ -322,12 +327,122 @@ def parse_concepts(response: str) -> list[str]:
     return concepts
 
 
-def generate_concept_graph(root_concept: str, concept_list_length: int, max_depth: int) -> None:
+def estimate_max_generated_concepts(concept_list_length: int, max_depth: int) -> int:
+    return sum(concept_list_length ** depth for depth in range(1, max_depth + 1))
+
+
+def estimate_max_prompt_calls(concept_list_length: int, max_depth: int) -> int:
+    return sum(concept_list_length ** depth for depth in range(max_depth))
+
+
+def save_generation_state(state_file: str, state: dict) -> None:
+    Path(state_file).write_text(
+        json.dumps(state, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
+
+def load_generation_state(state_file: str) -> dict:
+    return json.loads(Path(state_file).read_text(encoding="utf-8"))
+
+
+def sync_output_from_state(state: dict) -> None:
+    output_lines = state.get("edges", [])
+    payload = "\n".join(output_lines)
+    if payload:
+        payload += "\n"
+    write_to_file(payload, output_path=state["output_path"], mode="truncate")
+
+
+def _print_progress(state: dict) -> None:
+    generated = state["generated_concepts"]
+    estimated = state["estimated_max_generated_concepts"]
+    prompts_done = state["processed_prompt_calls"]
+    prompts_estimated = state["estimated_max_prompt_calls"]
+    queue_size = len(state["queue"])
+    elapsed = state["elapsed_seconds"]
+    rate = generated / elapsed if elapsed > 0 else 0.0
+
+    generated_pct = (generated / estimated * 100.0) if estimated else 0.0
+    prompts_pct = (prompts_done / prompts_estimated * 100.0) if prompts_estimated else 0.0
+
+    print(
+        "[progress] "
+        f"concepts={generated}/{estimated} ({generated_pct:.2f}%) | "
+        f"prompts={prompts_done}/{prompts_estimated} ({prompts_pct:.2f}%) | "
+        f"queue={queue_size} | speed={rate:.2f} concepts/s",
+        flush=True,
+    )
+
+
+def _build_new_state(
+    root_concept: str,
+    concept_list_length: int,
+    max_depth: int,
+    output_path: str,
+) -> dict:
+    normalized_root = _normalize_concept(root_concept)
+    return {
+        "version": 2,
+        "root_concept": root_concept,
+        "concept_list_length": concept_list_length,
+        "max_depth": max_depth,
+        "output_path": output_path,
+        "queue": [{"concept": root_concept, "depth": 0}],
+        "exclude_list": [root_concept],
+        "seen_normalized": [normalized_root],
+        "edges": [],
+        "generated_concepts": 0,
+        "processed_prompt_calls": 0,
+        "estimated_max_generated_concepts": estimate_max_generated_concepts(concept_list_length, max_depth),
+        "estimated_max_prompt_calls": estimate_max_prompt_calls(concept_list_length, max_depth),
+        "elapsed_seconds": 0.0,
+    }
+
+
+def generate_concept_graph(
+    root_concept: str,
+    concept_list_length: int,
+    max_depth: int,
+    output_path: str = "concept_list.txt",
+    state_file: str = "concept_list_state.json",
+    resume: bool = False,
+) -> None:
     if max_depth < 1:
         raise ValueError("max_depth must be >= 1")
+    if concept_list_length < 1:
+        raise ValueError("concept_list_length must be >= 1")
 
-    seen_normalized: set[str] = set()
-    exclude_list: list[str] = []
+    if resume:
+        state_path = Path(state_file)
+        if not state_path.exists():
+            raise SystemExit(f"Cannot resume: state file not found at '{state_file}'")
+        state = load_generation_state(state_file)
+        if state.get("version") not in (1, 2):
+            raise SystemExit("Unsupported state file version.")
+        state.setdefault("edges", [])
+        state["version"] = 2
+        output_path = state["output_path"]
+        if not Path(output_path).exists():
+            raise SystemExit(
+                f"Cannot resume: output file '{output_path}' is missing."
+            )
+        print(f"Resuming generation from '{state_file}'", flush=True)
+    else:
+        state = _build_new_state(root_concept, concept_list_length, max_depth, output_path)
+        save_generation_state(state_file, state)
+        print(f"Starting generation. Checkpoint file: '{state_file}'", flush=True)
+
+    seen_normalized: set[str] = set(state["seen_normalized"])
+    queue: deque[dict] = deque(state["queue"])
+    run_started_at = time.monotonic() - float(state.get("elapsed_seconds", 0.0))
+    sync_output_from_state(state)
+
+    def persist_state() -> None:
+        state["queue"] = list(queue)
+        state["seen_normalized"] = sorted(seen_normalized)
+        state["elapsed_seconds"] = time.monotonic() - run_started_at
+        save_generation_state(state_file, state)
 
     def mark_seen(concept: str) -> bool:
         normalized = _normalize_concept(concept)
@@ -335,55 +450,92 @@ def generate_concept_graph(root_concept: str, concept_list_length: int, max_dept
             return False
 
         seen_normalized.add(normalized)
-        exclude_list.append(concept)
+        state["exclude_list"].append(concept)
         return True
 
-    mark_seen(root_concept)
-    current_frontier = [root_concept]
-    write_to_file("", mode="truncate")
-    should_truncate = True
+    try:
+        while queue:
+            current = queue[0]
+            concept = current["concept"]
+            depth = int(current["depth"])
+            new_edges: list[str] = []
 
-    for _ in range(max_depth):
-        next_frontier: list[str] = []
+            if depth >= state["max_depth"]:
+                queue.popleft()
+                persist_state()
+                continue
 
-        for concept in current_frontier:
-            prompt = build_prompt(concept, concept_list_length, exclude_list)
+            prompt = build_prompt(concept, state["concept_list_length"], state["exclude_list"])
             response = simple_prompt(prompt)
             response_concepts = parse_concepts(response)
 
             fresh_concepts: list[str] = []
+            child_depth = depth + 1
+
             for candidate in response_concepts:
                 if not mark_seen(candidate):
                     continue
                 fresh_concepts.append(candidate)
+                queue.append({"concept": candidate, "depth": child_depth})
 
-            if not fresh_concepts:
-                continue
+            if fresh_concepts:
+                new_edges = [f"{concept}: {child}" for child in fresh_concepts]
+                state["edges"].extend(new_edges)
+                state["generated_concepts"] += len(fresh_concepts)
 
-            formatted_response = "\n".join([f"{concept}: {child}" for child in fresh_concepts])
-            write_to_file(
-                formatted_response + "\n",
-                mode="truncate" if should_truncate else "append"
-            )
-            should_truncate = False
-            next_frontier.extend(fresh_concepts)
+            queue.popleft()
+            state["processed_prompt_calls"] += 1
+            persist_state()
 
-        if not next_frontier:
-            break
+            if new_edges:
+                write_to_file(
+                    "\n".join(new_edges) + "\n",
+                    output_path=state["output_path"],
+                    mode="append",
+                )
+            _print_progress(state)
 
-        current_frontier = next_frontier
+    except KeyboardInterrupt:
+        persist_state()
+        print(
+            "\nGeneration paused by user. "
+            f"Resume with: python src/build_concept_list.py --resume --state-file {state_file}",
+            flush=True,
+        )
+        return
+
+    Path(state_file).unlink(missing_ok=True)
+    print(
+        "Generation complete. "
+        f"Total concepts generated: {state['generated_concepts']}. "
+        f"Output: {state['output_path']}",
+        flush=True,
+    )
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Generate a concept graph with Ollama.")
+    parser.add_argument("--root-concept", default="Computer Science")
+    parser.add_argument("--concept-list-length", type=int, default=25)
+    parser.add_argument("--max-depth", type=int, default=3)
+    parser.add_argument("--output", default="concept_list.txt")
+    parser.add_argument("--state-file", default="concept_list_state.json")
+    parser.add_argument("--resume", action="store_true")
+    return parser.parse_args()
 
 
 # ── Main — quick demo of each function ────────────────────────────────────────
 
 if __name__ == "__main__":
-
-    # root_concept = slugify(input("[root-concept]: "))
-    root_concept = "Computer Science"
-    concept_list_length = 25
-    max_depth = 2
-
-    generate_concept_graph(root_concept, concept_list_length, max_depth)
+    args = parse_args()
+    generate_concept_graph(
+        root_concept=args.root_concept,
+        concept_list_length=args.concept_list_length,
+        max_depth=args.max_depth,
+        output_path=args.output,
+        state_file=args.state_file,
+        resume=args.resume,
+    )
 
     # Loop Iteration 2
 
