@@ -39,6 +39,7 @@ This document defines the baseline architecture for the `gui/` frontend.
 3. `build-concept-graph.ts` builds nodes and directional links.
 4. `compute-graph-layout.ts` generates stable world coordinates for all nodes.
 5. `graph-explorer.tsx` animates a camera through that world when users select nodes.
+6. `constellation-view.tsx` handles drag-pan and cursor-centered wheel zoom gestures.
 
 ## Planned Evolution
 
