@@ -267,30 +267,27 @@ def write_to_file(string: str, mode: str="truncate"):
 
     file.close()
 
-def build_prompt(root_concept:str, concept_list_length:int, exclude_list):
+def build_prompt(root_concept:str, concept_list_length:int):
     prompt = f"""
-    > You are an expert knowledge cartographer.
-    >
-    > Core concept: **{root_concept}**
-    >
-    > Task: Identify the most semantically close and structurally related concepts to this core concept.
-    >
-    > Constraints:
-    >
-    > * Return exactly **{concept_list_length}** concepts.
-    > * Concepts must be directly related (first-order proximity).
-    > * Avoid examples, explanations, commentary, or formatting.
-    > * Do not include the following concepts : {exclude_list}
-    > * Avoid duplicates or near-synonyms of the same idea.
-    > * Prefer canonical academic or industry-standard concept names.
-    > * Each concept must be 1–4 words maximum.
-    >
-    > Output format:
-    >
-    > * Return ONLY a plain list.
-    > * One concept per line.
-    > * No numbering.
-    > * No additional text before or after the list.
+    You are an expert knowledge cartographer.
+    
+    Core concept: **{root_concept}**
+    
+    Task: Identify the most semantically close and structurally related concepts to this core concept.
+    
+    Constraints:
+    * Return exactly **{concept_list_length}** concepts.
+    * Concepts must be directly related (first-order proximity).
+    * Avoid examples, explanations, commentary, or formatting.
+    * Avoid duplicates or near-synonyms of the same idea.
+    * Prefer canonical academic or industry-standard concept names.
+    * Each concept must be 1–4 words maximum.
+    
+    Output format:
+    * Return ONLY a plain list.
+    * One concept per line.
+    * No numbering.
+    * No additional text before or after the list.
     """
 
     return prompt
