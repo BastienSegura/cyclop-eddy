@@ -21,15 +21,80 @@ interface CameraState {
 const MIN_ZOOM = 0.07;
 const MAX_ZOOM = 1.3;
 const FOCUS_ZOOM = 0.18;
+const STATIC_ENTRY_NODE_ID = "computer science";
 
 function clampZoom(value: number): number {
   return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, value));
+}
+
+function getDirectNeighborIds(graph: ConceptGraph, nodeId: NodeId): NodeId[] {
+  const outgoing = graph.neighborsByNode[nodeId] ?? [];
+  const incoming = graph.reverseNeighborsByNode[nodeId] ?? [];
+  return Array.from(new Set<NodeId>([...outgoing, ...incoming]));
+}
+
+function expandVisibleNodes(
+  graph: ConceptGraph,
+  currentVisible: Set<NodeId>,
+  focusNodeId: NodeId,
+): Set<NodeId> {
+  const nextVisible = new Set<NodeId>(currentVisible);
+  nextVisible.add(focusNodeId);
+
+  for (const neighborId of getDirectNeighborIds(graph, focusNodeId)) {
+    nextVisible.add(neighborId);
+  }
+
+  return nextVisible;
+}
+
+function computeFitCameraForNodes(
+  positions: Record<NodeId, { x: number; y: number }>,
+  nodeIds: Set<NodeId>,
+  fallbackNodeId: NodeId,
+): CameraState {
+  const candidateIds = nodeIds.size > 0 ? Array.from(nodeIds) : [fallbackNodeId];
+  const visiblePositions = candidateIds
+    .map((nodeId) => positions[nodeId])
+    .filter((position): position is { x: number; y: number } => Boolean(position));
+
+  if (visiblePositions.length === 0) {
+    return { x: 0, y: 0, zoom: FOCUS_ZOOM };
+  }
+
+  const bounds = visiblePositions.reduce(
+    (accumulator, position) => ({
+      minX: Math.min(accumulator.minX, position.x),
+      maxX: Math.max(accumulator.maxX, position.x),
+      minY: Math.min(accumulator.minY, position.y),
+      maxY: Math.max(accumulator.maxY, position.y),
+    }),
+    {
+      minX: Number.POSITIVE_INFINITY,
+      maxX: Number.NEGATIVE_INFINITY,
+      minY: Number.POSITIVE_INFINITY,
+      maxY: Number.NEGATIVE_INFINITY,
+    },
+  );
+
+  const centerX = (bounds.minX + bounds.maxX) / 2;
+  const centerY = (bounds.minY + bounds.maxY) / 2;
+  const contentWidth = Math.max(280, bounds.maxX - bounds.minX + 320);
+  const contentHeight = Math.max(240, bounds.maxY - bounds.minY + 280);
+  const zoomToFit = Math.min(VIEWPORT_WIDTH / contentWidth, VIEWPORT_HEIGHT / contentHeight);
+
+  return {
+    x: centerX,
+    y: centerY,
+    zoom: clampZoom(zoomToFit * 0.94),
+  };
 }
 
 export function GraphExplorer() {
   const [status, setStatus] = useState<LoadStatus>("loading");
   const [graph, setGraph] = useState<ConceptGraph | null>(null);
   const [currentNodeId, setCurrentNodeId] = useState<NodeId | null>(null);
+  const [visibleNodeIds, setVisibleNodeIds] = useState<Set<NodeId>>(new Set<NodeId>());
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [copyFeedback, setCopyFeedback] = useState<string>("");
   const [camera, setCamera] = useState<CameraState>({ x: 0, y: 0, zoom: FOCUS_ZOOM });
@@ -59,8 +124,23 @@ export function GraphExplorer() {
           throw new Error("Empty graph payload");
         }
 
+        const initialNodeId = loadedGraph.nodes[STATIC_ENTRY_NODE_ID]
+          ? STATIC_ENTRY_NODE_ID
+          : loadedGraph.rootNodeId;
+
+        if (!initialNodeId) {
+          throw new Error("No root node available in loaded graph");
+        }
+
+        const initialVisibleNodeIds = expandVisibleNodes(
+          loadedGraph,
+          new Set<NodeId>(),
+          initialNodeId,
+        );
+
         setGraph(loadedGraph);
-        setCurrentNodeId(loadedGraph.rootNodeId);
+        setCurrentNodeId(initialNodeId);
+        setVisibleNodeIds(initialVisibleNodeIds);
         setStatus("ready");
       } catch (error) {
         if (cancelled) {
@@ -114,7 +194,7 @@ export function GraphExplorer() {
 
     if (!hasInitializedCamera.current) {
       hasInitializedCamera.current = true;
-      setCamera((previous) => ({ ...previous, ...targetCamera }));
+      setCamera(computeFitCameraForNodes(layout.positions, visibleNodeIds, currentNodeId));
       return;
     }
 
@@ -144,7 +224,7 @@ export function GraphExplorer() {
       animationFrameRef.current = requestAnimationFrame(tick);
       return startCamera;
     });
-  }, [layout, currentNodeId]);
+  }, [layout, currentNodeId, visibleNodeIds]);
 
   const neighborhoodDepths = useMemo(() => {
     if (!graph || !currentNodeId) {
@@ -195,6 +275,17 @@ export function GraphExplorer() {
 
   const canGoBack = parentIds.length > 0;
   const firstParent = canGoBack ? parentIds[0] : null;
+
+  function focusNode(nodeId: NodeId) {
+    if (!graph) {
+      return;
+    }
+
+    setCurrentNodeId(nodeId);
+    setVisibleNodeIds((previousVisibleNodeIds) =>
+      expandVisibleNodes(graph, previousVisibleNodeIds, nodeId),
+    );
+  }
 
   async function copyPrompt() {
     if (!promptTemplate) {
@@ -284,7 +375,7 @@ export function GraphExplorer() {
               disabled={!canGoBack}
               onClick={() => {
                 if (firstParent) {
-                  setCurrentNodeId(firstParent);
+                  focusNode(firstParent);
                 }
               }}
             >
@@ -309,8 +400,9 @@ export function GraphExplorer() {
             layout={layout}
             selectedNodeId={currentNodeId}
             neighborhoodDepths={neighborhoodDepths}
+            visibleNodeIds={visibleNodeIds}
             camera={camera}
-            onSelectNode={(nodeId) => setCurrentNodeId(nodeId)}
+            onSelectNode={(nodeId) => focusNode(nodeId)}
             onPan={panCamera}
             onZoomAtPoint={zoomAtPoint}
           />
@@ -337,7 +429,7 @@ export function GraphExplorer() {
               <ul>
                 {connectedNeighbors.slice(0, 20).map((neighbor) => (
                   <li key={`list-${neighbor.id}`}>
-                    <button type="button" onClick={() => setCurrentNodeId(neighbor.id)}>
+                    <button type="button" onClick={() => focusNode(neighbor.id)}>
                       {neighbor.label}
                     </button>
                   </li>
