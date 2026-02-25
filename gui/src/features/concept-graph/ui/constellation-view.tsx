@@ -29,17 +29,21 @@ interface ConstellationViewProps {
 function edgeClass(
   from: NodeId,
   to: NodeId,
+  selectedNodeId: NodeId,
   neighborhoodDepths: Map<NodeId, number>,
 ): string {
   const fromDepth = neighborhoodDepths.get(from);
   const toDepth = neighborhoodDepths.get(to);
 
+  if (from === selectedNodeId || to === selectedNodeId) {
+    return "edge-near";
+  }
+
   if (fromDepth === undefined && toDepth === undefined) {
     return "edge-far";
   }
 
-  const bestDepth = Math.min(fromDepth ?? Number.POSITIVE_INFINITY, toDepth ?? Number.POSITIVE_INFINITY);
-  if (bestDepth <= 1) {
+  if (fromDepth !== undefined && toDepth !== undefined) {
     return "edge-near";
   }
 
@@ -238,7 +242,12 @@ export function ConstellationView({
                   y1={fromPosition.y}
                   x2={toPosition.x}
                   y2={toPosition.y}
-                  className={`constellation-line ${edgeClass(edge.from, edge.to, neighborhoodDepths)}`}
+                  className={`constellation-line ${edgeClass(
+                    edge.from,
+                    edge.to,
+                    selectedNodeId,
+                    neighborhoodDepths,
+                  )}`}
                 />
                 <line
                   x1={fromPosition.x}
