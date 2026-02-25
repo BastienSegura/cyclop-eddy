@@ -27,6 +27,7 @@ interface ConstellationViewProps {
   selectedNodeId: NodeId;
   neighborhoodDepths: Map<NodeId, number>;
   visibleNodeIds: Set<NodeId>;
+  leafNodeIds: Set<NodeId>;
   camera: CameraState;
   onSelectNode: (id: NodeId) => void;
   onPan: (deltaWorldX: number, deltaWorldY: number) => void;
@@ -329,6 +330,7 @@ export function ConstellationView({
   selectedNodeId,
   neighborhoodDepths,
   visibleNodeIds,
+  leafNodeIds,
   camera,
   onSelectNode,
   onPan,
@@ -526,6 +528,10 @@ export function ConstellationView({
               return null;
             }
 
+            const isLeaf = leafNodeIds.has(node.id);
+            const dotRadius = node.id === selectedNodeId ? 18 : 10;
+            const leafSize = node.id === selectedNodeId ? 23 : 14;
+            const leafHalfSize = leafSize / 2;
             const classes = nodeClass(node.id, selectedNodeId, neighborhoodDepths);
             const showLabel = shouldShowLabel(node.id, selectedNodeId, neighborhoodDepths)
               && visibleLabelIds.has(node.id);
@@ -534,7 +540,7 @@ export function ConstellationView({
               <g
                 key={`node-${node.id}`}
                 data-node-id={node.id}
-                className={`constellation-node-group ${classes}`}
+                className={`constellation-node-group ${classes}${isLeaf ? " node-leaf" : ""}`}
                 transform={`translate(${position.x} ${position.y})`}
                 role="button"
                 tabIndex={0}
@@ -545,7 +551,20 @@ export function ConstellationView({
                   }
                 }}
               >
-                <circle className="constellation-node-dot" r={node.id === selectedNodeId ? 18 : 10} />
+                {isLeaf ? (
+                  <rect
+                    className="constellation-node-dot constellation-node-leaf-marker"
+                    x={-leafHalfSize}
+                    y={-leafHalfSize}
+                    width={leafSize}
+                    height={leafSize}
+                    rx={2}
+                    ry={2}
+                    transform="rotate(45)"
+                  />
+                ) : (
+                  <circle className="constellation-node-dot" r={dotRadius} />
+                )}
                 {showLabel ? (
                   <text className="constellation-node-label" x={LABEL_OFFSET_X} y={LABEL_OFFSET_Y}>
                     {node.label}
