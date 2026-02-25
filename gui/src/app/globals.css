@@ -147,13 +147,13 @@ body {
 }
 
 .constellation-line.edge-far {
-  stroke: rgba(122, 176, 232, 0.13);
-  stroke-width: 0.8;
+  stroke: rgba(172, 194, 220, 0.08);
+  stroke-width: 0.7;
 }
 
 .constellation-line.edge-mid {
-  stroke: rgba(122, 176, 232, 0.28);
-  stroke-width: 1.05;
+  stroke: rgba(172, 194, 220, 0.14);
+  stroke-width: 0.95;
 }
 
 .constellation-line.edge-near {
@@ -195,13 +195,13 @@ body {
 }
 
 .constellation-node-group.node-mid .constellation-node-dot {
-  fill: rgba(86, 149, 221, 0.62);
-  stroke: rgba(142, 197, 252, 0.66);
+  fill: rgba(149, 171, 194, 0.32);
+  stroke: rgba(149, 171, 194, 0.44);
 }
 
 .constellation-node-group.node-far .constellation-node-dot {
-  fill: rgba(102, 135, 168, 0.3);
-  stroke: rgba(102, 135, 168, 0.42);
+  fill: rgba(149, 171, 194, 0.14);
+  stroke: rgba(149, 171, 194, 0.24);
   stroke-width: 1.3;
 }
 
