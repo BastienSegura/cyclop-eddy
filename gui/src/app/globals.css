@@ -17,6 +17,7 @@
 html,
 body {
   margin: 0;
+  height: 100%;
   min-height: 100%;
   color: var(--text);
   background:
@@ -24,14 +25,18 @@ body {
     radial-gradient(circle at 80% 10%, rgba(247, 192, 106, 0.2), transparent 28%),
     linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
   font-family: "Space Grotesk", "Trebuchet MS", "Segoe UI", sans-serif;
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 .page-shell {
   padding: 1.5rem;
+  height: 100vh;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   gap: 1.2rem;
+  overflow: hidden;
 }
 
 .top-bar {
@@ -91,6 +96,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
+  min-height: 0;
 }
 
 .panel-actions {
@@ -208,6 +214,8 @@ body {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  min-height: 0;
+  overflow: auto;
 }
 
 .details-panel h2,
