@@ -19,6 +19,7 @@ interface ConstellationViewProps {
   layout: GraphLayout;
   selectedNodeId: NodeId;
   neighborhoodDepths: Map<NodeId, number>;
+  visibleNodeIds: Set<NodeId>;
   camera: CameraState;
   onSelectNode: (id: NodeId) => void;
   onPan: (deltaWorldX: number, deltaWorldY: number) => void;
@@ -76,6 +77,7 @@ export function ConstellationView({
   layout,
   selectedNodeId,
   neighborhoodDepths,
+  visibleNodeIds,
   camera,
   onSelectNode,
   onPan,
@@ -93,10 +95,21 @@ export function ConstellationView({
   const edges: Array<{ from: NodeId; to: NodeId }> = [];
 
   for (const [from, neighbors] of Object.entries(graph.neighborsByNode)) {
+    if (!visibleNodeIds.has(from)) {
+      continue;
+    }
     for (const to of neighbors) {
+      if (!visibleNodeIds.has(to)) {
+        continue;
+      }
       edges.push({ from, to });
     }
   }
+
+  const visibleNodes = Array.from(visibleNodeIds)
+    .map((nodeId) => graph.nodes[nodeId])
+    .filter((node): node is NonNullable<typeof node> => Boolean(node))
+    .sort((a, b) => a.label.localeCompare(b.label));
 
   const transform = `translate(${VIEWPORT_WIDTH / 2} ${VIEWPORT_HEIGHT / 2}) scale(${camera.zoom}) translate(${-camera.x} ${-camera.y})`;
 
@@ -223,7 +236,7 @@ export function ConstellationView({
             );
           })}
 
-          {Object.values(graph.nodes).map((node) => {
+          {visibleNodes.map((node) => {
             const position = layout.positions[node.id];
             if (!position) {
               return null;
