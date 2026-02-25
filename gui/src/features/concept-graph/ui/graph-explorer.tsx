@@ -8,6 +8,7 @@ import { buildLearningPrompt } from "../application/build-learning-prompt";
 import { loadConceptGraphFromPublicFile } from "../infrastructure/load-graph";
 import type { ConceptGraph, NodeId } from "../domain/types";
 import { ConstellationView } from "./constellation-view";
+import { VIEWPORT_HEIGHT, VIEWPORT_WIDTH } from "./viewport-constants";
 
 type LoadStatus = "loading" | "ready" | "error";
 
@@ -35,6 +36,13 @@ export function GraphExplorer() {
 
   const hasInitializedCamera = useRef(false);
   const animationFrameRef = useRef<number | null>(null);
+
+  function stopCameraAnimation() {
+    if (animationFrameRef.current !== null) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -69,9 +77,7 @@ export function GraphExplorer() {
 
     return () => {
       cancelled = true;
-      if (animationFrameRef.current !== null) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
+      stopCameraAnimation();
     };
   }, []);
 
@@ -112,9 +118,7 @@ export function GraphExplorer() {
       return;
     }
 
-    if (animationFrameRef.current !== null) {
-      cancelAnimationFrame(animationFrameRef.current);
-    }
+    stopCameraAnimation();
 
     const animationDurationMs = 460;
     const startedAt = performance.now();
@@ -208,10 +212,34 @@ export function GraphExplorer() {
   }
 
   function updateZoom(multiplier: number) {
+    zoomAtPoint(VIEWPORT_WIDTH / 2, VIEWPORT_HEIGHT / 2, multiplier);
+  }
+
+  function panCamera(deltaWorldX: number, deltaWorldY: number) {
+    stopCameraAnimation();
     setCamera((previous) => ({
       ...previous,
-      zoom: clampZoom(previous.zoom * multiplier),
+      x: previous.x + deltaWorldX,
+      y: previous.y + deltaWorldY,
     }));
+  }
+
+  function zoomAtPoint(screenX: number, screenY: number, multiplier: number) {
+    stopCameraAnimation();
+    const safeMultiplier = Math.min(1.35, Math.max(0.65, multiplier));
+
+    setCamera((previous) => {
+      const newZoom = clampZoom(previous.zoom * safeMultiplier);
+
+      const worldX = previous.x + (screenX - VIEWPORT_WIDTH / 2) / previous.zoom;
+      const worldY = previous.y + (screenY - VIEWPORT_HEIGHT / 2) / previous.zoom;
+
+      return {
+        x: worldX - (screenX - VIEWPORT_WIDTH / 2) / newZoom,
+        y: worldY - (screenY - VIEWPORT_HEIGHT / 2) / newZoom,
+        zoom: newZoom,
+      };
+    });
   }
 
   function resetCameraZoom() {
@@ -283,6 +311,8 @@ export function GraphExplorer() {
             neighborhoodDepths={neighborhoodDepths}
             camera={camera}
             onSelectNode={(nodeId) => setCurrentNodeId(nodeId)}
+            onPan={panCamera}
+            onZoomAtPoint={zoomAtPoint}
           />
         </article>
 
