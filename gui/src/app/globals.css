@@ -127,9 +127,9 @@ body {
   touch-action: none;
   isolation: isolate;
   background:
-    radial-gradient(circle at center, rgba(255, 255, 255, 0.05), transparent 36%),
-    radial-gradient(circle at 35% 25%, rgba(80, 201, 255, 0.15), transparent 40%),
-    #030c18;
+    radial-gradient(circle at center, rgba(255, 255, 255, 0.035), transparent 34%),
+    radial-gradient(circle at 35% 25%, rgba(80, 201, 255, 0.11), transparent 38%),
+    #020814;
 }
 
 .constellation-shell::before,
