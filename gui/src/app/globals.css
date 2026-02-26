@@ -142,7 +142,7 @@ body {
 }
 
 .constellation-shell::before {
-  opacity: 0.42;
+  opacity: 0.59;
   background-image:
     radial-gradient(1px 1px at 8% 13%, rgba(231, 244, 255, 0.6) 70%, transparent 100%),
     radial-gradient(1px 1px at 15% 77%, rgba(193, 223, 252, 0.42) 70%, transparent 100%),
@@ -153,11 +153,13 @@ body {
     radial-gradient(1px 1px at 63% 27%, rgba(235, 246, 255, 0.58) 70%, transparent 100%),
     radial-gradient(1px 1px at 74% 71%, rgba(182, 213, 245, 0.4) 70%, transparent 100%),
     radial-gradient(1px 1px at 82% 39%, rgba(218, 237, 255, 0.5) 70%, transparent 100%),
-    radial-gradient(1px 1px at 91% 84%, rgba(191, 220, 250, 0.38) 70%, transparent 100%);
+    radial-gradient(1px 1px at 91% 84%, rgba(191, 220, 250, 0.38) 70%, transparent 100%),
+    radial-gradient(1px 1px at 6% 54%, rgba(221, 240, 255, 0.44) 70%, transparent 100%),
+    radial-gradient(1px 1px at 36% 48%, rgba(192, 223, 251, 0.36) 70%, transparent 100%);
 }
 
 .constellation-shell::after {
-  opacity: 0.26;
+  opacity: 0.36;
   background-image:
     radial-gradient(1px 1px at 12% 26%, rgba(230, 244, 255, 0.48) 70%, transparent 100%),
     radial-gradient(1px 1px at 28% 58%, rgba(206, 230, 252, 0.38) 70%, transparent 100%),
@@ -166,7 +168,9 @@ body {
     radial-gradient(1px 1px at 67% 89%, rgba(230, 243, 255, 0.44) 70%, transparent 100%),
     radial-gradient(1px 1px at 79% 16%, rgba(197, 223, 248, 0.32) 70%, transparent 100%),
     radial-gradient(1px 1px at 87% 55%, rgba(233, 245, 255, 0.47) 70%, transparent 100%),
-    radial-gradient(1px 1px at 95% 28%, rgba(201, 226, 248, 0.31) 70%, transparent 100%);
+    radial-gradient(1px 1px at 95% 28%, rgba(201, 226, 248, 0.31) 70%, transparent 100%),
+    radial-gradient(1px 1px at 47% 73%, rgba(227, 243, 255, 0.4) 70%, transparent 100%),
+    radial-gradient(1px 1px at 69% 6%, rgba(190, 219, 246, 0.3) 70%, transparent 100%);
 }
 
 .constellation-shell.is-dragging {
