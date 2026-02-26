@@ -18,6 +18,12 @@ npm run dev
 
 Open http://localhost:3000.
 
+Production build check:
+
+```bash
+npm run build
+```
+
 ## Architecture
 
 `src/features/concept-graph/` is split by responsibility:
@@ -37,6 +43,12 @@ Prototype uses:
 
 You can replace this file with newer generated data from `memory/concept_list_cleaned.txt`.
 
+Example:
+
+```bash
+cp ../memory/concept_list_cleaned.txt public/data/concept_list_cleaned.txt
+```
+
 ## Current UX
 
 - Loads concept graph from cleaned text file
@@ -47,7 +59,13 @@ You can replace this file with newer generated data from `memory/concept_list_cl
 - Supports drag-to-pan navigation
 - Supports mouse-wheel / trackpad zoom centered on cursor
 - Supports edge click navigation (click a link to move to its target node)
-- Highlights local neighborhood while keeping distant stars visible
+- Applies fog-of-war visibility:
+  - selected node: gold
+  - connected nodes: bright blue
+  - farther discovered nodes: pale/transparent
+- Highlights dead-end concepts (leaf nodes) with a diamond marker
+- Adds a subtle starry-night background in the graph canvas
+- Runs a local collision-avoidance pass for visible nodes/labels to reduce overlap
 - Generates and copies a learning prompt template for the selected node
 
 ## Next Iterations
