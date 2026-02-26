@@ -41,6 +41,12 @@ Clean generated graph data:
 python brain/clean_concept_list.py
 ```
 
+Sync cleaned data into the GUI prototype:
+
+```bash
+cp memory/concept_list_cleaned.txt gui/public/data/concept_list_cleaned.txt
+```
+
 Run GUI prototype:
 
 ```bash
@@ -48,3 +54,12 @@ cd gui
 npm install
 npm run dev
 ```
+
+## Current exploration UX
+
+- Starts at `Computer Science` and reveals neighbors first.
+- Expands discovered graph progressively (fog-of-war feel).
+- Supports smooth camera move, drag-pan, cursor-centered zoom.
+- Supports edge click navigation to target concept.
+- Highlights dead ends with diamond markers.
+- Uses a subtle starry-night graph backdrop.
