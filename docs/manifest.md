@@ -13,6 +13,7 @@ Users move across a connected graph of concepts, stop on any node, and copy a re
 - You log in, enter a visible portion of the concept universe, and travel node by node.
 - Every node is actionable: open details, understand local context, and copy a learning prompt.
 - Navigation should feel rewarding, not academic or static.
+- Dead ends should be quickly identifiable to avoid blind clicking.
 
 ## Visual Direction (Upcoming GUI)
 - Skyrim-like skill-tree mood.
@@ -24,11 +25,12 @@ Users move across a connected graph of concepts, stop on any node, and copy a re
 In scope now:
 - Python engine to generate concept relationships.
 - Python cleaner to normalize generated concept files.
-- Next.js GUI prototype for constellation-style concept navigation.
+- Next.js GUI prototype for constellation-style concept navigation with smooth travel.
 - Repository organization and documentation.
 
 Out of scope now:
-- Full GUI implementation (planned next).
+- Production authentication/account system.
+- Persistent user progression backend.
 - Long-term roadmap planning (project is intentionally iterative / vibe-coded).
 
 ## Repository Responsibilities
@@ -69,6 +71,18 @@ Current behavior is the expected behavior:
 - `Ctrl+C` pauses safely without losing progress.
 - Resume continues from checkpoint state.
 - On successful completion, checkpoint is removed automatically.
+
+## Current GUI Snapshot
+- Starts centered on `Computer Science` and direct neighbors.
+- Progressive reveal expands the visible universe as users travel.
+- Smooth camera movement, drag-pan, and cursor-centered zoom.
+- Edge click navigation (clicking a link jumps to the target concept).
+- Fog-of-war visual hierarchy:
+  - selected node in gold
+  - connected nodes in bright blue
+  - farther discovered nodes faded
+- Dead-end concepts rendered with a distinct diamond marker.
+- Discreet starry-night graph background.
 
 ## Documentation Language
 All active documentation is English.
