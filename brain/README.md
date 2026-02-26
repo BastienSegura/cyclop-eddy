@@ -7,9 +7,24 @@ Scripts:
 - `build_concept_list.py`: generates concept relationships with live progress and resume support.
 - `clean_concept_list.py`: cleans/normalizes generated relationships and rebuilds tree-style prefixes.
 
-Quick run:
+How to run:
 
 ```bash
-python brain/build_concept_list.py
-python brain/clean_concept_list.py
+python brain/build_concept_list.py \
+  --root-concept "Computer Science" \
+  --concept-list-length 25 \
+  --max-depth 3 \
+  --output memory/concept_list.txt \
+  --state-file memory/concept_list_state.json
+
+python brain/build_concept_list.py --resume --state-file memory/concept_list_state.json
+
+python brain/clean_concept_list.py \
+  --input memory/concept_list.txt \
+  --output memory/concept_list_cleaned.txt \
+  --root "Computer Science"
 ```
+
+Notes:
+- During generation, progress is printed in real time (`generated/estimated`, prompts, queue, speed).
+- `Ctrl+C` saves state so generation can be resumed safely.
