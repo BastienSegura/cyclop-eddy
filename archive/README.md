@@ -10,4 +10,4 @@ Examples in this folder:
 
 Rule:
 - Do not build new features here.
-- New development belongs in active folders (`brain/`, later GUI folder, etc.).
+- New development belongs in active folders (`brain/`, `gui/`, `memory/`, `docs/`).
