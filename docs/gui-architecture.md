@@ -38,10 +38,21 @@ This document defines the baseline architecture for the `gui/` frontend.
 2. `parse-edge-list.ts` converts raw lines into structured entries.
 3. `build-concept-graph.ts` builds nodes and directional links.
 4. `compute-graph-layout.ts` generates world coordinates using a force-directed pass to reduce long confusing edges.
-5. `graph-explorer.tsx` animates a camera through that world when users select nodes.
-6. `constellation-view.tsx` handles drag-pan and cursor-centered wheel zoom gestures.
-7. `graph-explorer.tsx` applies progressive reveal (start node + neighbors, then expand on selection).
+5. `graph-explorer.tsx` computes dead-end nodes (leaf concepts) and tracks progressive reveal state.
+6. `graph-explorer.tsx` animates a camera through the world when users select nodes.
+7. `constellation-view.tsx` handles drag-pan and cursor-centered wheel zoom gestures.
 8. `constellation-view.tsx` exposes edge-hit interactions so users can navigate by clicking links.
+9. `constellation-view.tsx` runs a local collision-avoidance pass for visible nodes/labels.
+10. `graph-explorer.tsx` applies fog-of-war style visibility (selected, near, far) on discovered nodes.
+11. Graph canvas styles in `globals.css` provide the starry-night backdrop and node state styling.
+
+## Current Interaction Model
+
+- Initial focus is static on `Computer Science` (fallback to graph root when unavailable).
+- Visible universe starts as: selected node + direct neighbors.
+- Selecting a node reveals its neighbors and recenters camera smoothly.
+- Clicking a visible edge directly selects the target node.
+- Dead-end concepts are rendered with a distinct diamond shape to reduce exploration friction.
 
 ## Planned Evolution
 
