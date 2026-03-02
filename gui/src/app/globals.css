@@ -269,8 +269,13 @@ body {
 }
 
 .constellation-node-overview {
-  fill: rgba(182, 208, 234, 0.3);
+  fill: rgba(197, 222, 247, 0.5);
+  stroke: rgba(225, 240, 255, 0.42);
+  stroke-width: 0.35;
   opacity: var(--overview-node-idle-opacity, 0.2);
+  filter: drop-shadow(
+    0 0 var(--overview-node-idle-glow-radius, 3px) var(--overview-node-idle-glow-color, rgba(156, 216, 255, 0.26))
+  );
   animation: overview-node-glimmer 7600ms ease-in-out infinite;
 }
 
@@ -319,13 +324,19 @@ body {
 
 @keyframes overview-node-glimmer {
   0%,
-  82%,
+  80%,
   100% {
     opacity: var(--overview-node-idle-opacity, 0.2);
+    filter: drop-shadow(
+      0 0 var(--overview-node-idle-glow-radius, 3px) var(--overview-node-idle-glow-color, rgba(156, 216, 255, 0.26))
+    );
   }
 
   88% {
     opacity: var(--overview-node-flash-opacity, 0.55);
+    filter: drop-shadow(
+      0 0 var(--overview-node-flash-glow-radius, 9px) var(--overview-node-flash-glow-color, rgba(156, 216, 255, 0.82))
+    );
   }
 }
 
@@ -343,7 +354,8 @@ body {
 
   .constellation-node-overview {
     animation: none;
-    opacity: 0.24;
+    opacity: 0.34;
+    filter: none;
   }
 }
 

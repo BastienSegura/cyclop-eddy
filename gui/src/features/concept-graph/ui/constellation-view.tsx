@@ -62,14 +62,22 @@ function buildOverviewNodeStyle(nodeId: NodeId): CSSProperties {
   const seed = hashNodeId(nodeId);
   const durationMs = 4800 + (seed % 6200);
   const delayMs = seed % durationMs;
-  const idleOpacity = 0.16 + ((seed >>> 8) % 10) / 100;
-  const flashOpacity = 0.38 + ((seed >>> 16) % 28) / 100;
+  const idleOpacity = 0.31 + ((seed >>> 8) % 15) / 100;
+  const flashOpacity = 0.74 + ((seed >>> 16) % 22) / 100;
+  const idleGlowRadiusPx = 2 + ((seed >>> 4) % 3);
+  const flashGlowRadiusPx = idleGlowRadiusPx + 5 + (seed % 3);
+  const idleGlowColor = `rgba(156, 216, 255, ${(0.22 + ((seed >>> 24) % 12) / 100).toFixed(2)})`;
+  const flashGlowColor = `rgba(156, 216, 255, ${(0.66 + ((seed >>> 12) % 22) / 100).toFixed(2)})`;
 
   return {
     animationDuration: `${durationMs}ms`,
     animationDelay: `-${delayMs}ms`,
     ["--overview-node-idle-opacity" as string]: idleOpacity.toFixed(2),
     ["--overview-node-flash-opacity" as string]: flashOpacity.toFixed(2),
+    ["--overview-node-idle-glow-radius" as string]: `${idleGlowRadiusPx}px`,
+    ["--overview-node-flash-glow-radius" as string]: `${flashGlowRadiusPx}px`,
+    ["--overview-node-idle-glow-color" as string]: idleGlowColor,
+    ["--overview-node-flash-glow-color" as string]: flashGlowColor,
   } as CSSProperties;
 }
 
