@@ -24,6 +24,7 @@ const FOCUS_ZOOM = 1.5;
 const STATIC_ENTRY_NODE_ID = "computer science";
 const INITIAL_MIN_ZOOM = 1.56;
 const INITIAL_LOAD_ZOOM_MULTIPLIER = 1;
+const ZOOM_SLIDER_CENTER = INITIAL_MIN_ZOOM;
 const CAMERA_TRANSITION_DURATION_MS = 780;
 
 function clampZoom(value: number): number {
@@ -293,9 +294,12 @@ export function GraphExplorer() {
 
   const canGoBack = parentIds.length > 0;
   const firstParent = canGoBack ? parentIds[0] : null;
+  const zoomSliderValueUnrounded = camera.zoom >= ZOOM_SLIDER_CENTER
+    ? 50 + ((camera.zoom - ZOOM_SLIDER_CENTER) / Math.max(MAX_ZOOM - ZOOM_SLIDER_CENTER, 0.001)) * 50
+    : 50 - ((ZOOM_SLIDER_CENTER - camera.zoom) / Math.max(ZOOM_SLIDER_CENTER - MIN_ZOOM, 0.001)) * 50;
   const zoomSliderValue = Math.min(
     100,
-    Math.max(0, Math.round(((camera.zoom - MIN_ZOOM) / (MAX_ZOOM - MIN_ZOOM)) * 100)),
+    Math.max(0, Math.round(zoomSliderValueUnrounded)),
   );
 
   function focusNode(nodeId: NodeId) {
@@ -353,7 +357,9 @@ export function GraphExplorer() {
 
   function setZoomFromSlider(nextValue: number) {
     const clampedValue = Math.min(100, Math.max(0, nextValue));
-    const targetZoom = MIN_ZOOM + ((MAX_ZOOM - MIN_ZOOM) * clampedValue) / 100;
+    const targetZoom = clampedValue >= 50
+      ? ZOOM_SLIDER_CENTER + ((clampedValue - 50) / 50) * (MAX_ZOOM - ZOOM_SLIDER_CENTER)
+      : ZOOM_SLIDER_CENTER - ((50 - clampedValue) / 50) * (ZOOM_SLIDER_CENTER - MIN_ZOOM);
     stopCameraAnimation();
 
     setCamera((previous) => ({
