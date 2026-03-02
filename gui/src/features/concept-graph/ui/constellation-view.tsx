@@ -59,7 +59,7 @@ const NODE_COLOR_PALETTE_HEX = [
   "#546BAB",
   "#BEA9DE",
   "#5B3FA8", // adjusted from #14E81E for a more celestial tone
-  "#00EA8D",
+  "#1F5BD8", // adjusted from #00EA8D for a deep-blue celestial tone
   "#017ED5",
   "#E5CD8A",
 ] as const;
@@ -106,27 +106,14 @@ function colorForNode(nodeId: NodeId): RGBColor {
 }
 
 function buildVisibleNodeStyle(nodeId: NodeId): CSSProperties {
-  const seed = hashNodeId(nodeId);
   const baseColor = colorForNode(nodeId);
   const strokeColor = mixTowardWhite(baseColor, 0.35);
   const glowColor = mixTowardWhite(baseColor, 0.22);
-  const glowAlphaIdle = 0.28 + ((seed >>> 5) % 18) / 100;
-  const glowAlphaPeak = 0.58 + ((seed >>> 11) % 24) / 100;
-  const glowRadiusIdlePx = 4 + ((seed >>> 17) % 4);
-  const glowRadiusPeakPx = glowRadiusIdlePx + 5 + ((seed >>> 21) % 5);
-  const glowDurationMs = 2600 + (seed % 3100);
-  const glowDelayMs = seed % glowDurationMs;
 
   return {
     ["--node-fill-rgb" as string]: rgbToken(baseColor),
     ["--node-stroke-rgb" as string]: rgbToken(strokeColor),
     ["--node-glow-rgb" as string]: rgbToken(glowColor),
-    ["--node-glow-alpha-idle" as string]: glowAlphaIdle.toFixed(2),
-    ["--node-glow-alpha-peak" as string]: glowAlphaPeak.toFixed(2),
-    ["--node-glow-radius-idle" as string]: `${glowRadiusIdlePx}px`,
-    ["--node-glow-radius-peak" as string]: `${glowRadiusPeakPx}px`,
-    ["--node-glow-duration" as string]: `${glowDurationMs}ms`,
-    ["--node-glow-delay" as string]: `-${glowDelayMs}ms`,
   } as CSSProperties;
 }
 
