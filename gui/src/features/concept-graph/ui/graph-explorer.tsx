@@ -19,7 +19,7 @@ interface CameraState {
 }
 
 const MIN_ZOOM = 0.07;
-const MAX_ZOOM = 1.3;
+const MAX_ZOOM = 2.1;
 const FOCUS_ZOOM = 0.18;
 const STATIC_ENTRY_NODE_ID = "computer science";
 const INITIAL_MIN_ZOOM = 0.22;
