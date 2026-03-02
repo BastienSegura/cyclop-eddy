@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { type CSSProperties, useMemo, useRef, useState } from "react";
 
 import type { GraphLayout, NodePosition } from "../application/compute-graph-layout";
 import type { ConceptGraph, NodeId } from "../domain/types";
@@ -45,6 +45,32 @@ interface LabelBox {
   top: number;
   right: number;
   bottom: number;
+}
+
+function hashNodeId(nodeId: NodeId): number {
+  let hash = 2166136261;
+
+  for (let index = 0; index < nodeId.length; index += 1) {
+    hash ^= nodeId.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+
+  return hash >>> 0;
+}
+
+function buildOverviewNodeStyle(nodeId: NodeId): CSSProperties {
+  const seed = hashNodeId(nodeId);
+  const durationMs = 4800 + (seed % 6200);
+  const delayMs = seed % durationMs;
+  const idleOpacity = 0.16 + ((seed >>> 8) % 10) / 100;
+  const flashOpacity = 0.38 + ((seed >>> 16) % 28) / 100;
+
+  return {
+    animationDuration: `${durationMs}ms`,
+    animationDelay: `-${delayMs}ms`,
+    ["--overview-node-idle-opacity" as string]: idleOpacity.toFixed(2),
+    ["--overview-node-flash-opacity" as string]: flashOpacity.toFixed(2),
+  } as CSSProperties;
 }
 
 function edgeClass(
@@ -560,6 +586,7 @@ export function ConstellationView({
                 cy={node.position.y}
                 r={OVERVIEW_NODE_RADIUS_PX}
                 className="constellation-node-overview"
+                style={buildOverviewNodeStyle(node.id)}
               />
             ))}
           </g>

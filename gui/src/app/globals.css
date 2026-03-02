@@ -110,6 +110,12 @@ body {
   flex-wrap: wrap;
 }
 
+.navigation-controls {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
 .camera-controls {
   display: flex;
   gap: 0.45rem;
@@ -264,6 +270,8 @@ body {
 
 .constellation-node-overview {
   fill: rgba(182, 208, 234, 0.3);
+  opacity: var(--overview-node-idle-opacity, 0.2);
+  animation: overview-node-glimmer 7600ms ease-in-out infinite;
 }
 
 .constellation-line.edge-far {
@@ -309,6 +317,18 @@ body {
   }
 }
 
+@keyframes overview-node-glimmer {
+  0%,
+  82%,
+  100% {
+    opacity: var(--overview-node-idle-opacity, 0.2);
+  }
+
+  88% {
+    opacity: var(--overview-node-flash-opacity, 0.55);
+  }
+}
+
 .constellation-line-hitzone {
   stroke: rgba(0, 0, 0, 0);
   stroke-width: 14;
@@ -319,6 +339,11 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .constellation-line-flow {
     animation: none;
+  }
+
+  .constellation-node-overview {
+    animation: none;
+    opacity: 0.24;
   }
 }
 

@@ -294,6 +294,7 @@ export function GraphExplorer() {
 
   const canGoBack = parentIds.length > 0;
   const firstParent = canGoBack ? parentIds[0] : null;
+  const hasDiscoveredAllNodes = visibleNodeIds.size >= totalNodes;
   const zoomSliderValueUnrounded = camera.zoom >= ZOOM_SLIDER_CENTER
     ? 50 + ((camera.zoom - ZOOM_SLIDER_CENTER) / Math.max(MAX_ZOOM - ZOOM_SLIDER_CENTER, 0.001)) * 50
     : 50 - ((ZOOM_SLIDER_CENTER - camera.zoom) / Math.max(ZOOM_SLIDER_CENTER - MIN_ZOOM, 0.001)) * 50;
@@ -368,6 +369,14 @@ export function GraphExplorer() {
     }));
   }
 
+  function revealAllNodes() {
+    if (!graph) {
+      return;
+    }
+
+    setVisibleNodeIds(new Set<NodeId>(Object.keys(graph.nodes) as NodeId[]));
+  }
+
   if (status === "loading") {
     return <p className="status-banner">Loading concept universe...</p>;
   }
@@ -397,18 +406,28 @@ export function GraphExplorer() {
       <section className="explorer-layout">
         <article className="constellation-panel">
           <div className="panel-actions">
-            <button
-              type="button"
-              className="ghost-button"
-              disabled={!canGoBack}
-              onClick={() => {
-                if (firstParent) {
-                  focusNode(firstParent);
-                }
-              }}
-            >
-              Go to parent
-            </button>
+            <div className="navigation-controls">
+              <button
+                type="button"
+                className="ghost-button"
+                disabled={!canGoBack}
+                onClick={() => {
+                  if (firstParent) {
+                    focusNode(firstParent);
+                  }
+                }}
+              >
+                Go to parent
+              </button>
+              <button
+                type="button"
+                className="ghost-button"
+                disabled={hasDiscoveredAllNodes}
+                onClick={revealAllNodes}
+              >
+                Discover all graph
+              </button>
+            </div>
 
             <div className="camera-controls">
               <div className="zoom-indicator" aria-label="Zoom level control">
