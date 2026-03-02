@@ -295,3 +295,123 @@ Certificate authorities: * Asymmetric encryption
 Certificate authorities: * Symmetric encryption
 Behavioral biometrics: * Predictive Modeling
 Behavioral biometrics: * Data Mining
+Computational Intelligence: * Pattern Recognition Techniques
+Computational Intelligence: * Algorithmic Analysis
+Computational Intelligence: * High-Performance Computing
+Computational Intelligence: * Numerical Analysis
+Computational Intelligence: * Mathematical Modeling
+Computational Intelligence: * Simulation-Based Reasoning
+Computational Intelligence: * Computational Intelligence
+Computational Intelligence: * Cognitive Informatics
+Computational Intelligence: * Decision Analytics
+Computational Intelligence: * Risk Assessment Methods
+Computational Intelligence: * Bayesian Inference
+Computational Intelligence: * Probability Theory
+Computational Intelligence: * Stochastic Processes
+Computational Intelligence: * Information Systems Design
+Computational Intelligence: * Entity Relationship Modeling
+Computational Intelligence: * Data Profiling
+Computational Intelligence: * Data Quality Control
+Computational Intelligence: * Business Intelligence Systems
+Computational Intelligence: * Data Warehousing
+Computational Intelligence: * OLAP
+Computational Intelligence: * ETL
+Computational Intelligence: * Data Integration
+Computational Intelligence: * Data Merging
+Computational Intelligence: * Data Synthesis
+Computational Intelligence: * Data Aggregation
+Computational Intelligence: * Data Summarization
+Information Systems Design: * Information Retrieval
+Information Systems Design: * Human-Machine Interface
+Information Systems Design: * Multimodal Interaction
+Information Systems Design: * Soft Computing
+Information Systems Design: * Fuzzy Logic
+Information Systems Design: * Evolutionary Computation
+Information Systems Design: * Control Theory
+Information Systems Design: * Process Control
+Information Systems Design: * Feedback Systems
+Information Systems Design: * Self-Organization
+Information Systems Design: * System Dynamics
+Information Systems Design: * Cybernetics
+Information Systems Design: * Adaptive Systems
+Information Systems Design: * Stability Analysis
+Information Systems Design: * Controller Design
+Information Systems Design: * Real-Time Computing
+Information Systems Design: * Embedded Systems
+Information Systems Design: * Task Automation
+Information Systems Design: * Manufacturing Systems
+Information Systems Design: * Process Optimization
+Information Systems Design: * Inventory Control
+Information Systems Design: * Propositional Logic
+Information Systems Design: * Predicate Logic
+Information Systems Design: * Modal Logic
+Information Systems Design: * Formal Grammar
+Information Systems Design: * Type Theory
+Information Systems Design: * Logic Programming
+Information Systems Design: * Resolution Principle
+Information Systems Design: * Provable Inference
+Information Systems Design: * Mathematical Induction
+Information Systems Design: * Inductive Reasoning
+Information Systems Design: * Causal Diagrams
+Information Systems Design: * Bayesian Networks
+Information Systems Design: * Probabilistic Graphs
+Information Systems Design: * Inference Engines
+Information Systems Design: * Semantic Networks
+Information Systems Design: * Ontological Modeling
+Information Systems Design: * Taxonomic Hierarchies
+Data Governance: * Data Governance Frameworks
+Data Aggregation: * Hybrid Intelligence
+Data Aggregation: * Mathematical Optimization
+Data Aggregation: * Model Checking
+Data Aggregation: * Number Theory
+Data Aggregation: * Optimization Techniques
+Data Aggregation: * Proof Theory
+Data Aggregation: * Recursion Theory
+Data Aggregation: * Set Theory
+Data Aggregation: * Symbolic Computation
+Data Aggregation: * Theory of Computing
+Data Summarization: * Knowledge Representation Formalisms
+Data Summarization: * Semantic Query Processing
+Data Summarization: * Query Optimization Techniques
+Data Summarization: * Database Schema Design
+Data Summarization: * Data Model Validation
+Data Summarization: * Functional Dependency Theory
+Data Summarization: * Relational Algebra
+Data Summarization: * Tuple Relational Calculus
+Data Summarization: * Human Judgment
+Data Summarization: * Knowledge Engineering
+Data Summarization: * Rule-Based Systems
+Data Summarization: * Automata Theory
+Data Summarization: * Computer Architecture
+Data Summarization: * Microprogramming
+Data Summarization: * Digital Circuits
+Data Summarization: * Analog Computing
+Data Summarization: * Signal Processing
+Data Summarization: * Error Correction Codes
+Data Summarization: * Map Theory
+Data Summarization: * Spatial Analysis
+Data Summarization: * Geospatial Technology
+Data Summarization: * Cartography
+Data Summarization: * Geodesy
+Data Summarization: * Remote Sensing
+Data Summarization: * Computer Graphics
+Data Summarization: * Data Visualization
+Data Summarization: * Mathematics
+Data Summarization: * Linear Algebra
+Data Summarization: * Calculus
+Data Summarization: * Multidimensional Scaling
+Data Summarization: * Spatial Statistics
+Data Summarization: * Computational Geometry
+Data Summarization: * Algorithmic Complexity
+Computer Architecture: * Cryptographic Hash Functions
+Computer Architecture: * Digital Signature Schemes
+Data Visualization: * Information Visualization
+Algorithmic Complexity: * Algorithmic Complexity Theory
+Nonlinear Dynamics: Here are the 25 semantically closest and structurally related concepts to "Nonlinear Dynamics":
+Quantitative Systems Biology: * Chaos Theory
+Quantitative Systems Biology: * Fractal Geometry
+Quantitative Systems Biology: * Nonlinear Algebraic Equations
+Quantitative Systems Biology: * Dynamical Systems
+Quantitative Systems Biology: * Bifurcation Theory
+Quantitative Systems Biology: * Symmetry Breaking
+Quantitative Systems Biology: * Self-Organizing Systems
