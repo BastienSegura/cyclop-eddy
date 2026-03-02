@@ -204,11 +204,45 @@ body {
   stroke-width: 1.4;
 }
 
+.constellation-line-flow {
+  pointer-events: none;
+  stroke-linecap: round;
+  stroke-dasharray: 6 11;
+  animation: edge-current-flow 1200ms linear infinite;
+}
+
+.constellation-line-flow.edge-far {
+  stroke: rgba(172, 194, 220, 0.16);
+  stroke-width: 0.95;
+}
+
+.constellation-line-flow.edge-mid {
+  stroke: rgba(172, 194, 220, 0.34);
+  stroke-width: 1.1;
+}
+
+.constellation-line-flow.edge-near {
+  stroke: rgba(118, 220, 255, 0.9);
+  stroke-width: 1.55;
+}
+
+@keyframes edge-current-flow {
+  to {
+    stroke-dashoffset: -34;
+  }
+}
+
 .constellation-line-hitzone {
   stroke: rgba(0, 0, 0, 0);
   stroke-width: 14;
   pointer-events: stroke;
   cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .constellation-line-flow {
+    animation: none;
+  }
 }
 
 .constellation-node-group {

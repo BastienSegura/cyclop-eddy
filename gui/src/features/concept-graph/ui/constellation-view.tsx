@@ -449,10 +449,21 @@ export function ConstellationView({
         return;
       }
 
-      const edgeTargetElement = element?.closest("[data-target-node-id]") as HTMLElement | null;
-      const targetNodeId = edgeTargetElement?.dataset.targetNodeId;
-      if (targetNodeId) {
-        onSelectNode(targetNodeId);
+      const edgeElement = element?.closest("[data-edge-from-node-id][data-edge-to-node-id]") as HTMLElement | null;
+      const edgeFromNodeId = edgeElement?.dataset.edgeFromNodeId;
+      const edgeToNodeId = edgeElement?.dataset.edgeToNodeId;
+      if (edgeFromNodeId && edgeToNodeId) {
+        if (selectedNodeId === edgeFromNodeId) {
+          onSelectNode(edgeToNodeId);
+          return;
+        }
+
+        if (selectedNodeId === edgeToNodeId) {
+          onSelectNode(edgeFromNodeId);
+          return;
+        }
+
+        onSelectNode(edgeToNodeId);
       }
     }
   }
@@ -498,6 +509,10 @@ export function ConstellationView({
 
             return (
               <g key={`edge-${edge.from}-${edge.to}`}>
+                {/*
+                  Animated dashed overlay follows the directed edge orientation (from -> to),
+                  making the graph "current" visible without changing interaction hit targets.
+                */}
                 <line
                   x1={fromPosition.x}
                   y1={fromPosition.y}
@@ -515,7 +530,20 @@ export function ConstellationView({
                   y1={fromPosition.y}
                   x2={toPosition.x}
                   y2={toPosition.y}
-                  data-target-node-id={edge.to}
+                  className={`constellation-line-flow ${edgeClass(
+                    edge.from,
+                    edge.to,
+                    selectedNodeId,
+                    neighborhoodDepths,
+                  )}`}
+                />
+                <line
+                  x1={fromPosition.x}
+                  y1={fromPosition.y}
+                  x2={toPosition.x}
+                  y2={toPosition.y}
+                  data-edge-from-node-id={edge.from}
+                  data-edge-to-node-id={edge.to}
                   className="constellation-line-hitzone"
                 />
               </g>
