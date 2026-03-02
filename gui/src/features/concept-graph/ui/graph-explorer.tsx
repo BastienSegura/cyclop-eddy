@@ -20,10 +20,10 @@ interface CameraState {
 
 const MIN_ZOOM = 0.07;
 const MAX_ZOOM = 2.1;
-const FOCUS_ZOOM = 0.18;
+const FOCUS_ZOOM = 1.5;
 const STATIC_ENTRY_NODE_ID = "computer science";
-const INITIAL_MIN_ZOOM = 0.22;
-const INITIAL_LOAD_ZOOM_MULTIPLIER = 1.2;
+const INITIAL_MIN_ZOOM = 1.56;
+const INITIAL_LOAD_ZOOM_MULTIPLIER = 1;
 const CAMERA_TRANSITION_DURATION_MS = 780;
 
 function clampZoom(value: number): number {
