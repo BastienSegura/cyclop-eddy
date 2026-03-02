@@ -23,6 +23,8 @@ const MAX_ZOOM = 1.3;
 const FOCUS_ZOOM = 0.18;
 const STATIC_ENTRY_NODE_ID = "computer science";
 const INITIAL_MIN_ZOOM = 0.22;
+const INITIAL_LOAD_ZOOM_MULTIPLIER = 1.2;
+const CAMERA_TRANSITION_DURATION_MS = 600;
 
 function clampZoom(value: number): number {
   return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, value));
@@ -94,7 +96,7 @@ function computeFitCameraForNodes(
   return {
     x: focusPosition.x,
     y: focusPosition.y,
-    zoom: clampZoom(Math.max(zoomToFit, INITIAL_MIN_ZOOM)),
+    zoom: clampZoom(Math.max(zoomToFit, INITIAL_MIN_ZOOM) * INITIAL_LOAD_ZOOM_MULTIPLIER),
   };
 }
 
@@ -208,7 +210,7 @@ export function GraphExplorer() {
 
     stopCameraAnimation();
 
-    const animationDurationMs = 460;
+    const animationDurationMs = CAMERA_TRANSITION_DURATION_MS;
     const startedAt = performance.now();
 
     setCamera((startCamera) => {
