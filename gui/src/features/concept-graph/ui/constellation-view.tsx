@@ -101,7 +101,7 @@ function rgbToken(color: RGBColor): string {
 }
 
 function buildFourPointStarPoints(outerRadius: number): string {
-  const innerOffset = outerRadius * (25 / 95);
+  const innerOffset = outerRadius * 0.31;
   const points = [
     [0, -outerRadius],
     [innerOffset, -innerOffset],
