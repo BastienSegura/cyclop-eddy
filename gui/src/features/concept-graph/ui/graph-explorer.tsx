@@ -293,15 +293,9 @@ export function GraphExplorer() {
 
   const canGoBack = parentIds.length > 0;
   const firstParent = canGoBack ? parentIds[0] : null;
-  const zoomLevel = camera.zoom / FOCUS_ZOOM;
-  const minZoomLevel = MIN_ZOOM / FOCUS_ZOOM;
-  const maxZoomLevel = MAX_ZOOM / FOCUS_ZOOM;
-  const zoomLevelPercentUnclamped = zoomLevel >= 1
-    ? 50 + ((zoomLevel - 1) / Math.max(maxZoomLevel - 1, 0.001)) * 50
-    : 50 - ((1 - zoomLevel) / Math.max(1 - minZoomLevel, 0.001)) * 50;
-  const zoomLevelPercent = Math.min(
+  const zoomSliderValue = Math.min(
     100,
-    Math.max(0, Math.round(zoomLevelPercentUnclamped)),
+    Math.max(0, Math.round(((camera.zoom - MIN_ZOOM) / (MAX_ZOOM - MIN_ZOOM)) * 100)),
   );
 
   function focusNode(nodeId: NodeId) {
@@ -328,10 +322,6 @@ export function GraphExplorer() {
       setCopyFeedback("Copy failed.");
       window.setTimeout(() => setCopyFeedback(""), 1800);
     }
-  }
-
-  function updateZoom(multiplier: number) {
-    zoomAtPoint(VIEWPORT_WIDTH / 2, VIEWPORT_HEIGHT / 2, multiplier);
   }
 
   function panCamera(deltaWorldX: number, deltaWorldY: number) {
@@ -361,10 +351,14 @@ export function GraphExplorer() {
     });
   }
 
-  function resetCameraZoom() {
+  function setZoomFromSlider(nextValue: number) {
+    const clampedValue = Math.min(100, Math.max(0, nextValue));
+    const targetZoom = MIN_ZOOM + ((MAX_ZOOM - MIN_ZOOM) * clampedValue) / 100;
+    stopCameraAnimation();
+
     setCamera((previous) => ({
       ...previous,
-      zoom: FOCUS_ZOOM,
+      zoom: clampZoom(targetZoom),
     }));
   }
 
@@ -391,7 +385,6 @@ export function GraphExplorer() {
           <span>{totalNodes} nodes</span>
           <span>{totalEdges} edges</span>
           <span>{leafNodeIds.size} dead ends</span>
-          <span>zoom level {zoomLevel.toFixed(2)}x</span>
         </div>
       </header>
 
@@ -412,24 +405,19 @@ export function GraphExplorer() {
             </button>
 
             <div className="camera-controls">
-              <div
-                className="zoom-indicator"
-                aria-label={`Current zoom level ${zoomLevel.toFixed(2)}x (raw ${camera.zoom.toFixed(2)}x)`}
-              >
-                <span className="zoom-indicator-text">Zoom L{zoomLevel.toFixed(2)}x</span>
-                <div className="zoom-meter" aria-hidden="true">
-                  <span className="zoom-meter-fill" style={{ width: `${zoomLevelPercent}%` }} />
-                </div>
+              <div className="zoom-indicator" aria-label="Zoom level control">
+                <label htmlFor="zoom-level-slider" className="zoom-indicator-text">Zoom Level</label>
+                <input
+                  id="zoom-level-slider"
+                  className="zoom-level-slider"
+                  type="range"
+                  min={0}
+                  max={100}
+                  step={1}
+                  value={zoomSliderValue}
+                  onChange={(event) => setZoomFromSlider(Number(event.currentTarget.value))}
+                />
               </div>
-              <button type="button" className="ghost-button" onClick={() => updateZoom(1.15)}>
-                Zoom +
-              </button>
-              <button type="button" className="ghost-button" onClick={() => updateZoom(0.87)}>
-                Zoom -
-              </button>
-              <button type="button" className="ghost-button" onClick={resetCameraZoom}>
-                Reset zoom
-              </button>
             </div>
           </div>
 
