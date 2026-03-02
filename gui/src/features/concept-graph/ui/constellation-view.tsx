@@ -345,6 +345,48 @@ export function ConstellationView({
     dragDistance: 0,
   });
 
+  const overviewEdges: Array<{
+    from: NodePosition;
+    to: NodePosition;
+  }> = [];
+
+  for (const [from, neighbors] of Object.entries(graph.neighborsByNode)) {
+    const fromPosition = layout.positions[from];
+    if (!fromPosition) {
+      continue;
+    }
+
+    for (const to of neighbors) {
+      if (visibleNodeIds.has(from) && visibleNodeIds.has(to)) {
+        continue;
+      }
+
+      const toPosition = layout.positions[to];
+      if (!toPosition) {
+        continue;
+      }
+
+      overviewEdges.push({
+        from: fromPosition,
+        to: toPosition,
+      });
+    }
+  }
+
+  const overviewNodes: Array<{ id: NodeId; position: NodePosition }> = [];
+  for (const nodeId of Object.keys(graph.nodes)) {
+    if (visibleNodeIds.has(nodeId)) {
+      continue;
+    }
+
+    const position = layout.positions[nodeId];
+    if (!position) {
+      continue;
+    }
+
+    overviewNodes.push({ id: nodeId, position });
+  }
+
   const edges: Array<{ from: NodeId; to: NodeId }> = [];
 
   for (const [from, neighbors] of Object.entries(graph.neighborsByNode)) {
@@ -499,6 +541,28 @@ export function ConstellationView({
     >
       <svg className="constellation-lines" viewBox={`0 0 ${VIEWPORT_WIDTH} ${VIEWPORT_HEIGHT}`} preserveAspectRatio="xMidYMid meet">
         <g transform={transform}>
+          <g className="constellation-overview-layer" aria-hidden="true">
+            {overviewEdges.map((edge, index) => (
+              <line
+                key={`overview-edge-${index}`}
+                x1={edge.from.x}
+                y1={edge.from.y}
+                x2={edge.to.x}
+                y2={edge.to.y}
+                className="constellation-line-overview"
+              />
+            ))}
+            {overviewNodes.map((node) => (
+              <circle
+                key={`overview-node-${node.id}`}
+                cx={node.position.x}
+                cy={node.position.y}
+                r={2}
+                className="constellation-node-overview"
+              />
+            ))}
+          </g>
+
           {edges.map((edge) => {
             const fromPosition = adjustedPositions[edge.from] ?? layout.positions[edge.from];
             const toPosition = adjustedPositions[edge.to] ?? layout.positions[edge.to];

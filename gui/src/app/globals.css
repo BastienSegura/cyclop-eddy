@@ -251,6 +251,19 @@ body {
   stroke-linecap: round;
 }
 
+.constellation-overview-layer {
+  pointer-events: none;
+}
+
+.constellation-line-overview {
+  stroke: rgba(149, 171, 194, 0.06);
+  stroke-width: 0.45;
+}
+
+.constellation-node-overview {
+  fill: rgba(149, 171, 194, 0.18);
+}
+
 .constellation-line.edge-far {
   stroke: rgba(172, 194, 220, 0.08);
   stroke-width: 0.7;
