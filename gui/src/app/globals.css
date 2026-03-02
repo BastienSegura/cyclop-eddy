@@ -269,12 +269,12 @@ body {
 }
 
 .constellation-node-overview {
-  fill: rgba(197, 222, 247, 0.5);
-  stroke: rgba(225, 240, 255, 0.42);
-  stroke-width: 0.35;
+  fill: rgba(201, 226, 249, 0.58);
+  stroke: rgba(232, 244, 255, 0.62);
+  stroke-width: 0.5;
   opacity: var(--overview-node-idle-opacity, 0.2);
   filter: drop-shadow(
-    0 0 var(--overview-node-idle-glow-radius, 3px) var(--overview-node-idle-glow-color, rgba(156, 216, 255, 0.26))
+    0 0 var(--overview-node-idle-glow-radius, 5px) var(--overview-node-idle-glow-color, rgba(156, 216, 255, 0.46))
   );
   animation: overview-node-glimmer 7600ms ease-in-out infinite;
 }
@@ -324,18 +324,19 @@ body {
 
 @keyframes overview-node-glimmer {
   0%,
-  80%,
+  76%,
   100% {
     opacity: var(--overview-node-idle-opacity, 0.2);
     filter: drop-shadow(
-      0 0 var(--overview-node-idle-glow-radius, 3px) var(--overview-node-idle-glow-color, rgba(156, 216, 255, 0.26))
+      0 0 var(--overview-node-idle-glow-radius, 5px) var(--overview-node-idle-glow-color, rgba(156, 216, 255, 0.46))
     );
   }
 
-  88% {
+  86%,
+  90% {
     opacity: var(--overview-node-flash-opacity, 0.55);
     filter: drop-shadow(
-      0 0 var(--overview-node-flash-glow-radius, 9px) var(--overview-node-flash-glow-color, rgba(156, 216, 255, 0.82))
+      0 0 var(--overview-node-flash-glow-radius, 15px) var(--overview-node-flash-glow-color, rgba(156, 216, 255, 0.98))
     );
   }
 }

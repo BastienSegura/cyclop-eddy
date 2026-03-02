@@ -63,11 +63,11 @@ function buildOverviewNodeStyle(nodeId: NodeId): CSSProperties {
   const durationMs = 4800 + (seed % 6200);
   const delayMs = seed % durationMs;
   const idleOpacity = 0.31 + ((seed >>> 8) % 15) / 100;
-  const flashOpacity = 0.74 + ((seed >>> 16) % 22) / 100;
-  const idleGlowRadiusPx = 2 + ((seed >>> 4) % 3);
-  const flashGlowRadiusPx = idleGlowRadiusPx + 5 + (seed % 3);
-  const idleGlowColor = `rgba(156, 216, 255, ${(0.22 + ((seed >>> 24) % 12) / 100).toFixed(2)})`;
-  const flashGlowColor = `rgba(156, 216, 255, ${(0.66 + ((seed >>> 12) % 22) / 100).toFixed(2)})`;
+  const flashOpacity = 0.86 + ((seed >>> 16) % 14) / 100;
+  const idleGlowRadiusPx = 4 + ((seed >>> 4) % 4);
+  const flashGlowRadiusPx = idleGlowRadiusPx + 10 + (seed % 5);
+  const idleGlowColor = `rgba(156, 216, 255, ${(0.4 + ((seed >>> 24) % 20) / 100).toFixed(2)})`;
+  const flashGlowColor = `rgba(156, 216, 255, ${(0.92 + ((seed >>> 12) % 9) / 100).toFixed(2)})`;
 
   return {
     animationDuration: `${durationMs}ms`,
