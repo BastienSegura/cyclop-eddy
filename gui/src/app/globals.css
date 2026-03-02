@@ -133,6 +133,7 @@ body {
 }
 
 .zoom-meter {
+  position: relative;
   width: 86px;
   height: 6px;
   border-radius: 999px;
@@ -140,8 +141,22 @@ body {
   background: rgba(120, 168, 213, 0.2);
 }
 
+.zoom-meter::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -1px;
+  bottom: -1px;
+  width: 1px;
+  transform: translateX(-50%);
+  background: rgba(247, 192, 106, 0.65);
+  z-index: 1;
+}
+
 .zoom-meter-fill {
   display: block;
+  position: relative;
+  z-index: 0;
   height: 100%;
   border-radius: 999px;
   background: linear-gradient(90deg, #50c9ff, #f7c06a);

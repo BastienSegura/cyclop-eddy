@@ -293,9 +293,15 @@ export function GraphExplorer() {
 
   const canGoBack = parentIds.length > 0;
   const firstParent = canGoBack ? parentIds[0] : null;
+  const zoomLevel = camera.zoom / FOCUS_ZOOM;
+  const minZoomLevel = MIN_ZOOM / FOCUS_ZOOM;
+  const maxZoomLevel = MAX_ZOOM / FOCUS_ZOOM;
+  const zoomLevelPercentUnclamped = zoomLevel >= 1
+    ? 50 + ((zoomLevel - 1) / Math.max(maxZoomLevel - 1, 0.001)) * 50
+    : 50 - ((1 - zoomLevel) / Math.max(1 - minZoomLevel, 0.001)) * 50;
   const zoomLevelPercent = Math.min(
     100,
-    Math.max(0, Math.round(((camera.zoom - MIN_ZOOM) / (MAX_ZOOM - MIN_ZOOM)) * 100)),
+    Math.max(0, Math.round(zoomLevelPercentUnclamped)),
   );
 
   function focusNode(nodeId: NodeId) {
@@ -385,7 +391,7 @@ export function GraphExplorer() {
           <span>{totalNodes} nodes</span>
           <span>{totalEdges} edges</span>
           <span>{leafNodeIds.size} dead ends</span>
-          <span>zoom {camera.zoom.toFixed(2)}x</span>
+          <span>zoom level {zoomLevel.toFixed(2)}x</span>
         </div>
       </header>
 
@@ -406,8 +412,11 @@ export function GraphExplorer() {
             </button>
 
             <div className="camera-controls">
-              <div className="zoom-indicator" aria-label={`Current zoom ${camera.zoom.toFixed(2)}x`}>
-                <span className="zoom-indicator-text">Zoom {camera.zoom.toFixed(2)}x</span>
+              <div
+                className="zoom-indicator"
+                aria-label={`Current zoom level ${zoomLevel.toFixed(2)}x (raw ${camera.zoom.toFixed(2)}x)`}
+              >
+                <span className="zoom-indicator-text">Zoom L{zoomLevel.toFixed(2)}x</span>
                 <div className="zoom-meter" aria-hidden="true">
                   <span className="zoom-meter-fill" style={{ width: `${zoomLevelPercent}%` }} />
                 </div>
