@@ -279,7 +279,7 @@ body {
   animation: overview-node-glimmer 7600ms ease-in-out infinite;
 }
 
-.constellation-node-overview-lobe {
+.constellation-node-overview-shape {
   fill: rgb(var(--overview-node-fill-rgb, 201 226 249) / 0.58);
   stroke: rgb(var(--overview-node-stroke-rgb, 232 244 255) / 0.62);
   stroke-width: 0.44;
@@ -380,7 +380,7 @@ body {
   stroke-width: 2;
 }
 
-.constellation-node-group .constellation-node-quadrifoil {
+.constellation-node-group .constellation-node-star {
   transition: transform 140ms ease, filter 140ms ease;
   filter: drop-shadow(
     0 0 7px
@@ -391,7 +391,7 @@ body {
   );
 }
 
-.constellation-node-group:hover .constellation-node-quadrifoil {
+.constellation-node-group:hover .constellation-node-star {
   transform: scale(1.06);
 }
 
@@ -400,7 +400,7 @@ body {
   stroke: rgba(214, 232, 250, 0.98);
 }
 
-.constellation-node-group.node-selected .constellation-node-quadrifoil,
+.constellation-node-group.node-selected .constellation-node-star,
 .constellation-node-group.node-selected .constellation-node-leaf-marker {
   filter: drop-shadow(0 0 8px rgba(238, 247, 255, 0.95)) drop-shadow(0 0 18px rgba(190, 221, 255, 0.65));
 }

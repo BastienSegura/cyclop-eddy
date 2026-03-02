@@ -16,11 +16,6 @@ const LABEL_OFFSET_Y = -14;
 const LABEL_HEIGHT_PX = 14;
 const LABEL_PADDING_PX = 5;
 
-interface QuadrifoilGeometry {
-  lobeOffset: number;
-  lobeRadius: number;
-}
-
 interface CameraState {
   x: number;
   y: number;
@@ -105,20 +100,20 @@ function rgbToken(color: RGBColor): string {
   return `${color.r} ${color.g} ${color.b}`;
 }
 
-function quadrifoilGeometry(baseRadius: number): QuadrifoilGeometry {
-  return {
-    lobeOffset: baseRadius * 0.56,
-    lobeRadius: baseRadius * 0.64,
-  };
-}
-
-function quadrifoilLobes(shape: QuadrifoilGeometry): Array<{ x: number; y: number }> {
-  return [
-    { x: 0, y: -shape.lobeOffset },
-    { x: shape.lobeOffset, y: 0 },
-    { x: 0, y: shape.lobeOffset },
-    { x: -shape.lobeOffset, y: 0 },
+function buildFourPointStarPoints(outerRadius: number): string {
+  const innerOffset = outerRadius * (25 / 95);
+  const points = [
+    [0, -outerRadius],
+    [innerOffset, -innerOffset],
+    [outerRadius, 0],
+    [innerOffset, innerOffset],
+    [0, outerRadius],
+    [-innerOffset, innerOffset],
+    [-outerRadius, 0],
+    [-innerOffset, -innerOffset],
   ];
+
+  return points.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`).join(" ");
 }
 
 function colorForNode(nodeId: NodeId): RGBColor {
@@ -550,8 +545,18 @@ export function ConstellationView({
     return stylesByNodeId;
   }, [overviewNodes]);
 
-  const overviewShape = useMemo(() => quadrifoilGeometry(OVERVIEW_NODE_RADIUS_PX), []);
-  const overviewLobes = useMemo(() => quadrifoilLobes(overviewShape), [overviewShape]);
+  const overviewStarPoints = useMemo(
+    () => buildFourPointStarPoints(OVERVIEW_NODE_RADIUS_PX * 1.25),
+    [],
+  );
+  const defaultVisibleStarPoints = useMemo(
+    () => buildFourPointStarPoints(8.5),
+    [],
+  );
+  const selectedVisibleStarPoints = useMemo(
+    () => buildFourPointStarPoints(10.5),
+    [],
+  );
 
   const adjustedPositions = useMemo(
     () => buildAdjustedVisiblePositions(visibleNodeIdList, layout, selectedNodeId, neighborhoodDepths, camera),
@@ -704,15 +709,7 @@ export function ConstellationView({
                 transform={`translate(${node.position.x} ${node.position.y})`}
                 style={overviewNodeStyleById.get(node.id)}
               >
-                {overviewLobes.map((lobe, index) => (
-                  <circle
-                    key={`overview-lobe-${node.id}-${index}`}
-                    className="constellation-node-overview-lobe"
-                    cx={lobe.x}
-                    cy={lobe.y}
-                    r={overviewShape.lobeRadius}
-                  />
-                ))}
+                <polygon className="constellation-node-overview-shape" points={overviewStarPoints} />
               </g>
             ))}
           </g>
@@ -775,11 +772,10 @@ export function ConstellationView({
             }
 
             const isLeaf = leafNodeIds.has(node.id);
-            const dotRadius = node.id === selectedNodeId ? 10.5 : 8.5;
+            const isSelectedNode = node.id === selectedNodeId;
             const leafSize = node.id === selectedNodeId ? 16 : 13;
             const leafHalfSize = leafSize / 2;
-            const dotShape = quadrifoilGeometry(dotRadius);
-            const dotLobes = quadrifoilLobes(dotShape);
+            const starPoints = isSelectedNode ? selectedVisibleStarPoints : defaultVisibleStarPoints;
             const classes = nodeClass(node.id, selectedNodeId, neighborhoodDepths);
             const showLabel = shouldShowLabel(node.id, selectedNodeId, neighborhoodDepths)
               && visibleLabelIds.has(node.id);
@@ -812,16 +808,8 @@ export function ConstellationView({
                     transform="rotate(45)"
                   />
                 ) : (
-                  <g className="constellation-node-quadrifoil">
-                    {dotLobes.map((lobe, index) => (
-                      <circle
-                        key={`visible-lobe-${node.id}-${index}`}
-                        className="constellation-node-dot"
-                        cx={lobe.x}
-                        cy={lobe.y}
-                        r={dotShape.lobeRadius}
-                      />
-                    ))}
+                  <g className="constellation-node-star">
+                    <polygon className="constellation-node-dot" points={starPoints} />
                   </g>
                 )}
                 {showLabel ? (
