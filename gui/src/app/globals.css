@@ -270,7 +270,7 @@ body {
   pointer-events: none;
   stroke-linecap: round;
   stroke-dasharray: 6 11;
-  animation: edge-current-flow 1200ms linear infinite;
+  animation: edge-current-flow 1800ms linear infinite;
 }
 
 .constellation-line-flow.edge-far {
