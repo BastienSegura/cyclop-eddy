@@ -16,6 +16,11 @@ const LABEL_OFFSET_Y = -14;
 const LABEL_HEIGHT_PX = 14;
 const LABEL_PADDING_PX = 5;
 
+interface QuadrifoilGeometry {
+  lobeOffset: number;
+  lobeRadius: number;
+}
+
 interface CameraState {
   x: number;
   y: number;
@@ -98,6 +103,13 @@ function mixTowardWhite(color: RGBColor, ratio: number): RGBColor {
 
 function rgbToken(color: RGBColor): string {
   return `${color.r} ${color.g} ${color.b}`;
+}
+
+function quadrifoilGeometry(baseRadius: number): QuadrifoilGeometry {
+  return {
+    lobeOffset: baseRadius * 0.56,
+    lobeRadius: baseRadius * 0.64,
+  };
 }
 
 function colorForNode(nodeId: NodeId): RGBColor {
@@ -642,28 +654,36 @@ export function ConstellationView({
     >
       <svg className="constellation-lines" viewBox={`0 0 ${VIEWPORT_WIDTH} ${VIEWPORT_HEIGHT}`} preserveAspectRatio="xMidYMid meet">
         <g transform={transform}>
-          <g className="constellation-overview-layer" aria-hidden="true">
-            {overviewEdges.map((edge, index) => (
-              <line
-                key={`overview-edge-${index}`}
-                x1={edge.from.x}
-                y1={edge.from.y}
-                x2={edge.to.x}
-                y2={edge.to.y}
-                className="constellation-line-overview"
-              />
-            ))}
-            {overviewNodes.map((node) => (
-              <circle
-                key={`overview-node-${node.id}`}
-                cx={node.position.x}
-                cy={node.position.y}
-                r={OVERVIEW_NODE_RADIUS_PX}
-                className="constellation-node-overview"
-                style={buildOverviewNodeStyle(node.id)}
-              />
-            ))}
-          </g>
+          {(() => {
+            const overviewShape = quadrifoilGeometry(OVERVIEW_NODE_RADIUS_PX);
+
+            return (
+              <g className="constellation-overview-layer" aria-hidden="true">
+                {overviewEdges.map((edge, index) => (
+                  <line
+                    key={`overview-edge-${index}`}
+                    x1={edge.from.x}
+                    y1={edge.from.y}
+                    x2={edge.to.x}
+                    y2={edge.to.y}
+                    className="constellation-line-overview"
+                  />
+                ))}
+                {overviewNodes.map((node) => (
+                  <g
+                    key={`overview-node-${node.id}`}
+                    transform={`translate(${node.position.x} ${node.position.y})`}
+                    style={buildOverviewNodeStyle(node.id)}
+                  >
+                    <circle className="constellation-node-overview" cx={0} cy={-overviewShape.lobeOffset} r={overviewShape.lobeRadius} />
+                    <circle className="constellation-node-overview" cx={overviewShape.lobeOffset} cy={0} r={overviewShape.lobeRadius} />
+                    <circle className="constellation-node-overview" cx={0} cy={overviewShape.lobeOffset} r={overviewShape.lobeRadius} />
+                    <circle className="constellation-node-overview" cx={-overviewShape.lobeOffset} cy={0} r={overviewShape.lobeRadius} />
+                  </g>
+                ))}
+              </g>
+            );
+          })()}
 
           {edges.map((edge) => {
             const fromPosition = adjustedPositions[edge.from] ?? layout.positions[edge.from];
@@ -723,9 +743,10 @@ export function ConstellationView({
             }
 
             const isLeaf = leafNodeIds.has(node.id);
-            const dotRadius = node.id === selectedNodeId ? 18 : 10;
-            const leafSize = node.id === selectedNodeId ? 23 : 14;
+            const dotRadius = node.id === selectedNodeId ? 13 : 10;
+            const leafSize = node.id === selectedNodeId ? 18 : 14;
             const leafHalfSize = leafSize / 2;
+            const dotShape = quadrifoilGeometry(dotRadius);
             const classes = nodeClass(node.id, selectedNodeId, neighborhoodDepths);
             const showLabel = shouldShowLabel(node.id, selectedNodeId, neighborhoodDepths)
               && visibleLabelIds.has(node.id);
@@ -758,7 +779,12 @@ export function ConstellationView({
                     transform="rotate(45)"
                   />
                 ) : (
-                  <circle className="constellation-node-dot" r={dotRadius} />
+                  <g className="constellation-node-quadrifoil">
+                    <circle className="constellation-node-dot" cx={0} cy={-dotShape.lobeOffset} r={dotShape.lobeRadius} />
+                    <circle className="constellation-node-dot" cx={dotShape.lobeOffset} cy={0} r={dotShape.lobeRadius} />
+                    <circle className="constellation-node-dot" cx={0} cy={dotShape.lobeOffset} r={dotShape.lobeRadius} />
+                    <circle className="constellation-node-dot" cx={-dotShape.lobeOffset} cy={0} r={dotShape.lobeRadius} />
+                  </g>
                 )}
                 {showLabel ? (
                   <text className="constellation-node-label" x={LABEL_OFFSET_X} y={LABEL_OFFSET_Y}>
