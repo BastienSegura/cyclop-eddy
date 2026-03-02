@@ -199,7 +199,7 @@ body {
   background:
     radial-gradient(circle at center, rgba(255, 255, 255, 0.035), transparent 34%),
     radial-gradient(circle at 35% 25%, rgba(80, 201, 255, 0.11), transparent 38%),
-    linear-gradient(rgba(2, 8, 20, 0.86), rgba(2, 8, 20, 0.86)),
+    linear-gradient(rgba(2, 8, 20, 0.79), rgba(2, 8, 20, 0.79)),
     url("/images/backgrounds/aurora-borealis-wallhaven-499e7x.jpg") center / cover no-repeat,
     #020814;
 }
