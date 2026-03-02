@@ -363,6 +363,11 @@ body {
     opacity: 0.34;
     filter: none;
   }
+
+  .constellation-node-group .constellation-node-dot {
+    animation: none;
+    filter: none;
+  }
 }
 
 .constellation-node-group {
@@ -375,6 +380,15 @@ body {
   fill: rgb(var(--node-fill-rgb, 72 122 175) / 0.75);
   stroke: rgb(var(--node-stroke-rgb, 120 175 235) / 0.55);
   stroke-width: 2;
+  filter: drop-shadow(
+    0 0 var(--node-glow-radius-idle, 5px)
+    rgb(var(--node-glow-rgb, 156 216 255) / var(--node-glow-alpha-idle, 0.34))
+  ) drop-shadow(
+    0 0 calc(var(--node-glow-radius-idle, 5px) + 4px)
+    rgb(var(--node-glow-rgb, 156 216 255) / calc(var(--node-glow-alpha-idle, 0.34) * 0.65))
+  );
+  animation: node-starlight-glow var(--node-glow-duration, 3400ms) ease-in-out infinite;
+  animation-delay: var(--node-glow-delay, 0ms);
 }
 
 .constellation-node-group:hover .constellation-node-dot {
@@ -384,6 +398,8 @@ body {
 .constellation-node-group.node-selected .constellation-node-dot {
   fill: rgba(247, 192, 106, 0.95);
   stroke: rgba(255, 232, 176, 0.95);
+  filter: drop-shadow(0 0 8px rgba(247, 192, 106, 0.7)) drop-shadow(0 0 16px rgba(247, 192, 106, 0.4));
+  animation: none;
 }
 
 .constellation-node-group.node-leaf .constellation-node-dot {
@@ -420,6 +436,30 @@ body {
   fill: rgb(var(--node-fill-rgb, 149 171 194) / 0.14);
   stroke: rgb(var(--node-stroke-rgb, 149 171 194) / 0.24);
   stroke-width: 1.3;
+}
+
+@keyframes node-starlight-glow {
+  0%,
+  78%,
+  100% {
+    filter: drop-shadow(
+      0 0 var(--node-glow-radius-idle, 5px)
+      rgb(var(--node-glow-rgb, 156 216 255) / var(--node-glow-alpha-idle, 0.34))
+    ) drop-shadow(
+      0 0 calc(var(--node-glow-radius-idle, 5px) + 4px)
+      rgb(var(--node-glow-rgb, 156 216 255) / calc(var(--node-glow-alpha-idle, 0.34) * 0.65))
+    );
+  }
+
+  87% {
+    filter: drop-shadow(
+      0 0 var(--node-glow-radius-peak, 11px)
+      rgb(var(--node-glow-rgb, 156 216 255) / var(--node-glow-alpha-peak, 0.72))
+    ) drop-shadow(
+      0 0 calc(var(--node-glow-radius-peak, 11px) + 8px)
+      rgb(var(--node-glow-rgb, 156 216 255) / calc(var(--node-glow-alpha-peak, 0.72) * 0.72))
+    );
+  }
 }
 
 .constellation-node-leaf-marker {

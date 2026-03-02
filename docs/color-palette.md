@@ -13,9 +13,10 @@
 
 ## Node Rendering Variants
 
-To keep random node colors readable on the deep-night graph background, two dark blues are slightly lifted for node usage:
+To keep random node colors readable and sky-consistent on the deep-night graph background, three node-palette substitutions are applied:
 
 - `#131862` -> `#3B4A8F` (contrast-safe node variant)
 - `#2E4482` -> `#4A5FA8` (contrast-safe node variant)
+- `#14E81E` -> `#5B3FA8` (deep-purple variant; more celestial than neon green)
 
 All other palette colors are used directly.
