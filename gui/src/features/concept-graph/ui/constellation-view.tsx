@@ -112,6 +112,15 @@ function quadrifoilGeometry(baseRadius: number): QuadrifoilGeometry {
   };
 }
 
+function quadrifoilLobes(shape: QuadrifoilGeometry): Array<{ x: number; y: number }> {
+  return [
+    { x: 0, y: -shape.lobeOffset },
+    { x: shape.lobeOffset, y: 0 },
+    { x: 0, y: shape.lobeOffset },
+    { x: -shape.lobeOffset, y: 0 },
+  ];
+}
+
 function colorForNode(nodeId: NodeId): RGBColor {
   const paletteColorHex = NODE_COLOR_PALETTE_HEX[hashNodeId(nodeId) % NODE_COLOR_PALETTE_HEX.length];
   return hexToRgb(paletteColorHex);
@@ -458,68 +467,91 @@ export function ConstellationView({
     dragDistance: 0,
   });
 
-  const overviewEdges: Array<{
-    from: NodePosition;
-    to: NodePosition;
-  }> = [];
+  const {
+    edges,
+    overviewEdges,
+    overviewNodes,
+    visibleNodes,
+    visibleNodeIdList,
+  } = useMemo(() => {
+    const nextEdges: Array<{ from: NodeId; to: NodeId }> = [];
+    const nextOverviewEdges: Array<{ from: NodePosition; to: NodePosition }> = [];
+    const nextOverviewNodes: Array<{ id: NodeId; position: NodePosition }> = [];
 
-  for (const [from, neighbors] of Object.entries(graph.neighborsByNode)) {
-    const fromPosition = layout.positions[from];
-    if (!fromPosition) {
-      continue;
+    for (const [from, neighbors] of Object.entries(graph.neighborsByNode)) {
+      const fromPosition = layout.positions[from];
+
+      for (const to of neighbors) {
+        if (visibleNodeIds.has(from) && visibleNodeIds.has(to)) {
+          nextEdges.push({ from, to });
+          continue;
+        }
+
+        if (!fromPosition) {
+          continue;
+        }
+
+        const toPosition = layout.positions[to];
+        if (!toPosition) {
+          continue;
+        }
+
+        nextOverviewEdges.push({
+          from: fromPosition,
+          to: toPosition,
+        });
+      }
     }
 
-    for (const to of neighbors) {
-      if (visibleNodeIds.has(from) && visibleNodeIds.has(to)) {
+    for (const nodeId of Object.keys(graph.nodes)) {
+      if (visibleNodeIds.has(nodeId)) {
         continue;
       }
 
-      const toPosition = layout.positions[to];
-      if (!toPosition) {
+      const position = layout.positions[nodeId];
+      if (!position) {
         continue;
       }
 
-      overviewEdges.push({
-        from: fromPosition,
-        to: toPosition,
-      });
-    }
-  }
-
-  const overviewNodes: Array<{ id: NodeId; position: NodePosition }> = [];
-  for (const nodeId of Object.keys(graph.nodes)) {
-    if (visibleNodeIds.has(nodeId)) {
-      continue;
+      nextOverviewNodes.push({ id: nodeId, position });
     }
 
-    const position = layout.positions[nodeId];
-    if (!position) {
-      continue;
+    const nextVisibleNodes = Array.from(visibleNodeIds)
+      .map((nodeId) => graph.nodes[nodeId])
+      .filter((node): node is NonNullable<typeof node> => Boolean(node))
+      .sort((a, b) => a.label.localeCompare(b.label));
+
+    return {
+      edges: nextEdges,
+      overviewEdges: nextOverviewEdges,
+      overviewNodes: nextOverviewNodes,
+      visibleNodes: nextVisibleNodes,
+      visibleNodeIdList: nextVisibleNodes.map((node) => node.id),
+    };
+  }, [graph, layout, visibleNodeIds]);
+
+  const visibleNodeStyleById = useMemo(() => {
+    const stylesByNodeId = new Map<NodeId, CSSProperties>();
+
+    for (const node of visibleNodes) {
+      stylesByNodeId.set(node.id, buildVisibleNodeStyle(node.id));
     }
 
-    overviewNodes.push({ id: nodeId, position });
-  }
+    return stylesByNodeId;
+  }, [visibleNodes]);
 
-  const edges: Array<{ from: NodeId; to: NodeId }> = [];
+  const overviewNodeStyleById = useMemo(() => {
+    const stylesByNodeId = new Map<NodeId, CSSProperties>();
 
-  for (const [from, neighbors] of Object.entries(graph.neighborsByNode)) {
-    if (!visibleNodeIds.has(from)) {
-      continue;
+    for (const node of overviewNodes) {
+      stylesByNodeId.set(node.id, buildOverviewNodeStyle(node.id));
     }
-    for (const to of neighbors) {
-      if (!visibleNodeIds.has(to)) {
-        continue;
-      }
-      edges.push({ from, to });
-    }
-  }
 
-  const visibleNodes = Array.from(visibleNodeIds)
-    .map((nodeId) => graph.nodes[nodeId])
-    .filter((node): node is NonNullable<typeof node> => Boolean(node))
-    .sort((a, b) => a.label.localeCompare(b.label));
+    return stylesByNodeId;
+  }, [overviewNodes]);
 
-  const visibleNodeIdList = visibleNodes.map((node) => node.id);
+  const overviewShape = useMemo(() => quadrifoilGeometry(OVERVIEW_NODE_RADIUS_PX), []);
+  const overviewLobes = useMemo(() => quadrifoilLobes(overviewShape), [overviewShape]);
 
   const adjustedPositions = useMemo(
     () => buildAdjustedVisiblePositions(visibleNodeIdList, layout, selectedNodeId, neighborhoodDepths, camera),
@@ -654,36 +686,36 @@ export function ConstellationView({
     >
       <svg className="constellation-lines" viewBox={`0 0 ${VIEWPORT_WIDTH} ${VIEWPORT_HEIGHT}`} preserveAspectRatio="xMidYMid meet">
         <g transform={transform}>
-          {(() => {
-            const overviewShape = quadrifoilGeometry(OVERVIEW_NODE_RADIUS_PX);
-
-            return (
-              <g className="constellation-overview-layer" aria-hidden="true">
-                {overviewEdges.map((edge, index) => (
-                  <line
-                    key={`overview-edge-${index}`}
-                    x1={edge.from.x}
-                    y1={edge.from.y}
-                    x2={edge.to.x}
-                    y2={edge.to.y}
-                    className="constellation-line-overview"
+          <g className="constellation-overview-layer" aria-hidden="true">
+            {overviewEdges.map((edge, index) => (
+              <line
+                key={`overview-edge-${index}`}
+                x1={edge.from.x}
+                y1={edge.from.y}
+                x2={edge.to.x}
+                y2={edge.to.y}
+                className="constellation-line-overview"
+              />
+            ))}
+            {overviewNodes.map((node) => (
+              <g
+                key={`overview-node-${node.id}`}
+                className="constellation-node-overview"
+                transform={`translate(${node.position.x} ${node.position.y})`}
+                style={overviewNodeStyleById.get(node.id)}
+              >
+                {overviewLobes.map((lobe, index) => (
+                  <circle
+                    key={`overview-lobe-${node.id}-${index}`}
+                    className="constellation-node-overview-lobe"
+                    cx={lobe.x}
+                    cy={lobe.y}
+                    r={overviewShape.lobeRadius}
                   />
                 ))}
-                {overviewNodes.map((node) => (
-                  <g
-                    key={`overview-node-${node.id}`}
-                    transform={`translate(${node.position.x} ${node.position.y})`}
-                    style={buildOverviewNodeStyle(node.id)}
-                  >
-                    <circle className="constellation-node-overview" cx={0} cy={-overviewShape.lobeOffset} r={overviewShape.lobeRadius} />
-                    <circle className="constellation-node-overview" cx={overviewShape.lobeOffset} cy={0} r={overviewShape.lobeRadius} />
-                    <circle className="constellation-node-overview" cx={0} cy={overviewShape.lobeOffset} r={overviewShape.lobeRadius} />
-                    <circle className="constellation-node-overview" cx={-overviewShape.lobeOffset} cy={0} r={overviewShape.lobeRadius} />
-                  </g>
-                ))}
               </g>
-            );
-          })()}
+            ))}
+          </g>
 
           {edges.map((edge) => {
             const fromPosition = adjustedPositions[edge.from] ?? layout.positions[edge.from];
@@ -743,10 +775,11 @@ export function ConstellationView({
             }
 
             const isLeaf = leafNodeIds.has(node.id);
-            const dotRadius = node.id === selectedNodeId ? 13 : 10;
-            const leafSize = node.id === selectedNodeId ? 18 : 14;
+            const dotRadius = node.id === selectedNodeId ? 10.5 : 8.5;
+            const leafSize = node.id === selectedNodeId ? 16 : 13;
             const leafHalfSize = leafSize / 2;
             const dotShape = quadrifoilGeometry(dotRadius);
+            const dotLobes = quadrifoilLobes(dotShape);
             const classes = nodeClass(node.id, selectedNodeId, neighborhoodDepths);
             const showLabel = shouldShowLabel(node.id, selectedNodeId, neighborhoodDepths)
               && visibleLabelIds.has(node.id);
@@ -757,7 +790,7 @@ export function ConstellationView({
                 data-node-id={node.id}
                 className={`constellation-node-group ${classes}${isLeaf ? " node-leaf" : ""}`}
                 transform={`translate(${position.x} ${position.y})`}
-                style={buildVisibleNodeStyle(node.id)}
+                style={visibleNodeStyleById.get(node.id)}
                 role="button"
                 tabIndex={0}
                 onKeyDown={(event) => {
@@ -780,10 +813,15 @@ export function ConstellationView({
                   />
                 ) : (
                   <g className="constellation-node-quadrifoil">
-                    <circle className="constellation-node-dot" cx={0} cy={-dotShape.lobeOffset} r={dotShape.lobeRadius} />
-                    <circle className="constellation-node-dot" cx={dotShape.lobeOffset} cy={0} r={dotShape.lobeRadius} />
-                    <circle className="constellation-node-dot" cx={0} cy={dotShape.lobeOffset} r={dotShape.lobeRadius} />
-                    <circle className="constellation-node-dot" cx={-dotShape.lobeOffset} cy={0} r={dotShape.lobeRadius} />
+                    {dotLobes.map((lobe, index) => (
+                      <circle
+                        key={`visible-lobe-${node.id}-${index}`}
+                        className="constellation-node-dot"
+                        cx={lobe.x}
+                        cy={lobe.y}
+                        r={dotShape.lobeRadius}
+                      />
+                    ))}
                   </g>
                 )}
                 {showLabel ? (
