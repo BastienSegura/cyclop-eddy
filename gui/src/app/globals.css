@@ -271,12 +271,13 @@ body {
 }
 
 .constellation-node-overview {
-  fill: rgba(201, 226, 249, 0.58);
-  stroke: rgba(232, 244, 255, 0.62);
+  fill: rgb(var(--overview-node-fill-rgb, 201 226 249) / 0.58);
+  stroke: rgb(var(--overview-node-stroke-rgb, 232 244 255) / 0.62);
   stroke-width: 0.5;
   opacity: var(--overview-node-idle-opacity, 0.2);
   filter: drop-shadow(
-    0 0 var(--overview-node-idle-glow-radius, 5px) var(--overview-node-idle-glow-color, rgba(156, 216, 255, 0.46))
+    0 0 var(--overview-node-idle-glow-radius, 5px)
+    rgb(var(--overview-node-glow-rgb, 156 216 255) / var(--overview-node-idle-glow-alpha, 0.46))
   );
   animation: overview-node-glimmer 7600ms ease-in-out infinite;
 }
@@ -330,7 +331,8 @@ body {
   100% {
     opacity: var(--overview-node-idle-opacity, 0.2);
     filter: drop-shadow(
-      0 0 var(--overview-node-idle-glow-radius, 5px) var(--overview-node-idle-glow-color, rgba(156, 216, 255, 0.46))
+      0 0 var(--overview-node-idle-glow-radius, 5px)
+      rgb(var(--overview-node-glow-rgb, 156 216 255) / var(--overview-node-idle-glow-alpha, 0.46))
     );
   }
 
@@ -338,7 +340,8 @@ body {
   90% {
     opacity: var(--overview-node-flash-opacity, 0.55);
     filter: drop-shadow(
-      0 0 var(--overview-node-flash-glow-radius, 15px) var(--overview-node-flash-glow-color, rgba(156, 216, 255, 0.98))
+      0 0 var(--overview-node-flash-glow-radius, 15px)
+      rgb(var(--overview-node-glow-rgb, 156 216 255) / var(--overview-node-flash-glow-alpha, 0.98))
     );
   }
 }
@@ -369,8 +372,8 @@ body {
 
 .constellation-node-group .constellation-node-dot {
   transition: transform 140ms ease, fill 140ms ease, stroke 140ms ease;
-  fill: rgba(72, 122, 175, 0.75);
-  stroke: rgba(120, 175, 235, 0.55);
+  fill: rgb(var(--node-fill-rgb, 72 122 175) / 0.75);
+  stroke: rgb(var(--node-stroke-rgb, 120 175 235) / 0.55);
   stroke-width: 2;
 }
 
@@ -384,18 +387,18 @@ body {
 }
 
 .constellation-node-group.node-leaf .constellation-node-dot {
-  fill: rgba(162, 212, 252, 0.56);
-  stroke: rgba(217, 238, 255, 0.84);
+  fill: rgb(var(--node-fill-rgb, 162 212 252) / 0.56);
+  stroke: rgb(var(--node-stroke-rgb, 217 238 255) / 0.84);
 }
 
 .constellation-node-group.node-leaf.node-mid .constellation-node-dot {
-  fill: rgba(160, 198, 232, 0.3);
-  stroke: rgba(188, 216, 241, 0.46);
+  fill: rgb(var(--node-fill-rgb, 160 198 232) / 0.3);
+  stroke: rgb(var(--node-stroke-rgb, 188 216 241) / 0.46);
 }
 
 .constellation-node-group.node-leaf.node-far .constellation-node-dot {
-  fill: rgba(156, 193, 226, 0.17);
-  stroke: rgba(184, 213, 240, 0.28);
+  fill: rgb(var(--node-fill-rgb, 156 193 226) / 0.17);
+  stroke: rgb(var(--node-stroke-rgb, 184 213 240) / 0.28);
 }
 
 .constellation-node-group.node-leaf.node-selected .constellation-node-dot {
@@ -404,18 +407,18 @@ body {
 }
 
 .constellation-node-group.node-near .constellation-node-dot {
-  fill: rgba(80, 201, 255, 0.95);
-  stroke: rgba(200, 237, 255, 0.95);
+  fill: rgb(var(--node-fill-rgb, 80 201 255) / 0.95);
+  stroke: rgb(var(--node-stroke-rgb, 200 237 255) / 0.95);
 }
 
 .constellation-node-group.node-mid .constellation-node-dot {
-  fill: rgba(149, 171, 194, 0.32);
-  stroke: rgba(149, 171, 194, 0.44);
+  fill: rgb(var(--node-fill-rgb, 149 171 194) / 0.32);
+  stroke: rgb(var(--node-stroke-rgb, 149 171 194) / 0.44);
 }
 
 .constellation-node-group.node-far .constellation-node-dot {
-  fill: rgba(149, 171, 194, 0.14);
-  stroke: rgba(149, 171, 194, 0.24);
+  fill: rgb(var(--node-fill-rgb, 149 171 194) / 0.14);
+  stroke: rgb(var(--node-stroke-rgb, 149 171 194) / 0.24);
   stroke-width: 1.3;
 }
 
