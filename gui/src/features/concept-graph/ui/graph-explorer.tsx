@@ -293,6 +293,10 @@ export function GraphExplorer() {
 
   const canGoBack = parentIds.length > 0;
   const firstParent = canGoBack ? parentIds[0] : null;
+  const zoomLevelPercent = Math.min(
+    100,
+    Math.max(0, Math.round(((camera.zoom - MIN_ZOOM) / (MAX_ZOOM - MIN_ZOOM)) * 100)),
+  );
 
   function focusNode(nodeId: NodeId) {
     if (!graph) {
@@ -402,6 +406,12 @@ export function GraphExplorer() {
             </button>
 
             <div className="camera-controls">
+              <div className="zoom-indicator" aria-label={`Current zoom ${camera.zoom.toFixed(2)}x`}>
+                <span className="zoom-indicator-text">Zoom {camera.zoom.toFixed(2)}x</span>
+                <div className="zoom-meter" aria-hidden="true">
+                  <span className="zoom-meter-fill" style={{ width: `${zoomLevelPercent}%` }} />
+                </div>
+              </div>
               <button type="button" className="ghost-button" onClick={() => updateZoom(1.15)}>
                 Zoom +
               </button>
