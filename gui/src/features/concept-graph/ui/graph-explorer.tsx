@@ -109,9 +109,12 @@ export function GraphExplorer() {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [copyFeedback, setCopyFeedback] = useState<string>("");
   const [camera, setCamera] = useState<CameraState>({ x: 0, y: 0, zoom: FOCUS_ZOOM });
+  const [isGraphFullscreen, setIsGraphFullscreen] = useState(false);
+  const [isFullscreenSupported, setIsFullscreenSupported] = useState(false);
 
   const hasInitializedCamera = useRef(false);
   const animationFrameRef = useRef<number | null>(null);
+  const constellationPanelRef = useRef<HTMLElement | null>(null);
 
   function stopCameraAnimation() {
     if (animationFrameRef.current !== null) {
@@ -169,6 +172,21 @@ export function GraphExplorer() {
     return () => {
       cancelled = true;
       stopCameraAnimation();
+    };
+  }, []);
+
+  useEffect(() => {
+    setIsFullscreenSupported(document.fullscreenEnabled);
+
+    const syncFullscreenState = () => {
+      setIsGraphFullscreen(document.fullscreenElement === constellationPanelRef.current);
+    };
+
+    document.addEventListener("fullscreenchange", syncFullscreenState);
+    syncFullscreenState();
+
+    return () => {
+      document.removeEventListener("fullscreenchange", syncFullscreenState);
     };
   }, []);
 
@@ -377,6 +395,23 @@ export function GraphExplorer() {
     setVisibleNodeIds(new Set<NodeId>(Object.keys(graph.nodes) as NodeId[]));
   }
 
+  async function toggleGraphFullscreen() {
+    if (!isFullscreenSupported || !constellationPanelRef.current) {
+      return;
+    }
+
+    try {
+      if (document.fullscreenElement === constellationPanelRef.current) {
+        await document.exitFullscreen();
+        return;
+      }
+
+      await constellationPanelRef.current.requestFullscreen();
+    } catch {
+      // Ignore fullscreen errors (for example browser restrictions or canceled requests).
+    }
+  }
+
   if (status === "loading") {
     return <p className="status-banner">Loading concept universe...</p>;
   }
@@ -404,7 +439,7 @@ export function GraphExplorer() {
       </header>
 
       <section className="explorer-layout">
-        <article className="constellation-panel">
+        <article ref={constellationPanelRef} className="constellation-panel">
           <div className="panel-actions">
             <div className="navigation-controls">
               <button
@@ -443,6 +478,22 @@ export function GraphExplorer() {
                   onChange={(event) => setZoomFromSlider(Number(event.currentTarget.value))}
                 />
               </div>
+              <button
+                type="button"
+                className="fullscreen-toggle-button"
+                aria-label={isGraphFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+                title={isGraphFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+                disabled={!isFullscreenSupported}
+                onClick={toggleGraphFullscreen}
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  {isGraphFullscreen ? (
+                    <path d="M9 4H4v5m11-5h5v5M9 20H4v-5m11 5h5v-5" />
+                  ) : (
+                    <path d="M4 9V4h5m6 0h5v5M4 15v5h5m6 0h5v-5" />
+                  )}
+                </svg>
+              </button>
             </div>
           </div>
 
