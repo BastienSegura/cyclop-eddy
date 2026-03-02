@@ -9,7 +9,8 @@ import { VIEWPORT_HEIGHT, VIEWPORT_WIDTH } from "./viewport-constants";
 const DRAG_THRESHOLD_PX = 6;
 const VIEWPORT_MARGIN_PX = 140;
 const COLLISION_ITERATIONS = 7;
-const BASE_NODE_DISTANCE_PX = 34;
+const BASE_NODE_DISTANCE_PX = 41;
+const OVERVIEW_NODE_RADIUS_PX = 3;
 const LABEL_OFFSET_X = 14;
 const LABEL_OFFSET_Y = -14;
 const LABEL_HEIGHT_PX = 14;
@@ -557,7 +558,7 @@ export function ConstellationView({
                 key={`overview-node-${node.id}`}
                 cx={node.position.x}
                 cy={node.position.y}
-                r={2}
+                r={OVERVIEW_NODE_RADIUS_PX}
                 className="constellation-node-overview"
               />
             ))}
