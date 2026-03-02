@@ -261,7 +261,7 @@ body {
 }
 
 .constellation-node-overview {
-  fill: rgba(149, 171, 194, 0.18);
+  fill: rgba(182, 208, 234, 0.3);
 }
 
 .constellation-line.edge-far {
