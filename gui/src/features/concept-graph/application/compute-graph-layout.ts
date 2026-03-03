@@ -439,13 +439,13 @@ function enforceRootNeighborhoodRing(
   const medianDistance = sortedDistances.length === 0
     ? 0
     : sortedDistances[Math.floor(sortedDistances.length / 2)];
-  const minChordLength = 180;
+  const minChordLength = 110;
   const chordRadius = neighborEntries.length > 1
     ? minChordLength / (2 * Math.sin(Math.PI / neighborEntries.length))
     : minChordLength;
   const targetRadius = Math.min(
-    1100,
-    Math.max(320, medianDistance * 0.9, chordRadius),
+    720,
+    Math.max(190, medianDistance * 0.65, chordRadius),
   );
 
   const startAngle = neighborEntries[0]?.angle ?? (-Math.PI / 2);
@@ -459,7 +459,7 @@ function enforceRootNeighborhoodRing(
     };
   });
 
-  const protectedRadius = targetRadius + 130;
+  const protectedRadius = targetRadius + 95;
   const rootNeighborhood = new Set<NodeId>([rootNodeId, ...neighborEntries.map((entry) => entry.nodeId)]);
 
   for (const [nodeId, nodePosition] of Object.entries(positions)) {
