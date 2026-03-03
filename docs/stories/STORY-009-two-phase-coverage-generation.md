@@ -24,31 +24,36 @@ Updated: `2026-03-03`
 ## Goal
 
 - Establish a repeatable two-phase generation workflow optimized for concept coverage.
-- Make phase outputs mergeable and comparable with explicit metrics.
+- Make phase outputs mergeable and comparable using existing reporting outputs.
+
+Boundary:
+- This story owns orchestration/workflow (run phases + merge + documented commands).
+- Metric engine implementation is owned by STORY-006.
 
 ## Out of Scope
 
 - Full automation of ontology completion.
 - Human curation UI.
+- Implementing a new quality metrics/reporting engine.
 
 ## Acceptance Criteria
 
 - [ ] A documented two-phase command sequence exists with parameter guidance.
 - [ ] Phase outputs can be merged into a single deduplicated edge file.
-- [ ] Workflow includes objective comparison metrics (unique concepts, coverage growth, under-filled parents).
+- [ ] Workflow includes objective comparison checkpoints using STORY-006 report outputs.
 - [ ] README/docs clearly state when to use two-phase mode vs single run.
 
 ## Subtasks
 
 - [ ] Add script or command docs for Phase 1 (wide) and Phase 2 (refinement).
 - [ ] Add merge utility for multi-run raw outputs with deterministic dedup.
-- [ ] Add simple coverage metrics report after merge.
+- [ ] Wire merge workflow to consume metrics from STORY-006 report command.
 - [ ] Document recommended defaults and tuning guidance.
 - [ ] Add example run transcript in docs.
 
 ## Dependencies
 
-- STORY-006 for quality/coverage reporting.
+- STORY-006 for quality/coverage reporting (required).
 - STORY-010 for frontier root selection input.
 
 ## Risks
