@@ -52,6 +52,9 @@ DEFAULTS = {
 
 MAX_CONCEPT_WORDS = 4
 MAX_REJECTION_EVENTS = 2000
+SUPPORTED_EXCLUDE_STRATEGIES = ("global", "local", "none")
+DEFAULT_EXCLUDE_STRATEGY = "local"
+DEFAULT_LOCAL_EXCLUDE_LIMIT = 64
 
 
 def _post(route: str, payload: dict[str, Any]) -> dict[str, Any]:
@@ -118,6 +121,21 @@ def build_prompt(
     * No numbering.
     * No additional text before or after the list.
     """
+
+
+def normalize_exclude_strategy(raw_strategy: Any) -> str:
+    strategy = str(raw_strategy or "").strip().lower()
+    if strategy in SUPPORTED_EXCLUDE_STRATEGIES:
+        return strategy
+    return DEFAULT_EXCLUDE_STRATEGY
+
+
+def normalize_exclude_local_limit(raw_limit: Any) -> int:
+    try:
+        limit = int(raw_limit)
+    except (TypeError, ValueError):
+        return DEFAULT_LOCAL_EXCLUDE_LIMIT
+    return max(1, limit)
 
 
 def _normalize_concept(concept: str) -> str:
@@ -229,15 +247,19 @@ def build_new_state(
     concept_list_length: int,
     max_depth: int,
     output_path: str,
+    exclude_strategy: str,
+    exclude_local_limit: int,
 ) -> dict[str, Any]:
     root_label = canonical_concept_label(root_concept)
     normalized_root = _normalize_concept(root_label)
     return {
-        "version": 4,
+        "version": 5,
         "root_concept": root_label,
         "concept_list_length": concept_list_length,
         "max_depth": max_depth,
         "output_path": output_path,
+        "exclude_strategy": normalize_exclude_strategy(exclude_strategy),
+        "exclude_local_limit": normalize_exclude_local_limit(exclude_local_limit),
         "queue": [{"concept": root_label, "depth": 0}],
         "exclude_list": [root_label],
         "seen_normalized": [normalized_root],
@@ -285,6 +307,73 @@ def normalize_queue(raw_queue: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return normalized_queue
 
 
+def build_parent_children_index(raw_edges: list[Any]) -> dict[str, list[str]]:
+    by_parent: dict[str, list[str]] = {}
+    seen_by_parent: dict[str, set[str]] = {}
+
+    for raw_edge in raw_edges:
+        edge = str(raw_edge)
+        if ":" not in edge:
+            continue
+        raw_parent, raw_child = edge.split(":", 1)
+        parent = canonical_concept_label(raw_parent)
+        child = canonical_concept_label(raw_child)
+        parent_key = canonical_concept_key(parent)
+        child_key = canonical_concept_key(child)
+        if not parent_key or not child_key:
+            continue
+
+        parent_seen = seen_by_parent.setdefault(parent_key, set())
+        if child_key in parent_seen:
+            continue
+
+        parent_seen.add(child_key)
+        by_parent.setdefault(parent_key, []).append(child)
+
+    return by_parent
+
+
+def add_parent_child_relation(
+    parent_children_index: dict[str, list[str]],
+    parent_concept: str,
+    child_concept: str,
+) -> None:
+    parent_key = canonical_concept_key(parent_concept)
+    child_label = canonical_concept_label(child_concept)
+    child_key = canonical_concept_key(child_label)
+    if not parent_key or not child_key:
+        return
+
+    children = parent_children_index.setdefault(parent_key, [])
+    existing_keys = {canonical_concept_key(item) for item in children}
+    if child_key not in existing_keys:
+        children.append(child_label)
+
+
+def build_prompt_exclude_list(
+    parent_concept: str,
+    state: dict[str, Any],
+    parent_children_index: dict[str, list[str]],
+) -> list[str] | None:
+    strategy = normalize_exclude_strategy(state.get("exclude_strategy"))
+
+    if strategy == "none":
+        return None
+
+    if strategy == "global":
+        excludes = normalize_exclude_list(list(state.get("exclude_list", [])))
+        return excludes or None
+
+    parent_key = canonical_concept_key(parent_concept)
+    local_excludes: list[str] = [canonical_concept_label(parent_concept)]
+    if parent_key:
+        local_excludes.extend(parent_children_index.get(parent_key, []))
+    local_excludes = normalize_exclude_list(local_excludes)
+    local_limit = normalize_exclude_local_limit(state.get("exclude_local_limit"))
+    local_excludes = local_excludes[:local_limit]
+    return local_excludes or None
+
+
 def generate_concept_graph(
     root_concept: str,
     concept_list_length: int,
@@ -292,18 +381,27 @@ def generate_concept_graph(
     output_path: str = "memory/concept_list.txt",
     state_file: str = "memory/concept_list_state.json",
     resume: bool = False,
+    exclude_strategy: str | None = None,
+    exclude_local_limit: int | None = None,
 ) -> None:
     if max_depth < 1:
         raise ValueError("max_depth must be >= 1")
     if concept_list_length < 1:
         raise ValueError("concept_list_length must be >= 1")
 
+    requested_exclude_strategy = (
+        normalize_exclude_strategy(exclude_strategy) if exclude_strategy is not None else None
+    )
+    requested_exclude_local_limit = (
+        normalize_exclude_local_limit(exclude_local_limit) if exclude_local_limit is not None else None
+    )
+
     if resume:
         state_path = Path(state_file)
         if not state_path.exists():
             raise SystemExit(f"Cannot resume: state file not found at '{state_file}'")
         state = load_generation_state(state_file)
-        if state.get("version") not in (1, 2, 3, 4):
+        if state.get("version") not in (1, 2, 3, 4, 5):
             raise SystemExit("Unsupported state file version.")
         state.setdefault("edges", [])
         state.setdefault("generated_concepts", len(state["edges"]))
@@ -339,7 +437,41 @@ def generate_concept_graph(
                 seen_normalized.add(key)
         state["seen_normalized"] = sorted(seen_normalized)
 
-        state["version"] = 4
+        raw_state_exclude_strategy = state.get("exclude_strategy")
+        if raw_state_exclude_strategy is None:
+            state_exclude_strategy = requested_exclude_strategy or DEFAULT_EXCLUDE_STRATEGY
+        else:
+            state_exclude_strategy = normalize_exclude_strategy(raw_state_exclude_strategy)
+            if (
+                requested_exclude_strategy is not None
+                and requested_exclude_strategy != state_exclude_strategy
+            ):
+                raise SystemExit(
+                    "Cannot resume with a different exclude strategy. "
+                    f"State uses '{state_exclude_strategy}'."
+                )
+
+        raw_state_exclude_local_limit = state.get("exclude_local_limit")
+        if raw_state_exclude_local_limit is None:
+            state_exclude_local_limit = (
+                requested_exclude_local_limit
+                if requested_exclude_local_limit is not None
+                else DEFAULT_LOCAL_EXCLUDE_LIMIT
+            )
+        else:
+            state_exclude_local_limit = normalize_exclude_local_limit(raw_state_exclude_local_limit)
+            if (
+                requested_exclude_local_limit is not None
+                and requested_exclude_local_limit != state_exclude_local_limit
+            ):
+                raise SystemExit(
+                    "Cannot resume with a different exclude local limit. "
+                    f"State uses '{state_exclude_local_limit}'."
+                )
+
+        state["exclude_strategy"] = state_exclude_strategy
+        state["exclude_local_limit"] = state_exclude_local_limit
+        state["version"] = 5
 
         resumed_output_path = state.get("output_path", output_path)
         if resumed_output_path.startswith("src/"):
@@ -352,16 +484,34 @@ def generate_concept_graph(
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
         print(f"Resuming generation from '{state_file}'", flush=True)
     else:
-        state = build_new_state(root_concept, concept_list_length, max_depth, output_path)
+        state = build_new_state(
+            root_concept,
+            concept_list_length,
+            max_depth,
+            output_path,
+            exclude_strategy=requested_exclude_strategy or DEFAULT_EXCLUDE_STRATEGY,
+            exclude_local_limit=(
+                requested_exclude_local_limit
+                if requested_exclude_local_limit is not None
+                else DEFAULT_LOCAL_EXCLUDE_LIMIT
+            ),
+        )
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
         Path(state_file).parent.mkdir(parents=True, exist_ok=True)
         save_generation_state(state_file, state)
         print(f"Starting generation. Checkpoint file: '{state_file}'", flush=True)
+    print(
+        "[config] "
+        f"exclude_strategy={state['exclude_strategy']} "
+        f"exclude_local_limit={state['exclude_local_limit']}",
+        flush=True,
+    )
 
     seen_normalized: set[str] = set(state["seen_normalized"])
     queue: deque[dict[str, Any]] = deque(state["queue"])
     run_started_at = time.monotonic() - float(state.get("elapsed_seconds", 0.0))
     sync_output_from_state(state)
+    parent_children_index = build_parent_children_index(list(state.get("edges", [])))
 
     def persist_state() -> None:
         state["queue"] = list(queue)
@@ -419,7 +569,8 @@ def generate_concept_graph(
                 persist_state()
                 continue
 
-            prompt = build_prompt(concept, int(state["concept_list_length"]), state["exclude_list"])
+            prompt_excludes = build_prompt_exclude_list(concept, state, parent_children_index)
+            prompt = build_prompt(concept, int(state["concept_list_length"]), prompt_excludes)
             response = simple_prompt(prompt)
             response_concepts = parse_concepts(response)
             accepted_count = 0
@@ -457,6 +608,7 @@ def generate_concept_graph(
                         prompt_rejection_counts=prompt_rejection_counts,
                     )
                     continue
+                add_parent_child_relation(parent_children_index, concept, cleaned_candidate)
                 new_edges.append(f"{concept}: {cleaned_candidate}")
                 queue.append({"concept": cleaned_candidate, "depth": child_depth})
                 accepted_count += 1
@@ -485,6 +637,7 @@ def generate_concept_graph(
             print(
                 "[prompt] "
                 f"parent={json.dumps(concept)} depth={depth} "
+                f"exclude_strategy={state['exclude_strategy']} prompt_excludes={len(prompt_excludes or [])} "
                 f"candidates={len(response_concepts)} accepted={accepted_count} "
                 f"rejected={rejected_in_prompt} reasons={reason_block}",
                 flush=True,
@@ -517,6 +670,26 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output", default="memory/concept_list.txt")
     parser.add_argument("--state-file", default="memory/concept_list_state.json")
     parser.add_argument("--resume", action="store_true")
+    parser.add_argument(
+        "--exclude-strategy",
+        choices=SUPPORTED_EXCLUDE_STRATEGIES,
+        default=None,
+        help=(
+            "Prompt exclude payload strategy. "
+            f"Default for new runs: '{DEFAULT_EXCLUDE_STRATEGY}'. "
+            "Resume uses the value stored in state."
+        ),
+    )
+    parser.add_argument(
+        "--exclude-local-limit",
+        type=int,
+        default=None,
+        help=(
+            "Maximum number of local exclude items when using --exclude-strategy local. "
+            f"Default for new runs: {DEFAULT_LOCAL_EXCLUDE_LIMIT}. "
+            "Resume uses the value stored in state."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -529,6 +702,8 @@ def main() -> None:
         output_path=args.output,
         state_file=args.state_file,
         resume=args.resume,
+        exclude_strategy=args.exclude_strategy,
+        exclude_local_limit=args.exclude_local_limit,
     )
 
 

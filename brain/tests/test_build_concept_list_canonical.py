@@ -60,6 +60,195 @@ class BuildConceptListCanonicalTests(unittest.TestCase):
             ],
         )
 
+    def test_default_exclude_strategy_is_local(self) -> None:
+        responses = [
+            "A\nB\n",
+            "",
+            "",
+        ]
+        prompts: list[str] = []
+
+        def fake_prompt(prompt: str) -> str:
+            prompts.append(prompt)
+            index = min(len(prompts) - 1, len(responses) - 1)
+            return responses[index]
+
+        original_prompt = builder.simple_prompt
+        builder.simple_prompt = fake_prompt
+        try:
+            with tempfile.TemporaryDirectory() as temp_dir:
+                output_path = Path(temp_dir) / "concept_list.txt"
+                state_path = Path(temp_dir) / "state.json"
+
+                builder.generate_concept_graph(
+                    root_concept="Computer Science",
+                    concept_list_length=2,
+                    max_depth=2,
+                    output_path=str(output_path),
+                    state_file=str(state_path),
+                )
+        finally:
+            builder.simple_prompt = original_prompt
+
+        self.assertGreaterEqual(len(prompts), 2)
+        prompt_for_a = prompts[1]
+        self.assertIn("Exclude any concept already listed below:", prompt_for_a)
+        self.assertIn("  - A", prompt_for_a)
+        self.assertNotIn("  - B", prompt_for_a)
+        self.assertNotIn("  - Computer Science", prompt_for_a)
+
+    def test_global_exclude_strategy_uses_full_seen_payload(self) -> None:
+        responses = [
+            "A\nB\n",
+            "",
+            "",
+        ]
+        prompts: list[str] = []
+
+        def fake_prompt(prompt: str) -> str:
+            prompts.append(prompt)
+            index = min(len(prompts) - 1, len(responses) - 1)
+            return responses[index]
+
+        original_prompt = builder.simple_prompt
+        builder.simple_prompt = fake_prompt
+        try:
+            with tempfile.TemporaryDirectory() as temp_dir:
+                output_path = Path(temp_dir) / "concept_list.txt"
+                state_path = Path(temp_dir) / "state.json"
+
+                builder.generate_concept_graph(
+                    root_concept="Computer Science",
+                    concept_list_length=2,
+                    max_depth=2,
+                    output_path=str(output_path),
+                    state_file=str(state_path),
+                    exclude_strategy="global",
+                )
+        finally:
+            builder.simple_prompt = original_prompt
+
+        self.assertGreaterEqual(len(prompts), 2)
+        prompt_for_a = prompts[1]
+        self.assertIn("Exclude any concept already listed below:", prompt_for_a)
+        self.assertIn("  - Computer Science", prompt_for_a)
+        self.assertIn("  - A", prompt_for_a)
+        self.assertIn("  - B", prompt_for_a)
+
+    def test_none_exclude_strategy_omits_prompt_excludes(self) -> None:
+        responses = [
+            "A\nB\n",
+            "",
+            "",
+        ]
+        prompts: list[str] = []
+
+        def fake_prompt(prompt: str) -> str:
+            prompts.append(prompt)
+            index = min(len(prompts) - 1, len(responses) - 1)
+            return responses[index]
+
+        original_prompt = builder.simple_prompt
+        builder.simple_prompt = fake_prompt
+        try:
+            with tempfile.TemporaryDirectory() as temp_dir:
+                output_path = Path(temp_dir) / "concept_list.txt"
+                state_path = Path(temp_dir) / "state.json"
+
+                builder.generate_concept_graph(
+                    root_concept="Computer Science",
+                    concept_list_length=2,
+                    max_depth=2,
+                    output_path=str(output_path),
+                    state_file=str(state_path),
+                    exclude_strategy="none",
+                )
+        finally:
+            builder.simple_prompt = original_prompt
+
+        self.assertGreaterEqual(len(prompts), 2)
+        self.assertNotIn("Exclude any concept already listed below:", prompts[0])
+        self.assertNotIn("Exclude any concept already listed below:", prompts[1])
+
+    def test_resume_uses_state_exclude_strategy_when_not_overridden(self) -> None:
+        prompts: list[str] = []
+
+        def fake_prompt(prompt: str) -> str:
+            prompts.append(prompt)
+            return ""
+
+        original_prompt = builder.simple_prompt
+        builder.simple_prompt = fake_prompt
+        try:
+            with tempfile.TemporaryDirectory() as temp_dir:
+                output_path = Path(temp_dir) / "concept_list.txt"
+                state_path = Path(temp_dir) / "state.json"
+                root = "Computer Science"
+                root_key = builder.canonical_concept_key(root)
+                child_a_key = builder.canonical_concept_key("A")
+                child_b_key = builder.canonical_concept_key("B")
+
+                state = builder.build_new_state(
+                    root_concept=root,
+                    concept_list_length=2,
+                    max_depth=2,
+                    output_path=str(output_path),
+                    exclude_strategy="global",
+                    exclude_local_limit=5,
+                )
+                state["queue"] = [{"concept": "A", "depth": 1}]
+                state["exclude_list"] = [root, "A", "B"]
+                state["seen_normalized"] = sorted([root_key, child_a_key, child_b_key])
+                state["edges"] = ["Computer Science: A", "Computer Science: B"]
+                state["generated_concepts"] = 2
+                state["accepted_candidates"] = 2
+                state["estimated_max_generated_concepts"] = builder.estimate_max_generated_concepts(2, 2)
+                state["estimated_max_prompt_calls"] = builder.estimate_max_prompt_calls(2, 2)
+                state["processed_prompt_calls"] = 1
+                builder.save_generation_state(str(state_path), state)
+
+                builder.generate_concept_graph(
+                    root_concept=root,
+                    concept_list_length=2,
+                    max_depth=2,
+                    output_path=str(output_path),
+                    state_file=str(state_path),
+                    resume=True,
+                )
+        finally:
+            builder.simple_prompt = original_prompt
+
+        self.assertEqual(len(prompts), 1)
+        self.assertIn("Exclude any concept already listed below:", prompts[0])
+        self.assertIn("  - B", prompts[0])
+
+    def test_resume_rejects_conflicting_exclude_strategy_override(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output_path = Path(temp_dir) / "concept_list.txt"
+            state_path = Path(temp_dir) / "state.json"
+            state = builder.build_new_state(
+                root_concept="Computer Science",
+                concept_list_length=2,
+                max_depth=2,
+                output_path=str(output_path),
+                exclude_strategy="global",
+                exclude_local_limit=5,
+            )
+            builder.save_generation_state(str(state_path), state)
+
+            with self.assertRaises(SystemExit) as ctx:
+                builder.generate_concept_graph(
+                    root_concept="Computer Science",
+                    concept_list_length=2,
+                    max_depth=2,
+                    output_path=str(output_path),
+                    state_file=str(state_path),
+                    resume=True,
+                    exclude_strategy="local",
+                )
+
+        self.assertIn("different exclude strategy", str(ctx.exception))
+
 
 if __name__ == "__main__":
     unittest.main()
