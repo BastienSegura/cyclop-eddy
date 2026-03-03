@@ -2,7 +2,7 @@
 
 ID: `STORY-001`
 Title: `Enforce pipeline artifact sync`
-Status: `ready`
+Status: `done`
 Priority: `P1`
 Owner: `unassigned`
 Created: `2026-03-03`
@@ -35,16 +35,16 @@ Updated: `2026-03-03`
 
 ## Acceptance Criteria
 
-- [ ] A documented single command (or script target) regenerates cleaned data from current raw data and syncs GUI data.
-- [ ] The workflow verifies line-count parity between `memory/concept_list_cleaned.txt` and `gui/public/data/concept_list_cleaned.txt`.
-- [ ] Docs explicitly define when this workflow must be run (after generation/resume completion).
+- [x] A documented single command (or script target) regenerates cleaned data from current raw data and syncs GUI data.
+- [x] The workflow verifies line-count parity between `memory/concept_list_cleaned.txt` and `gui/public/data/concept_list_cleaned.txt`.
+- [x] Docs explicitly define when this workflow must be run (after generation/resume completion).
 
 ## Subtasks
 
-- [ ] Add a small sync script or task runner command for clean + copy.
-- [ ] Add a guard step that fails if cleaned memory file and GUI data file differ.
-- [ ] Update root `README.md` and `memory/README.md` with the canonical workflow.
-- [ ] Add example output so contributors can quickly confirm success.
+- [x] Add a small sync script or task runner command for clean + copy.
+- [x] Add a guard step that fails if cleaned memory file and GUI data file differ.
+- [x] Update root `README.md` and `memory/README.md` with the canonical workflow.
+- [x] Add example output so contributors can quickly confirm success.
 
 ## Dependencies
 
@@ -60,3 +60,8 @@ Updated: `2026-03-03`
 - Run canonical sync command from a fresh checkout.
 - Confirm both cleaned files are byte-identical.
 - Launch GUI and verify latest edges appear (no stale subset).
+
+Implemented with:
+- `python brain/sync_concept_data.py`
+- Validation run: `python brain/sync_concept_data.py --cleaned-output /tmp/concept_list_cleaned.story1.txt --gui-output /tmp/gui_concept_list_cleaned.story1.txt`
+- Observed parity result: `Line parity: 413 == 413 (OK)` and `Byte parity: OK`.
