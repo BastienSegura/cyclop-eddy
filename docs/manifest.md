@@ -94,6 +94,38 @@ python brain/report_concept_quality.py \
   - self-edges `<= 0`
 - Additional thresholds are opt-in (for example `--max-cycle-edges`, `--max-duplicate-variant-extras`).
 
+Two-phase coverage workflow (recommended for broad coverage goals):
+- Phase 1 (wide scan): higher children, lower depth (default guidance: `14x2`).
+- Phase 2 (refinement): lower children, higher depth on selected frontier roots (default guidance: `8x3`).
+- Use the orchestration script to run both phases, merge outputs, and produce quality checkpoints:
+
+```bash
+python brain/run_two_phase_coverage.py \
+  --root-concept "Computer Science" \
+  --phase1-children 14 \
+  --phase1-depth 2 \
+  --phase2-children 8 \
+  --phase2-depth 3 \
+  --phase2-roots "Operating Systems" "Databases" "Computer Networks"
+```
+
+- Dry-run preview mode:
+
+```bash
+python brain/run_two_phase_coverage.py \
+  --phase2-roots "Operating Systems" "Databases" \
+  --dry-run
+```
+
+- Manual merge utility (if running phases manually):
+
+```bash
+python brain/merge_concept_edges.py \
+  --input memory/two_phase/phase1_raw.txt memory/two_phase/phase2/phase2_raw_01_operating_systems.txt \
+  --output memory/two_phase/concept_list_two_phase.txt \
+  --json-output memory/two_phase/reports/merge_stats.json
+```
+
 ## Resume / Save Behavior
 Current behavior is the expected behavior:
 - Progress is checkpointed to the state file.
