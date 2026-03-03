@@ -5,7 +5,20 @@ function toNodeId(label: string): NodeId {
 }
 
 function decodePathSegment(segment: string): string {
-  return segment.replace(/-/g, " ").trim();
+  const trimmed = segment.trim();
+
+  // New reversible encoding emitted by clean_concept_list.py
+  if (trimmed.startsWith("~")) {
+    const encoded = trimmed.slice(1);
+    try {
+      return decodeURIComponent(encoded).trim();
+    } catch {
+      return encoded.trim();
+    }
+  }
+
+  // Legacy encoding: spaces were stored as hyphens.
+  return trimmed.replace(/-/g, " ").trim();
 }
 
 function getParentLabel(pathPrefix: string): string {
