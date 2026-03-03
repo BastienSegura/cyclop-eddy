@@ -22,6 +22,9 @@ python brain/build_concept_list.py \
 python brain/build_concept_list.py --resume --state-file memory/concept_list_state.json
 
 python brain/sync_concept_data.py
+
+# Optional: enforce DAG-like cleaned output by dropping cycle-closing edges
+python brain/sync_concept_data.py --cycle-policy enforce
 ```
 
 Notes:
@@ -39,6 +42,10 @@ Notes:
   - `~<percent-encoded-label>` per segment
   - example: `~Computer%20Science.~Human-Computer%20Interaction: Child`
   - this preserves literal hyphens in concept names
+- Cleaner cycle policy is explicit:
+  - `warn` (default): keep cycles, print cycle counts/examples
+  - `enforce`: deterministically drop cycle-closing edges in first-seen order
+  - available on both `clean_concept_list.py` and `sync_concept_data.py`
 
 Identity contract:
 - canonical display label: `canonical_concept_label(text)` from `concept_identity.py`
