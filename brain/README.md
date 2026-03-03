@@ -36,6 +36,9 @@ python brain/report_concept_quality.py --input memory/concept_list.txt memory/co
 python brain/report_concept_quality.py --input memory/concept_list.txt --fail-on-threshold
 python brain/report_concept_quality.py --input memory/concept_list_cleaned.txt --mode cleaned \
   --fail-on-threshold --max-cycle-edges 0
+
+# Brain regression tests
+python -m unittest discover -s brain/tests -p 'test_*.py'
 ```
 
 Notes:
