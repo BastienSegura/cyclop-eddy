@@ -25,16 +25,22 @@ Updated: `2026-03-03`
 - Keep dedup in engine logic (`seen_normalized`) while reducing prompt bloat.
 - Use a minimal prompt exclude strategy that improves diversity and keeps queue expansion efficient.
 
+Boundary:
+- This story owns prompt exclude payload strategy only.
+- Canonical normalization and dedup key behavior are owned by STORY-003.
+
 ## Out of Scope
 
 - Changing model/provider.
 - Ontology-level semantic dedup (synonyms).
+- Canonicalization rule changes (markers/spacing/case behavior).
 
 ## Acceptance Criteria
 
 - [ ] Prompt builder no longer includes full global `exclude_list` by default.
-- [ ] Runtime dedup before enqueue remains enforced globally.
+- [ ] Runtime dedup before enqueue remains enforced globally without modifying canonical key behavior.
 - [ ] Optional local exclude mode exists (for example only parent-local accepted children).
+- [ ] Default strategy is explicitly documented and stable across resumed runs.
 - [ ] New mode and tradeoffs are documented in `brain/README.md`.
 
 ## Subtasks
@@ -43,11 +49,11 @@ Updated: `2026-03-03`
 - [ ] Implement local exclude payload construction with bounded size.
 - [ ] Keep `seen_normalized`/queue dedup unchanged as hard safety.
 - [ ] Log chosen exclude strategy in run output/state metadata.
-- [ ] Document defaults and migration notes for resumed runs.
+- [ ] Document defaults and migration notes for resumed runs and existing state files.
 
 ## Dependencies
 
-- STORY-003 for stronger normalization parity.
+- STORY-003 (must be completed first) for stable canonical key semantics.
 - STORY-007 for regression tests on dedup behavior.
 
 ## Risks
