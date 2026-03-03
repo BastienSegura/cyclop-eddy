@@ -41,6 +41,11 @@ Prototype uses:
 
 - `public/data/concept_list_cleaned.txt`
 
+Path prefix compatibility:
+- New cleaner format encodes each path segment as `~<percent-encoded-label>` to preserve literal hyphens.
+- Legacy files using `-` as a space substitute are still supported by fallback parsing.
+- A regression fixture is available at `public/data/concept_list_cleaned_hyphen_fixture.txt`.
+
 You can replace this file with newer generated data from `memory/concept_list_cleaned.txt`.
 
 Example:
