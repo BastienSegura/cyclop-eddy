@@ -365,6 +365,123 @@ function scaleComponentPositions(
   }
 }
 
+function stableAngleSeed(nodeId: NodeId): number {
+  let hash = 2166136261;
+  for (let index = 0; index < nodeId.length; index += 1) {
+    hash ^= nodeId.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+
+  return ((hash >>> 0) % 360) * (Math.PI / 180);
+}
+
+function enforceRootNeighborhoodRing(
+  graph: ConceptGraph,
+  positions: Record<NodeId, NodePosition>,
+): void {
+  const rootNodeId = graph.rootNodeId;
+  if (!rootNodeId) {
+    return;
+  }
+
+  const rootPosition = positions[rootNodeId];
+  if (!rootPosition) {
+    return;
+  }
+
+  const neighborIds = Array.from(
+    new Set<NodeId>([
+      ...(graph.neighborsByNode[rootNodeId] ?? []),
+      ...(graph.reverseNeighborsByNode[rootNodeId] ?? []),
+    ]),
+  ).filter((nodeId) => nodeId !== rootNodeId && Boolean(positions[nodeId]));
+
+  if (neighborIds.length === 0) {
+    return;
+  }
+
+  const neighborEntries = neighborIds
+    .map((nodeId) => {
+      const nodePosition = positions[nodeId];
+      if (!nodePosition) {
+        return null;
+      }
+
+      const dx = nodePosition.x - rootPosition.x;
+      const dy = nodePosition.y - rootPosition.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      const angle = distance > 0.0001 ? Math.atan2(dy, dx) : stableAngleSeed(nodeId);
+
+      return {
+        nodeId,
+        angle,
+        distance,
+        label: graph.nodes[nodeId]?.label ?? nodeId,
+      };
+    })
+    .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))
+    .sort((a, b) => {
+      if (a.angle !== b.angle) {
+        return a.angle - b.angle;
+      }
+      return a.label.localeCompare(b.label);
+    });
+
+  if (neighborEntries.length === 0) {
+    return;
+  }
+
+  const sortedDistances = neighborEntries
+    .map((entry) => entry.distance)
+    .filter((distance) => Number.isFinite(distance))
+    .sort((a, b) => a - b);
+
+  const medianDistance = sortedDistances.length === 0
+    ? 0
+    : sortedDistances[Math.floor(sortedDistances.length / 2)];
+  const minChordLength = 240;
+  const chordRadius = neighborEntries.length > 1
+    ? minChordLength / (2 * Math.sin(Math.PI / neighborEntries.length))
+    : minChordLength;
+  const targetRadius = Math.min(
+    1400,
+    Math.max(460, medianDistance, chordRadius),
+  );
+
+  const startAngle = neighborEntries[0]?.angle ?? (-Math.PI / 2);
+  const angleStep = (Math.PI * 2) / neighborEntries.length;
+
+  neighborEntries.forEach((entry, index) => {
+    const angle = startAngle + index * angleStep;
+    positions[entry.nodeId] = {
+      x: rootPosition.x + Math.cos(angle) * targetRadius,
+      y: rootPosition.y + Math.sin(angle) * targetRadius,
+    };
+  });
+
+  const protectedRadius = targetRadius + 180;
+  const rootNeighborhood = new Set<NodeId>([rootNodeId, ...neighborEntries.map((entry) => entry.nodeId)]);
+
+  for (const [nodeId, nodePosition] of Object.entries(positions)) {
+    if (rootNeighborhood.has(nodeId)) {
+      continue;
+    }
+
+    const dx = nodePosition.x - rootPosition.x;
+    const dy = nodePosition.y - rootPosition.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    if (distance >= protectedRadius) {
+      continue;
+    }
+
+    const angle = distance > 0.0001 ? Math.atan2(dy, dx) : stableAngleSeed(nodeId);
+    positions[nodeId] = {
+      x: rootPosition.x + Math.cos(angle) * protectedRadius,
+      y: rootPosition.y + Math.sin(angle) * protectedRadius,
+    };
+  }
+}
+
 export function computeGraphLayout(graph: ConceptGraph): GraphLayout {
   const undirected = buildUndirectedNeighbors(graph);
   const components = getConnectedComponents(graph, undirected);
@@ -406,6 +523,8 @@ export function computeGraphLayout(graph: ConceptGraph): GraphLayout {
       positions[nodeId] = componentPositions[nodeId];
     }
   });
+
+  enforceRootNeighborhoodRing(graph, positions);
 
   const allPositions = Object.values(positions);
   const bounds = allPositions.reduce(

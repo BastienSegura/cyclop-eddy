@@ -10,12 +10,6 @@ const DRAG_THRESHOLD_PX = 6;
 const VIEWPORT_MARGIN_PX = 140;
 const COLLISION_ITERATIONS = 14;
 const BASE_NODE_DISTANCE_PX = 82;
-const FIRST_RING_BASE_RADIUS_PX = 240;
-const FIRST_RING_PER_NODE_RADIUS_PX = 6;
-const FIRST_RING_MAX_RADIUS_PX = 560;
-const FIRST_RING_MIN_CHORD_PX = 96;
-const FIRST_RING_CLEARANCE_PX = 64;
-const OVERVIEW_EXCLUSION_RADIUS_PX = 360;
 const OVERVIEW_NODE_RADIUS_PX = 3;
 const LABEL_OFFSET_X = 14;
 const LABEL_OFFSET_Y = -14;
@@ -296,75 +290,6 @@ function buildAdjustedVisiblePositions(
     }
   }
 
-  const selectedBaseScreen = baseScreenByNodeId.get(selectedNodeId);
-  const firstRingNodeIds = activeNodeIds.filter((nodeId) => neighborhoodDepths.get(nodeId) === 1);
-  const firstRingNodeSet = new Set<NodeId>(firstRingNodeIds);
-  const firstRingCount = firstRingNodeIds.length;
-  let firstRingRadiusPx = FIRST_RING_BASE_RADIUS_PX;
-
-  if (selectedBaseScreen && firstRingCount > 0) {
-    const spacingRadius = FIRST_RING_BASE_RADIUS_PX + firstRingCount * FIRST_RING_PER_NODE_RADIUS_PX;
-    const chordRadius = firstRingCount > 1
-      ? FIRST_RING_MIN_CHORD_PX / (2 * Math.sin(Math.PI / firstRingCount))
-      : FIRST_RING_BASE_RADIUS_PX;
-    firstRingRadiusPx = Math.min(FIRST_RING_MAX_RADIUS_PX, Math.max(spacingRadius, chordRadius));
-
-    const seedAngles = firstRingNodeIds.map((nodeId) => {
-      const base = baseScreenByNodeId.get(nodeId);
-      if (!base) {
-        const hashSeed = (hashNodeId(nodeId) % 360) * (Math.PI / 180);
-        return { nodeId, angle: hashSeed };
-      }
-
-      return {
-        nodeId,
-        angle: Math.atan2(base.y - selectedBaseScreen.y, base.x - selectedBaseScreen.x),
-      };
-    });
-
-    seedAngles.sort((a, b) => a.angle - b.angle || a.nodeId.localeCompare(b.nodeId));
-    const startAngle = seedAngles[0]?.angle ?? -Math.PI / 2;
-    const step = (Math.PI * 2) / firstRingCount;
-
-    seedAngles.forEach((entry, index) => {
-      const angle = startAngle + index * step;
-      currentByNodeId.set(entry.nodeId, {
-        x: selectedBaseScreen.x + Math.cos(angle) * firstRingRadiusPx,
-        y: selectedBaseScreen.y + Math.sin(angle) * firstRingRadiusPx,
-      });
-    });
-
-    const keepOutRadiusPx = firstRingRadiusPx + FIRST_RING_CLEARANCE_PX;
-    for (const nodeId of activeNodeIds) {
-      if (nodeId === selectedNodeId || firstRingNodeSet.has(nodeId)) {
-        continue;
-      }
-
-      const current = currentByNodeId.get(nodeId);
-      if (!current) {
-        continue;
-      }
-
-      let dx = current.x - selectedBaseScreen.x;
-      let dy = current.y - selectedBaseScreen.y;
-      let distance = Math.sqrt(dx * dx + dy * dy);
-
-      if (distance >= keepOutRadiusPx) {
-        continue;
-      }
-
-      if (distance < 0.001) {
-        const fallbackAngle = (hashNodeId(nodeId) % 360) * (Math.PI / 180);
-        dx = Math.cos(fallbackAngle);
-        dy = Math.sin(fallbackAngle);
-        distance = 1;
-      }
-
-      current.x = selectedBaseScreen.x + (dx / distance) * keepOutRadiusPx;
-      current.y = selectedBaseScreen.y + (dy / distance) * keepOutRadiusPx;
-    }
-  }
-
   for (let iteration = 0; iteration < COLLISION_ITERATIONS; iteration += 1) {
     for (let i = 0; i < activeNodeIds.length; i += 1) {
       for (let j = i + 1; j < activeNodeIds.length; j += 1) {
@@ -400,8 +325,8 @@ function buildAdjustedVisiblePositions(
         const unitX = dx / distance;
         const unitY = dy / distance;
 
-        const aFixed = aNodeId === selectedNodeId || firstRingNodeSet.has(aNodeId);
-        const bFixed = bNodeId === selectedNodeId || firstRingNodeSet.has(bNodeId);
+        const aFixed = aNodeId === selectedNodeId;
+        const bFixed = bNodeId === selectedNodeId;
 
         if (!aFixed) {
           const factor = bFixed ? 2 : 1;
@@ -417,7 +342,7 @@ function buildAdjustedVisiblePositions(
     }
 
     for (const nodeId of activeNodeIds) {
-      if (nodeId === selectedNodeId || firstRingNodeSet.has(nodeId)) {
+      if (nodeId === selectedNodeId) {
         continue;
       }
 
@@ -638,10 +563,6 @@ export function ConstellationView({
     [visibleNodeIdList, layout, selectedNodeId, neighborhoodDepths, camera],
   );
 
-  const selectedWorldPosition = adjustedPositions[selectedNodeId] ?? layout.positions[selectedNodeId];
-  const overviewExclusionRadiusWorld = OVERVIEW_EXCLUSION_RADIUS_PX / Math.max(camera.zoom, 0.001);
-  const overviewExclusionRadiusWorldSquared = overviewExclusionRadiusWorld * overviewExclusionRadiusWorld;
-
   const visibleLabelIds = useMemo(
     () => buildVisibleLabelSet(graph, visibleNodeIdList, adjustedPositions, selectedNodeId, neighborhoodDepths, camera),
     [graph, visibleNodeIdList, adjustedPositions, selectedNodeId, neighborhoodDepths, camera],
@@ -772,56 +693,24 @@ export function ConstellationView({
         <g transform={transform}>
           <g className="constellation-overview-layer" aria-hidden="true">
             {overviewEdges.map((edge, index) => (
-              (() => {
-                if (selectedWorldPosition) {
-                  const fromDx = edge.from.x - selectedWorldPosition.x;
-                  const fromDy = edge.from.y - selectedWorldPosition.y;
-                  const toDx = edge.to.x - selectedWorldPosition.x;
-                  const toDy = edge.to.y - selectedWorldPosition.y;
-                  const fromDistanceSquared = fromDx * fromDx + fromDy * fromDy;
-                  const toDistanceSquared = toDx * toDx + toDy * toDy;
-                  if (
-                    fromDistanceSquared < overviewExclusionRadiusWorldSquared
-                    || toDistanceSquared < overviewExclusionRadiusWorldSquared
-                  ) {
-                    return null;
-                  }
-                }
-
-                return (
-                  <line
-                    key={`overview-edge-${index}`}
-                    x1={edge.from.x}
-                    y1={edge.from.y}
-                    x2={edge.to.x}
-                    y2={edge.to.y}
-                    className="constellation-line-overview"
-                  />
-                );
-              })()
+              <line
+                key={`overview-edge-${index}`}
+                x1={edge.from.x}
+                y1={edge.from.y}
+                x2={edge.to.x}
+                y2={edge.to.y}
+                className="constellation-line-overview"
+              />
             ))}
             {overviewNodes.map((node) => (
-              (() => {
-                if (selectedWorldPosition) {
-                  const dx = node.position.x - selectedWorldPosition.x;
-                  const dy = node.position.y - selectedWorldPosition.y;
-                  const distanceSquared = dx * dx + dy * dy;
-                  if (distanceSquared < overviewExclusionRadiusWorldSquared) {
-                    return null;
-                  }
-                }
-
-                return (
-                  <g
-                    key={`overview-node-${node.id}`}
-                    className="constellation-node-overview"
-                    transform={`translate(${node.position.x} ${node.position.y})`}
-                    style={overviewNodeStyleById.get(node.id)}
-                  >
-                    <polygon className="constellation-node-overview-shape" points={overviewStarPoints} />
-                  </g>
-                );
-              })()
+              <g
+                key={`overview-node-${node.id}`}
+                className="constellation-node-overview"
+                transform={`translate(${node.position.x} ${node.position.y})`}
+                style={overviewNodeStyleById.get(node.id)}
+              >
+                <polygon className="constellation-node-overview-shape" points={overviewStarPoints} />
+              </g>
             ))}
           </g>
 
