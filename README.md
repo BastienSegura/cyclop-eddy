@@ -35,6 +35,17 @@ Resume paused generation:
 python brain/build_concept_list.py --resume --state-file memory/concept_list_state.json
 ```
 
+Two-phase coverage workflow (recommended for broad concept coverage growth):
+
+```bash
+python brain/run_two_phase_coverage.py \
+  --phase2-roots "Operating Systems" "Databases" "Computer Networks"
+```
+
+When to use each mode:
+- Single run (`build_concept_list.py`): fast iteration on prompt/parameter tuning.
+- Two-phase (`run_two_phase_coverage.py`): planned coverage expansion with merge + quality checkpoints.
+
 After generation completes (new run or resumed run), clean and sync data to the GUI source of truth:
 
 ```bash
