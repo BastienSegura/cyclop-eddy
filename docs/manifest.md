@@ -65,6 +65,19 @@ python brain/clean_concept_list.py \
   --root "Computer Science"
 ```
 
+Cycle policy on cleaned edges:
+- Default mode is `warn`: cycles are allowed and reported (count + examples).
+- Optional `enforce` mode removes cycle-closing edges deterministically in first-seen order.
+- Example:
+
+```bash
+python brain/clean_concept_list.py \
+  --input memory/concept_list.txt \
+  --output memory/concept_list_cleaned.txt \
+  --root "Computer Science" \
+  --cycle-policy enforce
+```
+
 ## Resume / Save Behavior
 Current behavior is the expected behavior:
 - Progress is checkpointed to the state file.
