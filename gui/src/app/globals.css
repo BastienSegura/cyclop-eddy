@@ -402,7 +402,7 @@ body {
 }
 
 .edge-hover-tooltip {
-  position: fixed;
+  position: absolute;
   z-index: 40;
   pointer-events: none;
   transform: translate3d(0, 0, 0);
@@ -417,7 +417,7 @@ body {
   box-shadow:
     0 0 0 1px rgba(76, 140, 206, 0.2),
     0 6px 18px rgba(0, 0, 0, 0.34);
-  max-width: min(44ch, calc(100vw - 32px));
+  max-width: min(44ch, calc(100% - 24px));
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
