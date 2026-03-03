@@ -20,7 +20,11 @@ The script:
 - strips simple list formatting markers from concepts
 - de-duplicates edges
 - rewrites each line with the full parent path prefix:
-    Root-Concept.Sub-Concept.Parent: Child Concept
+    ~Root%20Concept.~Sub%20Concept.~Parent: Child Concept
+
+Path segments use an encoded format to preserve literal characters safely:
+- each segment is prefixed with `~`
+- segment payload uses URL percent-encoding
 """
 
 from __future__ import annotations
@@ -28,11 +32,13 @@ from __future__ import annotations
 import argparse
 from collections import defaultdict, deque
 from pathlib import Path
+from urllib.parse import quote
 from concept_identity import canonical_concept_key, canonical_concept_label, collapse_spaces, is_meta_concept_text
 
 
 def to_path_segment(text: str) -> str:
-    return collapse_spaces(text).replace(" ", "-")
+    # Prefix with '~' so GUI parser can distinguish encoded format from legacy format.
+    return f"~{quote(collapse_spaces(text), safe='')}"
 
 
 def is_meta_concept(text: str) -> bool:
