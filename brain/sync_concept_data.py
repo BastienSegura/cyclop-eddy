@@ -1,0 +1,93 @@
+#!/usr/bin/env python3
+"""Clean generated concept data, sync it to GUI, and verify parity.
+
+Usage:
+    python brain/sync_concept_data.py
+"""
+
+from __future__ import annotations
+
+import argparse
+import shutil
+from pathlib import Path
+
+from clean_concept_list import clean_concept_file
+
+
+def line_count(path: Path) -> int:
+    return len(path.read_text(encoding="utf-8").splitlines())
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Clean concept data, copy to GUI data source, and verify sync parity.",
+    )
+    parser.add_argument(
+        "--input",
+        default="memory/concept_list.txt",
+        help="Raw concept edge list (default: memory/concept_list.txt)",
+    )
+    parser.add_argument(
+        "--cleaned-output",
+        default="memory/concept_list_cleaned.txt",
+        help="Cleaned concept edge list output (default: memory/concept_list_cleaned.txt)",
+    )
+    parser.add_argument(
+        "--gui-output",
+        default="gui/public/data/concept_list_cleaned.txt",
+        help="GUI data target (default: gui/public/data/concept_list_cleaned.txt)",
+    )
+    parser.add_argument(
+        "--root",
+        default="Computer Science",
+        help="Root concept used for cleaned path prefixes (default: Computer Science)",
+    )
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
+
+    input_path = Path(args.input)
+    cleaned_output_path = Path(args.cleaned_output)
+    gui_output_path = Path(args.gui_output)
+
+    if not input_path.exists():
+        raise SystemExit(f"Input file not found: {input_path}")
+
+    cleaned_output_path.parent.mkdir(parents=True, exist_ok=True)
+    gui_output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    input_lines, cleaned_lines = clean_concept_file(
+        input_path=input_path,
+        output_path=cleaned_output_path,
+        root_override=args.root,
+    )
+
+    shutil.copyfile(cleaned_output_path, gui_output_path)
+
+    memory_line_count = line_count(cleaned_output_path)
+    gui_line_count = line_count(gui_output_path)
+
+    if memory_line_count != gui_line_count:
+        raise SystemExit(
+            "Sync parity check failed: "
+            f"memory lines={memory_line_count}, gui lines={gui_line_count}."
+        )
+
+    if cleaned_output_path.read_bytes() != gui_output_path.read_bytes():
+        raise SystemExit(
+            "Sync parity check failed: file contents differ after copy. "
+            "Expected byte-identical outputs."
+        )
+
+    print(f"[sync] Input lines: {input_lines}")
+    print(f"[sync] Cleaned lines: {cleaned_lines}")
+    print(f"[sync] Memory output: {cleaned_output_path}")
+    print(f"[sync] GUI output: {gui_output_path}")
+    print(f"[sync] Line parity: {memory_line_count} == {gui_line_count} (OK)")
+    print("[sync] Byte parity: OK")
+
+
+if __name__ == "__main__":
+    main()
