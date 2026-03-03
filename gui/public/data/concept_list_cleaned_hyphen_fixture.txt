@@ -1,0 +1,7 @@
+~Computer%20Science: Human-Computer Interaction
+~Computer%20Science.~Human-Computer%20Interaction: Error Prevention Techniques
+~Computer%20Science.~Human-Computer%20Interaction: User Experience Design
+
+# Legacy fallback samples (old cleaner format)
+Computer-Science: Legacy Parent
+Computer-Science.Legacy-Parent: Legacy Child
