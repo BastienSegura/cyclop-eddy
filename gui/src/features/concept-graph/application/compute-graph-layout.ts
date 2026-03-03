@@ -162,7 +162,7 @@ function initializeComponentPositions(
     }
 
     index += 1;
-    const radius = 105 * Math.sqrt(index);
+    const radius = 155 * Math.sqrt(index);
     const angle = index * goldenAngle;
 
     positions[nodeId] = {
@@ -214,14 +214,14 @@ function runForceLayout(
     })
     .filter((value): value is [number, number] => Boolean(value));
 
-  const idealLength = nodeCount > 260 ? 145 : nodeCount > 130 ? 160 : 178;
-  const iterations = nodeCount > 260 ? 220 : nodeCount > 130 ? 300 : 360;
-  const gravityStrength = 0.022;
-  const repulsionStrength = 0.9;
-  const attractionStrength = 0.24;
-  const repulsionCutoff = idealLength * 5.0;
-  const minEdgeLength = idealLength * 0.68;
-  const maxEdgeLength = idealLength * 1.52;
+  const idealLength = nodeCount > 260 ? 210 : nodeCount > 130 ? 228 : 248;
+  const iterations = nodeCount > 260 ? 260 : nodeCount > 130 ? 340 : 420;
+  const gravityStrength = 0.01;
+  const repulsionStrength = 1.45;
+  const attractionStrength = 0.2;
+  const repulsionCutoff = idealLength * 6.4;
+  const minEdgeLength = idealLength * 0.72;
+  const maxEdgeLength = idealLength * 1.86;
 
   // Faster direct degree lookup for current component.
   const degreeByIndex = new Array<number>(nodeCount).fill(0);
@@ -230,8 +230,8 @@ function runForceLayout(
     degreeByIndex[toIndex] += 1;
   }
 
-  let temperature = idealLength * 2.4;
-  const cooling = 0.972;
+  let temperature = idealLength * 3.1;
+  const cooling = 0.976;
   const anchorIndex = anchorNodeId ? nodeIndexes.get(anchorNodeId) ?? -1 : -1;
 
   for (let iteration = 0; iteration < iterations; iteration += 1) {
@@ -298,7 +298,7 @@ function runForceLayout(
       y[i] += (dispY[i] / displacement) * step;
     }
 
-    // Edge-length harmonization pass: keeps linked nodes in a tighter, more readable range.
+    // Edge-length harmonization pass keeps linked nodes in a readable distance range.
     for (const [fromIndex, toIndex] of edgeIndexes) {
       const dx = x[toIndex] - x[fromIndex];
       const dy = y[toIndex] - y[fromIndex];
@@ -341,7 +341,7 @@ export function computeGraphLayout(graph: ConceptGraph): GraphLayout {
   const components = getConnectedComponents(graph, undirected);
   const positions: Record<NodeId, NodePosition> = {};
 
-  const componentSpacing = 3400;
+  const componentSpacing = 5200;
   const columns = 3;
 
   components.forEach((componentNodes, componentIndex) => {
