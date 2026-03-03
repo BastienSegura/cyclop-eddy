@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import time
 from collections import deque
 from pathlib import Path
@@ -42,6 +43,11 @@ DEFAULTS = {
     "num_predict": 512,
     "num_ctx": 4096,
 }
+
+LEADING_MARKER_RE = re.compile(r"^(?:[-*•]+|\d+[.)])\s*")
+MULTISPACE_RE = re.compile(r"\s+")
+MAX_CONCEPT_WORDS = 4
+MAX_REJECTION_EVENTS = 2000
 
 
 def _post(route: str, payload: dict[str, Any]) -> dict[str, Any]:
@@ -111,7 +117,54 @@ def build_prompt(
 
 
 def _normalize_concept(concept: str) -> str:
-    return concept.strip().casefold()
+    return MULTISPACE_RE.sub(" ", concept).strip().casefold()
+
+
+def _count_words(concept: str) -> int:
+    normalized = MULTISPACE_RE.sub(" ", concept).strip()
+    if not normalized:
+        return 0
+    return len(normalized.split(" "))
+
+
+def _is_meta_candidate(concept: str) -> bool:
+    normalized = _normalize_concept(concept)
+
+    if normalized.startswith("here is") or normalized.startswith("here are"):
+        return True
+
+    if "semantically close" in normalized and "related concepts" in normalized:
+        return True
+
+    if normalized.startswith("output format"):
+        return True
+
+    return False
+
+
+def validate_candidate(candidate: str, parent_concept: str) -> tuple[str | None, str | None]:
+    concept = candidate.strip()
+
+    if not concept:
+        return None, "malformed_empty"
+
+    if LEADING_MARKER_RE.match(concept):
+        return None, "malformed_formatting"
+
+    if ":" in concept:
+        return None, "malformed_colon"
+
+    if _is_meta_candidate(concept):
+        return None, "meta_instruction"
+
+    word_count = _count_words(concept)
+    if word_count > MAX_CONCEPT_WORDS:
+        return None, "malformed_word_count"
+
+    if _normalize_concept(concept) == _normalize_concept(parent_concept):
+        return None, "self_reference"
+
+    return concept, None
 
 
 def parse_concepts(response: str) -> list[str]:
@@ -168,6 +221,8 @@ def print_progress(state: dict[str, Any]) -> None:
     queue_size = len(state["queue"])
     elapsed = float(state["elapsed_seconds"])
     rate = generated / elapsed if elapsed > 0 else 0.0
+    accepted = int(state.get("accepted_candidates", generated))
+    rejected = int(state.get("rejected_candidates", 0))
 
     generated_pct = (generated / estimated * 100.0) if estimated else 0.0
     prompts_pct = (prompts_done / prompts_estimated * 100.0) if prompts_estimated else 0.0
@@ -176,6 +231,7 @@ def print_progress(state: dict[str, Any]) -> None:
         "[progress] "
         f"concepts={generated}/{estimated} ({generated_pct:.2f}%) | "
         f"prompts={prompts_done}/{prompts_estimated} ({prompts_pct:.2f}%) | "
+        f"accepted={accepted} | rejected={rejected} | "
         f"queue={queue_size} | speed={rate:.2f} concepts/s",
         flush=True,
     )
@@ -189,7 +245,7 @@ def build_new_state(
 ) -> dict[str, Any]:
     normalized_root = _normalize_concept(root_concept)
     return {
-        "version": 2,
+        "version": 3,
         "root_concept": root_concept,
         "concept_list_length": concept_list_length,
         "max_depth": max_depth,
@@ -199,6 +255,11 @@ def build_new_state(
         "seen_normalized": [normalized_root],
         "edges": [],
         "generated_concepts": 0,
+        "accepted_candidates": 0,
+        "rejected_candidates": 0,
+        "rejection_counts": {},
+        "rejection_events": [],
+        "rejection_events_dropped": 0,
         "processed_prompt_calls": 0,
         "estimated_max_generated_concepts": estimate_max_generated_concepts(concept_list_length, max_depth),
         "estimated_max_prompt_calls": estimate_max_prompt_calls(concept_list_length, max_depth),
@@ -224,10 +285,16 @@ def generate_concept_graph(
         if not state_path.exists():
             raise SystemExit(f"Cannot resume: state file not found at '{state_file}'")
         state = load_generation_state(state_file)
-        if state.get("version") not in (1, 2):
+        if state.get("version") not in (1, 2, 3):
             raise SystemExit("Unsupported state file version.")
         state.setdefault("edges", [])
-        state["version"] = 2
+        state.setdefault("generated_concepts", len(state["edges"]))
+        state.setdefault("accepted_candidates", int(state["generated_concepts"]))
+        state.setdefault("rejected_candidates", 0)
+        state.setdefault("rejection_counts", {})
+        state.setdefault("rejection_events", [])
+        state.setdefault("rejection_events_dropped", 0)
+        state["version"] = 3
 
         resumed_output_path = state.get("output_path", output_path)
         if resumed_output_path.startswith("src/"):
@@ -266,12 +333,40 @@ def generate_concept_graph(
         state["exclude_list"].append(concept)
         return True
 
+    def register_rejection(
+        parent_concept: str,
+        depth: int,
+        candidate: str,
+        reason: str,
+        prompt_rejection_counts: dict[str, int],
+    ) -> None:
+        prompt_rejection_counts[reason] = prompt_rejection_counts.get(reason, 0) + 1
+        state["rejected_candidates"] = int(state["rejected_candidates"]) + 1
+
+        rejection_counts = state["rejection_counts"]
+        rejection_counts[reason] = int(rejection_counts.get(reason, 0)) + 1
+
+        rejection_events = state["rejection_events"]
+        if len(rejection_events) < MAX_REJECTION_EVENTS:
+            rejection_events.append(
+                {
+                    "prompt_call": int(state["processed_prompt_calls"]) + 1,
+                    "parent_concept": parent_concept,
+                    "depth": depth,
+                    "candidate": candidate,
+                    "reason": reason,
+                }
+            )
+        else:
+            state["rejection_events_dropped"] = int(state["rejection_events_dropped"]) + 1
+
     try:
         while queue:
             current = queue[0]
             concept = str(current["concept"])
             depth = int(current["depth"])
             new_edges: list[str] = []
+            prompt_rejection_counts: dict[str, int] = {}
 
             if depth >= int(state["max_depth"]):
                 queue.popleft()
@@ -281,17 +376,49 @@ def generate_concept_graph(
             prompt = build_prompt(concept, int(state["concept_list_length"]), state["exclude_list"])
             response = simple_prompt(prompt)
             response_concepts = parse_concepts(response)
+            accepted_count = 0
 
             child_depth = depth + 1
             for candidate in response_concepts:
-                if not mark_seen(candidate):
+                cleaned_candidate, rejection_reason = validate_candidate(candidate, concept)
+                if rejection_reason:
+                    register_rejection(
+                        parent_concept=concept,
+                        depth=depth,
+                        candidate=candidate,
+                        reason=rejection_reason,
+                        prompt_rejection_counts=prompt_rejection_counts,
+                    )
                     continue
-                new_edges.append(f"{concept}: {candidate}")
-                queue.append({"concept": candidate, "depth": child_depth})
+
+                assert cleaned_candidate is not None
+                if accepted_count >= int(state["concept_list_length"]):
+                    register_rejection(
+                        parent_concept=concept,
+                        depth=depth,
+                        candidate=cleaned_candidate,
+                        reason="over_limit",
+                        prompt_rejection_counts=prompt_rejection_counts,
+                    )
+                    continue
+
+                if not mark_seen(cleaned_candidate):
+                    register_rejection(
+                        parent_concept=concept,
+                        depth=depth,
+                        candidate=cleaned_candidate,
+                        reason="duplicate_seen",
+                        prompt_rejection_counts=prompt_rejection_counts,
+                    )
+                    continue
+                new_edges.append(f"{concept}: {cleaned_candidate}")
+                queue.append({"concept": cleaned_candidate, "depth": child_depth})
+                accepted_count += 1
 
             if new_edges:
                 state["edges"].extend(new_edges)
                 state["generated_concepts"] += len(new_edges)
+                state["accepted_candidates"] = int(state["accepted_candidates"]) + len(new_edges)
 
             queue.popleft()
             state["processed_prompt_calls"] += 1
@@ -303,6 +430,19 @@ def generate_concept_graph(
                     output_path=state["output_path"],
                     mode="append",
                 )
+            rejected_in_prompt = sum(prompt_rejection_counts.values())
+            if prompt_rejection_counts:
+                sorted_reasons = sorted(prompt_rejection_counts.items(), key=lambda item: (-item[1], item[0]))
+                reason_block = ", ".join(f"{reason}={count}" for reason, count in sorted_reasons)
+            else:
+                reason_block = "none"
+            print(
+                "[prompt] "
+                f"parent={json.dumps(concept)} depth={depth} "
+                f"candidates={len(response_concepts)} accepted={accepted_count} "
+                f"rejected={rejected_in_prompt} reasons={reason_block}",
+                flush=True,
+            )
             print_progress(state)
 
     except KeyboardInterrupt:
