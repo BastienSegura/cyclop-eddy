@@ -78,6 +78,22 @@ python brain/clean_concept_list.py \
   --cycle-policy enforce
 ```
 
+Quality reporting:
+- Generate report for raw + cleaned data:
+
+```bash
+python brain/report_concept_quality.py \
+  --input memory/concept_list.txt memory/concept_list_cleaned.txt \
+  --output memory/concept_quality_report.md \
+  --json-output memory/concept_quality_report.json
+```
+
+- Optional gate mode (`--fail-on-threshold`) defaults to:
+  - malformed lines `<= 0`
+  - meta leaks `<= 0`
+  - self-edges `<= 0`
+- Additional thresholds are opt-in (for example `--max-cycle-edges`, `--max-duplicate-variant-extras`).
+
 ## Resume / Save Behavior
 Current behavior is the expected behavior:
 - Progress is checkpointed to the state file.
