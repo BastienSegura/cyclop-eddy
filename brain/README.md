@@ -35,6 +35,10 @@ Notes:
   - caps accepted children per prompt call to `concept_list_length`
 - Per prompt call, logs now include `accepted`, `rejected`, and rejection reasons.
 - Rejection observability is persisted in checkpoint state (`rejection_counts`, `rejection_events`).
+- Cleaner output path prefixes now use reversible encoded segments:
+  - `~<percent-encoded-label>` per segment
+  - example: `~Computer%20Science.~Human-Computer%20Interaction: Child`
+  - this preserves literal hyphens in concept names
 
 Identity contract:
 - canonical display label: `canonical_concept_label(text)` from `concept_identity.py`
