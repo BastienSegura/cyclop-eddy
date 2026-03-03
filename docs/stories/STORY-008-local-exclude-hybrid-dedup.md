@@ -2,7 +2,7 @@
 
 ID: `STORY-008`
 Title: `Replace global prompt exclude with local exclude + runtime dedup`
-Status: `ready`
+Status: `done`
 Priority: `P1`
 Owner: `unassigned`
 Created: `2026-03-03`
@@ -37,19 +37,19 @@ Boundary:
 
 ## Acceptance Criteria
 
-- [ ] Prompt builder no longer includes full global `exclude_list` by default.
-- [ ] Runtime dedup before enqueue remains enforced globally without modifying canonical key behavior.
-- [ ] Optional local exclude mode exists (for example only parent-local accepted children).
-- [ ] Default strategy is explicitly documented and stable across resumed runs.
-- [ ] New mode and tradeoffs are documented in `brain/README.md`.
+- [x] Prompt builder no longer includes full global `exclude_list` by default.
+- [x] Runtime dedup before enqueue remains enforced globally without modifying canonical key behavior.
+- [x] Optional local exclude mode exists (for example only parent-local accepted children).
+- [x] Default strategy is explicitly documented and stable across resumed runs.
+- [x] New mode and tradeoffs are documented in `brain/README.md`.
 
 ## Subtasks
 
-- [ ] Add generation option for exclude strategy (`global`, `local`, `none`).
-- [ ] Implement local exclude payload construction with bounded size.
-- [ ] Keep `seen_normalized`/queue dedup unchanged as hard safety.
-- [ ] Log chosen exclude strategy in run output/state metadata.
-- [ ] Document defaults and migration notes for resumed runs and existing state files.
+- [x] Add generation option for exclude strategy (`global`, `local`, `none`).
+- [x] Implement local exclude payload construction with bounded size.
+- [x] Keep `seen_normalized`/queue dedup unchanged as hard safety.
+- [x] Log chosen exclude strategy in run output/state metadata.
+- [x] Document defaults and migration notes for resumed runs and existing state files.
 
 ## Dependencies
 
@@ -66,3 +66,22 @@ Boundary:
 - Run two comparable generations (`global` vs `local`) on same root and params.
 - Compare rejection ratios, unique concepts added, and under-filled parent counts.
 - Confirm queue dedup still blocks repeated concepts globally.
+
+Implemented with:
+- `brain/build_concept_list.py`
+  - adds `--exclude-strategy {global,local,none}` and `--exclude-local-limit`.
+  - defaults new runs to `local` strategy with bounded local payload.
+  - persists `exclude_strategy` and `exclude_local_limit` in state (`version: 5`).
+  - keeps hard runtime dedup (`seen_normalized`) unchanged before enqueue.
+  - resumes with state-stored strategy/limit and rejects conflicting overrides.
+  - logs strategy in run config and per-prompt metrics.
+- `brain/tests/test_build_concept_list_canonical.py`
+  - validates default `local` behavior.
+  - validates explicit `global` and `none` behavior.
+  - validates resume stability and conflicting strategy rejection.
+- `brain/README.md`
+  - documents strategy modes, defaults, and resume migration notes.
+
+Validation evidence:
+- `python -m unittest brain.tests.test_build_concept_list_canonical` passed (`7` tests).
+- `python -m unittest discover -s brain/tests -p 'test_*.py'` passed (`23` tests).
