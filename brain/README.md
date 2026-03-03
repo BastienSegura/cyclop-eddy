@@ -9,6 +9,8 @@ Scripts:
 - `sync_concept_data.py`: canonical one-command flow to clean, copy to GUI data, and verify parity.
 - `concept_identity.py`: shared canonical label/key helpers used by generation and cleaning.
 - `report_concept_quality.py`: deterministic quality report for raw/cleaned concept files.
+- `merge_concept_edges.py`: deterministic canonical merge for multiple raw edge files.
+- `run_two_phase_coverage.py`: two-phase coverage workflow (phase 1 wide, phase 2 refinement).
 
 How to run:
 
@@ -39,6 +41,27 @@ python brain/report_concept_quality.py --input memory/concept_list.txt --fail-on
 python brain/report_concept_quality.py --input memory/concept_list_cleaned.txt --mode cleaned \
   --fail-on-threshold --max-cycle-edges 0
 
+# Merge multiple raw runs into one deduplicated raw edge list
+python brain/merge_concept_edges.py \
+  --input memory/two_phase/phase1_raw.txt memory/two_phase/phase2/phase2_raw_01_algorithms.txt \
+  --output memory/concept_list_merged.txt \
+  --json-output memory/concept_list_merged.stats.json
+
+# Two-phase coverage workflow (recommended for broad coverage)
+python brain/run_two_phase_coverage.py \
+  --root-concept "Computer Science" \
+  --phase1-children 14 \
+  --phase1-depth 2 \
+  --phase2-children 8 \
+  --phase2-depth 3 \
+  --phase2-roots-file memory/frontier_roots.txt \
+  --baseline-input memory/concept_list_baseline.txt
+
+# Preview the two-phase commands without executing generation
+python brain/run_two_phase_coverage.py \
+  --phase2-roots "Operating Systems" "Databases" "Computer Networks" \
+  --dry-run
+
 # Brain regression tests
 python -m unittest discover -s brain/tests -p 'test_*.py'
 ```
@@ -59,6 +82,18 @@ Notes:
 - Runtime dedup remains global in-engine (`seen_normalized`), independent of prompt exclude strategy.
 - Per prompt call, logs now include `accepted`, `rejected`, and rejection reasons.
 - Rejection observability is persisted in checkpoint state (`rejection_counts`, `rejection_events`).
+- Two-phase workflow defaults and tuning:
+  - phase 1 (`14x2`) is a wide scan that maximizes first-pass coverage.
+  - phase 2 (`8x3`) refines selected frontier roots with deeper expansion.
+  - start from these defaults, then tune by report metrics:
+    - if duplicate rejection is high, lower phase-2 children.
+    - if frontier remains too broad, add more phase-2 roots instead of increasing depth globally.
+- `run_two_phase_coverage.py` writes quality checkpoints using `report_concept_quality.py`:
+  - phase 1 quality snapshot
+  - merged-output quality snapshot
+  - optional baseline-vs-merged comparison (when `--baseline-input` is provided)
+- Use single-run mode when you want quick iterations or prompt tuning.
+- Use two-phase mode when the goal is broad coverage growth with measurable checkpoints.
 - Cleaner output path prefixes now use reversible encoded segments:
   - `~<percent-encoded-label>` per segment
   - example: `~Computer%20Science.~Human-Computer%20Interaction: Child`
@@ -98,3 +133,16 @@ State migration note:
   - `exclude_local_limit` (defaults to `64`)
 - Resume behavior is stable by default: if a state file already stores strategy values, resume keeps those values.
 - For safety, resuming with conflicting `--exclude-strategy` or `--exclude-local-limit` exits with an error.
+
+Two-phase dry-run transcript example:
+
+```text
+[two-phase] Dry run. Planned commands:
+  1. /usr/bin/python .../brain/build_concept_list.py --root-concept 'Computer Science' --concept-list-length 14 --max-depth 2 ...
+  2. /usr/bin/python .../brain/report_concept_quality.py --input memory/two_phase/phase1_raw.txt --mode raw ...
+  3. /usr/bin/python .../brain/build_concept_list.py --root-concept 'Operating Systems' --concept-list-length 8 --max-depth 3 ...
+  4. /usr/bin/python .../brain/build_concept_list.py --root-concept Databases --concept-list-length 8 --max-depth 3 ...
+  5. /usr/bin/python .../brain/merge_concept_edges.py --input ... --output memory/two_phase/concept_list_two_phase.txt ...
+  6. /usr/bin/python .../brain/report_concept_quality.py --input memory/two_phase/concept_list_two_phase.txt --mode raw ...
+[two-phase] Phase2 roots (2): Operating Systems, Databases
+```
