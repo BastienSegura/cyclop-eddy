@@ -6,6 +6,7 @@ Purpose:
 Scripts:
 - `build_concept_list.py`: generates concept relationships with live progress and resume support.
 - `clean_concept_list.py`: cleans/normalizes generated relationships and rebuilds tree-style prefixes.
+- `sync_concept_data.py`: canonical one-command flow to clean, copy to GUI data, and verify parity.
 
 How to run:
 
@@ -19,12 +20,10 @@ python brain/build_concept_list.py \
 
 python brain/build_concept_list.py --resume --state-file memory/concept_list_state.json
 
-python brain/clean_concept_list.py \
-  --input memory/concept_list.txt \
-  --output memory/concept_list_cleaned.txt \
-  --root "Computer Science"
+python brain/sync_concept_data.py
 ```
 
 Notes:
 - During generation, progress is printed in real time (`generated/estimated`, prompts, queue, speed).
 - `Ctrl+C` saves state so generation can be resumed safely.
+- Run `python brain/sync_concept_data.py` after any completed generation (new or resumed).
