@@ -2,7 +2,7 @@
 
 ID: `STORY-009`
 Title: `Add two-phase coverage generation strategy`
-Status: `ready`
+Status: `done`
 Priority: `P1`
 Owner: `unassigned`
 Created: `2026-03-03`
@@ -38,18 +38,18 @@ Boundary:
 
 ## Acceptance Criteria
 
-- [ ] A documented two-phase command sequence exists with parameter guidance.
-- [ ] Phase outputs can be merged into a single deduplicated edge file.
-- [ ] Workflow includes objective comparison checkpoints using STORY-006 report outputs.
-- [ ] README/docs clearly state when to use two-phase mode vs single run.
+- [x] A documented two-phase command sequence exists with parameter guidance.
+- [x] Phase outputs can be merged into a single deduplicated edge file.
+- [x] Workflow includes objective comparison checkpoints using STORY-006 report outputs.
+- [x] README/docs clearly state when to use two-phase mode vs single run.
 
 ## Subtasks
 
-- [ ] Add script or command docs for Phase 1 (wide) and Phase 2 (refinement).
-- [ ] Add merge utility for multi-run raw outputs with deterministic dedup.
-- [ ] Wire merge workflow to consume metrics from STORY-006 report command.
-- [ ] Document recommended defaults and tuning guidance.
-- [ ] Add example run transcript in docs.
+- [x] Add script or command docs for Phase 1 (wide) and Phase 2 (refinement).
+- [x] Add merge utility for multi-run raw outputs with deterministic dedup.
+- [x] Wire merge workflow to consume metrics from STORY-006 report command.
+- [x] Document recommended defaults and tuning guidance.
+- [x] Add example run transcript in docs.
 
 ## Dependencies
 
@@ -66,3 +66,24 @@ Boundary:
 - Execute Phase 1 and Phase 2 on sample root.
 - Merge outputs and confirm monotonic unique edge growth.
 - Compare coverage metrics against a single baseline run.
+
+Implemented with:
+- `brain/merge_concept_edges.py`
+  - deterministic canonical dedup merge for multi-run raw edge files.
+  - outputs merged raw file + optional JSON merge stats.
+- `brain/run_two_phase_coverage.py`
+  - orchestrates phase 1 (`14x2` default guidance) + phase 2 (`8x3` default guidance).
+  - supports roots from CLI and/or file, canonical dedup of refinement roots.
+  - runs merge step and quality checkpoints using `report_concept_quality.py`.
+  - supports dry-run planning mode and optional baseline-vs-merged report.
+- tests:
+  - `brain/tests/test_merge_concept_edges.py`
+  - `brain/tests/test_run_two_phase_coverage.py`
+- docs:
+  - `brain/README.md` (workflow, tuning guidance, dry-run transcript)
+  - `README.md` (mode selection guidance)
+  - `docs/manifest.md` (project-level two-phase workflow)
+
+Validation evidence:
+- `python -m unittest brain.tests.test_merge_concept_edges` passed (`2` tests).
+- `python -m unittest brain.tests.test_run_two_phase_coverage` passed (`2` tests).
