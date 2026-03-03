@@ -461,6 +461,7 @@ export function ConstellationView({
 }: ConstellationViewProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [edgeHoverTooltip, setEdgeHoverTooltip] = useState<EdgeHoverTooltip | null>(null);
+  const shellRef = useRef<HTMLDivElement | null>(null);
 
   const interactionRef = useRef({
     pointerId: -1,
@@ -709,16 +710,24 @@ export function ConstellationView({
 
     const targetNodeId = edgeTargetNodeId(edgeFromNodeId, edgeToNodeId);
     const targetNodeLabel = graph.nodes[targetNodeId]?.label ?? targetNodeId;
+    const shellRect = shellRef.current?.getBoundingClientRect();
+    if (!shellRect) {
+      return;
+    }
+
+    const localX = event.clientX - shellRect.left + 14;
+    const localY = event.clientY - shellRect.top + 14;
 
     setEdgeHoverTooltip({
       label: targetNodeLabel,
-      screenX: event.clientX + 14,
-      screenY: event.clientY + 14,
+      screenX: localX,
+      screenY: localY,
     });
   }
 
   return (
     <div
+      ref={shellRef}
       className={`constellation-shell${isDragging ? " is-dragging" : ""}`}
       aria-label="Concept constellation map"
       onPointerDown={handlePointerDown}
