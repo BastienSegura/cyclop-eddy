@@ -13,5 +13,7 @@ Notes:
 - Keep only what you want to preserve between runs.
 - Typical generation flow:
   1. `brain/build_concept_list.py` writes `concept_list.txt` and checkpoints state in `concept_list_state.json`.
-  2. `brain/clean_concept_list.py` writes `concept_list_cleaned.txt`.
-  3. GUI prototype loads cleaned data from `gui/public/data/concept_list_cleaned.txt` (copy from this folder when needed).
+  2. After generation completion (including resumed runs), run:
+     `python brain/sync_concept_data.py`
+  3. `brain/sync_concept_data.py` rewrites `concept_list_cleaned.txt`, copies it to
+     `gui/public/data/concept_list_cleaned.txt`, and verifies line/byte parity.
