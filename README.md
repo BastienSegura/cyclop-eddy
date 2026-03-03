@@ -10,7 +10,7 @@ Cyclop Eddy is a concept-universe project focused on making learning feel engagi
 
 ## Repository layout
 
-- `brain/`: active Python engine (`build_concept_list.py`, `clean_concept_list.py`).
+- `brain/`: active Python engine (`build_concept_list.py`, `clean_concept_list.py`, `sync_concept_data.py`).
 - `gui/`: Next.js App Router prototype for concept constellation exploration.
 - `memory/`: generated runtime data and checkpoint/save files.
 - `archive/`: old experiments, historical snapshots, deprecated material.
@@ -35,16 +35,21 @@ Resume paused generation:
 python brain/build_concept_list.py --resume --state-file memory/concept_list_state.json
 ```
 
-Clean generated graph data:
+After generation completes (new run or resumed run), clean and sync data to the GUI source of truth:
 
 ```bash
-python brain/clean_concept_list.py
+python brain/sync_concept_data.py
 ```
 
-Sync cleaned data into the GUI prototype:
+Example output:
 
-```bash
-cp memory/concept_list_cleaned.txt gui/public/data/concept_list_cleaned.txt
+```text
+[sync] Input lines: 417
+[sync] Cleaned lines: 413
+[sync] Memory output: memory/concept_list_cleaned.txt
+[sync] GUI output: gui/public/data/concept_list_cleaned.txt
+[sync] Line parity: 413 == 413 (OK)
+[sync] Byte parity: OK
 ```
 
 Run GUI prototype:
