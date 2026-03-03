@@ -42,6 +42,12 @@ python brain/run_two_phase_coverage.py \
   --phase2-roots "Operating Systems" "Databases" "Computer Networks"
 ```
 
+Find under-explored graph zones and get ranked refinement roots:
+
+```bash
+python brain/find_unexplored_areas.py --input memory/concept_list_cleaned.txt --target-children 8 --top-n 20
+```
+
 When to use each mode:
 - Single run (`build_concept_list.py`): fast iteration on prompt/parameter tuning.
 - Two-phase (`run_two_phase_coverage.py`): planned coverage expansion with merge + quality checkpoints.
