@@ -25,13 +25,19 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
 import time
 from collections import deque
 from pathlib import Path
 from typing import Any
 
 import requests
+from concept_identity import (
+    canonical_concept_key,
+    canonical_concept_label,
+    concept_word_count,
+    has_leading_formatting_marker,
+    is_meta_concept_text,
+)
 
 BASE_URL = "http://localhost:11434"
 MODEL = "llama3:8b"
@@ -44,8 +50,6 @@ DEFAULTS = {
     "num_ctx": 4096,
 }
 
-LEADING_MARKER_RE = re.compile(r"^(?:[-*•]+|\d+[.)])\s*")
-MULTISPACE_RE = re.compile(r"\s+")
 MAX_CONCEPT_WORDS = 4
 MAX_REJECTION_EVENTS = 2000
 
@@ -117,39 +121,28 @@ def build_prompt(
 
 
 def _normalize_concept(concept: str) -> str:
-    return MULTISPACE_RE.sub(" ", concept).strip().casefold()
+    return canonical_concept_key(concept)
 
 
 def _count_words(concept: str) -> int:
-    normalized = MULTISPACE_RE.sub(" ", concept).strip()
-    if not normalized:
-        return 0
-    return len(normalized.split(" "))
+    return concept_word_count(concept)
 
 
 def _is_meta_candidate(concept: str) -> bool:
-    normalized = _normalize_concept(concept)
-
-    if normalized.startswith("here is") or normalized.startswith("here are"):
-        return True
-
-    if "semantically close" in normalized and "related concepts" in normalized:
-        return True
-
-    if normalized.startswith("output format"):
-        return True
-
-    return False
+    return is_meta_concept_text(concept)
 
 
 def validate_candidate(candidate: str, parent_concept: str) -> tuple[str | None, str | None]:
-    concept = candidate.strip()
-
-    if not concept:
+    raw_candidate = candidate.strip()
+    if not raw_candidate:
         return None, "malformed_empty"
 
-    if LEADING_MARKER_RE.match(concept):
+    if has_leading_formatting_marker(raw_candidate):
         return None, "malformed_formatting"
+
+    concept = canonical_concept_label(raw_candidate)
+    if not concept:
+        return None, "malformed_empty"
 
     if ":" in concept:
         return None, "malformed_colon"
@@ -169,18 +162,12 @@ def validate_candidate(candidate: str, parent_concept: str) -> tuple[str | None,
 
 def parse_concepts(response: str) -> list[str]:
     concepts: list[str] = []
-    seen: set[str] = set()
 
     for raw_concept in response.split("\n"):
         concept = raw_concept.strip()
         if not concept:
             continue
 
-        normalized = _normalize_concept(concept)
-        if normalized in seen:
-            continue
-
-        seen.add(normalized)
         concepts.append(concept)
 
     return concepts
@@ -243,15 +230,16 @@ def build_new_state(
     max_depth: int,
     output_path: str,
 ) -> dict[str, Any]:
-    normalized_root = _normalize_concept(root_concept)
+    root_label = canonical_concept_label(root_concept)
+    normalized_root = _normalize_concept(root_label)
     return {
-        "version": 3,
-        "root_concept": root_concept,
+        "version": 4,
+        "root_concept": root_label,
         "concept_list_length": concept_list_length,
         "max_depth": max_depth,
         "output_path": output_path,
-        "queue": [{"concept": root_concept, "depth": 0}],
-        "exclude_list": [root_concept],
+        "queue": [{"concept": root_label, "depth": 0}],
+        "exclude_list": [root_label],
         "seen_normalized": [normalized_root],
         "edges": [],
         "generated_concepts": 0,
@@ -265,6 +253,36 @@ def build_new_state(
         "estimated_max_prompt_calls": estimate_max_prompt_calls(concept_list_length, max_depth),
         "elapsed_seconds": 0.0,
     }
+
+
+def normalize_exclude_list(raw_excludes: list[Any]) -> list[str]:
+    normalized: list[str] = []
+    seen: set[str] = set()
+
+    for raw_value in raw_excludes:
+        label = canonical_concept_label(str(raw_value))
+        key = canonical_concept_key(label)
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        normalized.append(label)
+
+    return normalized
+
+
+def normalize_queue(raw_queue: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    normalized_queue: list[dict[str, Any]] = []
+    seen: set[str] = set()
+
+    for raw_item in raw_queue:
+        label = canonical_concept_label(str(raw_item.get("concept", "")))
+        key = canonical_concept_key(label)
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        normalized_queue.append({"concept": label, "depth": int(raw_item.get("depth", 0))})
+
+    return normalized_queue
 
 
 def generate_concept_graph(
@@ -285,7 +303,7 @@ def generate_concept_graph(
         if not state_path.exists():
             raise SystemExit(f"Cannot resume: state file not found at '{state_file}'")
         state = load_generation_state(state_file)
-        if state.get("version") not in (1, 2, 3):
+        if state.get("version") not in (1, 2, 3, 4):
             raise SystemExit("Unsupported state file version.")
         state.setdefault("edges", [])
         state.setdefault("generated_concepts", len(state["edges"]))
@@ -294,7 +312,34 @@ def generate_concept_graph(
         state.setdefault("rejection_counts", {})
         state.setdefault("rejection_events", [])
         state.setdefault("rejection_events_dropped", 0)
-        state["version"] = 3
+        state.setdefault("exclude_list", [state.get("root_concept", root_concept)])
+        state.setdefault("seen_normalized", [])
+        state.setdefault("queue", [])
+
+        state["root_concept"] = canonical_concept_label(str(state.get("root_concept", root_concept)))
+        if not state["root_concept"]:
+            state["root_concept"] = canonical_concept_label(root_concept)
+
+        state["exclude_list"] = normalize_exclude_list(list(state["exclude_list"]))
+        if not state["exclude_list"]:
+            state["exclude_list"] = [state["root_concept"]]
+
+        state["queue"] = normalize_queue(list(state["queue"]))
+        if not state["queue"]:
+            state["queue"] = [{"concept": state["root_concept"], "depth": 0}]
+
+        seen_normalized: set[str] = set()
+        for raw_seen in state["seen_normalized"]:
+            key = canonical_concept_key(str(raw_seen))
+            if key:
+                seen_normalized.add(key)
+        for exclude in state["exclude_list"]:
+            key = canonical_concept_key(exclude)
+            if key:
+                seen_normalized.add(key)
+        state["seen_normalized"] = sorted(seen_normalized)
+
+        state["version"] = 4
 
         resumed_output_path = state.get("output_path", output_path)
         if resumed_output_path.startswith("src/"):
@@ -325,12 +370,13 @@ def generate_concept_graph(
         save_generation_state(state_file, state)
 
     def mark_seen(concept: str) -> bool:
-        normalized = _normalize_concept(concept)
+        canonical_label = canonical_concept_label(concept)
+        normalized = _normalize_concept(canonical_label)
         if not normalized or normalized in seen_normalized:
             return False
 
         seen_normalized.add(normalized)
-        state["exclude_list"].append(concept)
+        state["exclude_list"].append(canonical_label)
         return True
 
     def register_rejection(
