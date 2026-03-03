@@ -28,24 +28,7 @@ from __future__ import annotations
 import argparse
 from collections import defaultdict, deque
 from pathlib import Path
-import re
-
-MULTISPACE_RE = re.compile(r"\s+")
-LEADING_MARKER_RE = re.compile(r"^(?:[-*•]+|\d+[.)])\s*")
-
-
-def collapse_spaces(text: str) -> str:
-    return MULTISPACE_RE.sub(" ", text).strip()
-
-
-def canonical(text: str) -> str:
-    return collapse_spaces(text).casefold()
-
-
-def strip_formatting(text: str) -> str:
-    cleaned = text.strip().replace("**", "")
-    cleaned = LEADING_MARKER_RE.sub("", cleaned)
-    return collapse_spaces(cleaned)
+from concept_identity import canonical_concept_key, canonical_concept_label, collapse_spaces, is_meta_concept_text
 
 
 def to_path_segment(text: str) -> str:
@@ -53,15 +36,7 @@ def to_path_segment(text: str) -> str:
 
 
 def is_meta_concept(text: str) -> bool:
-    lowered = canonical(text)
-
-    if lowered.startswith("here is") or lowered.startswith("here are"):
-        return True
-
-    if "semantically close" in lowered and "related concepts" in lowered:
-        return True
-
-    return False
+    return is_meta_concept_text(text)
 
 
 def parse_edge(raw_line: str) -> tuple[str, str] | None:
@@ -69,8 +44,8 @@ def parse_edge(raw_line: str) -> tuple[str, str] | None:
         return None
 
     parent_raw, child_raw = raw_line.split(":", 1)
-    parent = strip_formatting(parent_raw)
-    child = strip_formatting(child_raw).rstrip(":").strip()
+    parent = canonical_concept_label(parent_raw)
+    child = canonical_concept_label(child_raw).rstrip(":").strip()
 
     if not parent or not child:
         return None
@@ -87,8 +62,8 @@ def choose_root(
     root_override: str | None,
 ) -> str | None:
     if root_override:
-        root_label = strip_formatting(root_override)
-        root_key = canonical(root_label)
+        root_label = canonical_concept_label(root_override)
+        root_key = canonical_concept_key(root_label)
         labels.setdefault(root_key, root_label)
         return root_key
 
@@ -161,8 +136,8 @@ def clean_concept_file(
             continue
 
         parent_label, child_label = parsed
-        parent_key = canonical(parent_label)
-        child_key = canonical(child_label)
+        parent_key = canonical_concept_key(parent_label)
+        child_key = canonical_concept_key(child_label)
 
         if parent_key == child_key:
             continue
