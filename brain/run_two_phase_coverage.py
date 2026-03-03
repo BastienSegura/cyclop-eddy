@@ -143,12 +143,18 @@ def main() -> None:
         raise SystemExit("phase depth values must be >= 1")
     if args.exclude_local_limit < 1:
         raise SystemExit("exclude-local-limit must be >= 1")
+    if args.skip_quality_report and args.baseline_input:
+        raise SystemExit("--baseline-input requires quality reports; remove --skip-quality-report.")
 
     roots_file_path: Path | None = None
     if args.phase2_roots_file:
         roots_file_path = Path(args.phase2_roots_file)
         if not roots_file_path.exists():
             raise SystemExit(f"phase2 roots file not found: {roots_file_path}")
+    if args.baseline_input:
+        baseline_path = Path(args.baseline_input)
+        if not baseline_path.exists():
+            raise SystemExit(f"baseline input file not found: {baseline_path}")
 
     phase2_roots = collect_phase2_roots(args.phase2_roots, roots_file_path)
     if not phase2_roots:
