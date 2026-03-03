@@ -60,6 +60,17 @@ npm install
 npm run dev
 ```
 
+Run regression tests:
+
+```bash
+# Brain tests
+python -m unittest discover -s brain/tests -p 'test_*.py'
+
+# GUI tests
+cd gui
+npm run test
+```
+
 ## Current exploration UX
 
 - Starts at `Computer Science` and reveals neighbors first.
