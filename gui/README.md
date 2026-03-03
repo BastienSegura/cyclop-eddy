@@ -24,6 +24,12 @@ Production build check:
 npm run build
 ```
 
+Run regression tests:
+
+```bash
+npm run test
+```
+
 ## Architecture
 
 `src/features/concept-graph/` is split by responsibility:
