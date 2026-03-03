@@ -19,12 +19,17 @@ The script:
 - removes malformed and meta/instruction lines (e.g. "Here are ...")
 - strips simple list formatting markers from concepts
 - de-duplicates edges
+- applies a cycle policy (`warn` or `enforce`)
 - rewrites each line with the full parent path prefix:
     ~Root%20Concept.~Sub%20Concept.~Parent: Child Concept
 
 Path segments use an encoded format to preserve literal characters safely:
 - each segment is prefixed with `~`
 - segment payload uses URL percent-encoding
+
+Cycle policy:
+- `warn` (default): keep cyclic edges and report cycle metrics/examples.
+- `enforce`: deterministically drop cycle-closing edges in first-seen order.
 """
 
 from __future__ import annotations
@@ -32,6 +37,7 @@ from __future__ import annotations
 import argparse
 from collections import defaultdict, deque
 from pathlib import Path
+from typing import Any
 from urllib.parse import quote
 from concept_identity import canonical_concept_key, canonical_concept_label, collapse_spaces, is_meta_concept_text
 
@@ -125,11 +131,114 @@ def build_paths(
     return paths
 
 
+def build_adjacency(edges: list[tuple[str, str]]) -> dict[str, list[str]]:
+    adjacency: dict[str, list[str]] = defaultdict(list)
+    for parent, child in edges:
+        adjacency[parent].append(child)
+    return adjacency
+
+
+def find_path(
+    adjacency: dict[str, list[str]],
+    source: str,
+    target: str,
+) -> list[str] | None:
+    if source == target:
+        return [source]
+
+    queue: deque[list[str]] = deque([[source]])
+    visited: set[str] = {source}
+
+    while queue:
+        path = queue.popleft()
+        node = path[-1]
+
+        for neighbor in adjacency.get(node, []):
+            if neighbor == target:
+                return path + [neighbor]
+            if neighbor in visited:
+                continue
+            visited.add(neighbor)
+            queue.append(path + [neighbor])
+
+    return None
+
+
+def canonical_cycle_key(cycle_nodes_closed: list[str]) -> tuple[str, ...]:
+    body = cycle_nodes_closed[:-1]
+    if not body:
+        return tuple()
+    rotations = [tuple(body[index:] + body[:index]) for index in range(len(body))]
+    return min(rotations)
+
+
+def analyze_cycle_stats(
+    edges: list[tuple[str, str]],
+    labels: dict[str, str],
+    max_examples: int,
+) -> dict[str, Any]:
+    adjacency = build_adjacency(edges)
+    cycle_edge_count = 0
+    seen_cycles: set[tuple[str, ...]] = set()
+    examples: list[str] = []
+
+    for parent, child in edges:
+        path_child_to_parent = find_path(adjacency, child, parent)
+        if not path_child_to_parent:
+            continue
+
+        cycle_edge_count += 1
+        cycle_nodes_closed = [parent] + path_child_to_parent
+        cycle_key = canonical_cycle_key(cycle_nodes_closed)
+        if cycle_key in seen_cycles:
+            continue
+
+        seen_cycles.add(cycle_key)
+        if len(examples) < max_examples:
+            rendered = " -> ".join(labels.get(node, node) for node in cycle_nodes_closed)
+            examples.append(rendered)
+
+    return {
+        "cycle_edge_count": cycle_edge_count,
+        "cycle_examples": examples,
+    }
+
+
+def apply_cycle_policy(
+    edges: list[tuple[str, str]],
+    cycle_policy: str,
+) -> tuple[list[tuple[str, str]], list[tuple[str, str]]]:
+    if cycle_policy == "warn":
+        return edges, []
+
+    if cycle_policy != "enforce":
+        raise ValueError(f"Unsupported cycle policy: {cycle_policy}")
+
+    kept_edges: list[tuple[str, str]] = []
+    dropped_edges: list[tuple[str, str]] = []
+    adjacency: dict[str, list[str]] = defaultdict(list)
+
+    for edge in edges:
+        parent, child = edge
+        if find_path(adjacency, child, parent):
+            dropped_edges.append(edge)
+            continue
+        kept_edges.append(edge)
+        adjacency[parent].append(child)
+
+    return kept_edges, dropped_edges
+
+
 def clean_concept_file(
     input_path: Path,
     output_path: Path,
     root_override: str | None = None,
-) -> tuple[int, int]:
+    cycle_policy: str = "warn",
+    max_cycle_examples: int = 5,
+) -> tuple[int, int, dict[str, Any]]:
+    if max_cycle_examples < 0:
+        raise ValueError("max_cycle_examples must be >= 0")
+
     raw_lines = input_path.read_text(encoding="utf-8").splitlines()
 
     labels: dict[str, str] = {}
@@ -158,11 +267,15 @@ def clean_concept_file(
         seen_edges.add(edge)
         edges.append(edge)
 
-    root_key = choose_root(edges, labels, root_override)
-    paths = build_paths(edges, root_key)
+    before_stats = analyze_cycle_stats(edges, labels, max_cycle_examples)
+    filtered_edges, dropped_cycle_edges = apply_cycle_policy(edges, cycle_policy)
+    after_stats = analyze_cycle_stats(filtered_edges, labels, max_cycle_examples)
+
+    root_key = choose_root(filtered_edges, labels, root_override)
+    paths = build_paths(filtered_edges, root_key)
 
     output_lines: list[str] = []
-    for parent_key, child_key in edges:
+    for parent_key, child_key in filtered_edges:
         parent_path_nodes = paths.get(parent_key, [parent_key])
         parent_prefix = ".".join(to_path_segment(labels[node]) for node in parent_path_nodes)
         child_label = labels[child_key]
@@ -174,7 +287,15 @@ def clean_concept_file(
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(output_text, encoding="utf-8")
-    return len(raw_lines), len(output_lines)
+    stats = {
+        "cycle_policy": cycle_policy,
+        "cycle_edge_count_before": int(before_stats["cycle_edge_count"]),
+        "cycle_examples_before": list(before_stats["cycle_examples"]),
+        "cycle_edge_count_after": int(after_stats["cycle_edge_count"]),
+        "cycle_examples_after": list(after_stats["cycle_examples"]),
+        "dropped_cycle_edge_count": len(dropped_cycle_edges),
+    }
+    return len(raw_lines), len(output_lines), stats
 
 
 def parse_args() -> argparse.Namespace:
@@ -194,6 +315,18 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="Optional root concept override used for path prefixes.",
     )
+    parser.add_argument(
+        "--cycle-policy",
+        choices=("warn", "enforce"),
+        default="warn",
+        help="Cycle handling policy: 'warn' keeps cycles, 'enforce' drops cycle-closing edges.",
+    )
+    parser.add_argument(
+        "--max-cycle-examples",
+        type=int,
+        default=5,
+        help="Maximum number of representative cycle examples to print.",
+    )
     return parser.parse_args()
 
 
@@ -205,10 +338,34 @@ def main() -> None:
     if not input_path.exists():
         raise SystemExit(f"Input file not found: {input_path}")
 
-    total_lines, kept_lines = clean_concept_file(input_path, output_path, args.root)
+    total_lines, kept_lines, stats = clean_concept_file(
+        input_path,
+        output_path,
+        root_override=args.root,
+        cycle_policy=args.cycle_policy,
+        max_cycle_examples=args.max_cycle_examples,
+    )
     print(f"Cleaned concept list written to: {output_path}")
     print(f"Input lines: {total_lines}")
     print(f"Output lines: {kept_lines}")
+    print(
+        "Cycle policy: "
+        f"{stats['cycle_policy']} | "
+        f"cycle_edges(before={stats['cycle_edge_count_before']}, after={stats['cycle_edge_count_after']}) | "
+        f"dropped={stats['dropped_cycle_edge_count']}"
+    )
+
+    before_examples = stats["cycle_examples_before"]
+    if before_examples:
+        print("Cycle examples before policy:")
+        for example in before_examples:
+            print(f"  - {example}")
+
+    after_examples = stats["cycle_examples_after"]
+    if args.cycle_policy == "enforce" and after_examples:
+        print("Cycle examples after policy:")
+        for example in after_examples:
+            print(f"  - {example}")
 
 
 if __name__ == "__main__":
