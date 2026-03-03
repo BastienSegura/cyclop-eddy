@@ -47,6 +47,12 @@ interface LabelBox {
   bottom: number;
 }
 
+interface EdgeHoverTooltip {
+  label: string;
+  screenX: number;
+  screenY: number;
+}
+
 interface RGBColor {
   r: number;
   g: number;
@@ -454,6 +460,7 @@ export function ConstellationView({
   onZoomAtPoint,
 }: ConstellationViewProps) {
   const [isDragging, setIsDragging] = useState(false);
+  const [edgeHoverTooltip, setEdgeHoverTooltip] = useState<EdgeHoverTooltip | null>(null);
 
   const interactionRef = useRef({
     pointerId: -1,
@@ -613,6 +620,7 @@ export function ConstellationView({
     }
 
     setIsDragging(true);
+    setEdgeHoverTooltip(null);
     event.preventDefault();
     onPan(-deltaScreenX / camera.zoom, -deltaScreenY / camera.zoom);
   }
@@ -678,6 +686,37 @@ export function ConstellationView({
     onZoomAtPoint(screenX, screenY, multiplier);
   }
 
+  function edgeTargetNodeId(edgeFromNodeId: NodeId, edgeToNodeId: NodeId): NodeId {
+    if (selectedNodeId === edgeFromNodeId) {
+      return edgeToNodeId;
+    }
+
+    if (selectedNodeId === edgeToNodeId) {
+      return edgeFromNodeId;
+    }
+
+    return edgeToNodeId;
+  }
+
+  function updateEdgeHoverTooltip(
+    event: React.PointerEvent<SVGLineElement>,
+    edgeFromNodeId: NodeId,
+    edgeToNodeId: NodeId,
+  ): void {
+    if (interactionRef.current.pointerId !== -1) {
+      return;
+    }
+
+    const targetNodeId = edgeTargetNodeId(edgeFromNodeId, edgeToNodeId);
+    const targetNodeLabel = graph.nodes[targetNodeId]?.label ?? targetNodeId;
+
+    setEdgeHoverTooltip({
+      label: targetNodeLabel,
+      screenX: event.clientX + 14,
+      screenY: event.clientY + 14,
+    });
+  }
+
   return (
     <div
       className={`constellation-shell${isDragging ? " is-dragging" : ""}`}
@@ -687,6 +726,7 @@ export function ConstellationView({
       onPointerUp={finishPointerInteraction}
       onPointerCancel={finishPointerInteraction}
       onLostPointerCapture={finishPointerInteraction}
+      onPointerLeave={() => setEdgeHoverTooltip(null)}
       onWheel={handleWheel}
     >
       <svg className="constellation-lines" viewBox={`0 0 ${VIEWPORT_WIDTH} ${VIEWPORT_HEIGHT}`} preserveAspectRatio="xMidYMid meet">
@@ -760,6 +800,9 @@ export function ConstellationView({
                   data-edge-from-node-id={edge.from}
                   data-edge-to-node-id={edge.to}
                   className="constellation-line-hitzone"
+                  onPointerEnter={(event) => updateEdgeHoverTooltip(event, edge.from, edge.to)}
+                  onPointerMove={(event) => updateEdgeHoverTooltip(event, edge.from, edge.to)}
+                  onPointerLeave={() => setEdgeHoverTooltip(null)}
                 />
               </g>
             );
@@ -822,6 +865,17 @@ export function ConstellationView({
           })}
         </g>
       </svg>
+      {edgeHoverTooltip ? (
+        <div
+          className="edge-hover-tooltip"
+          style={{
+            left: edgeHoverTooltip.screenX,
+            top: edgeHoverTooltip.screenY,
+          }}
+        >
+          {edgeHoverTooltip.label}
+        </div>
+      ) : null}
     </div>
   );
 }
