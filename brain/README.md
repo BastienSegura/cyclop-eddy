@@ -8,6 +8,7 @@ Scripts:
 - `clean_concept_list.py`: cleans/normalizes generated relationships and rebuilds tree-style prefixes.
 - `sync_concept_data.py`: canonical one-command flow to clean, copy to GUI data, and verify parity.
 - `concept_identity.py`: shared canonical label/key helpers used by generation and cleaning.
+- `report_concept_quality.py`: deterministic quality report for raw/cleaned concept files.
 
 How to run:
 
@@ -25,6 +26,16 @@ python brain/sync_concept_data.py
 
 # Optional: enforce DAG-like cleaned output by dropping cycle-closing edges
 python brain/sync_concept_data.py --cycle-policy enforce
+
+# Quality report (markdown stdout + optional files)
+python brain/report_concept_quality.py --input memory/concept_list.txt memory/concept_list_cleaned.txt \
+  --output memory/concept_quality_report.md \
+  --json-output memory/concept_quality_report.json
+
+# CI/manual gate examples
+python brain/report_concept_quality.py --input memory/concept_list.txt --fail-on-threshold
+python brain/report_concept_quality.py --input memory/concept_list_cleaned.txt --mode cleaned \
+  --fail-on-threshold --max-cycle-edges 0
 ```
 
 Notes:
@@ -46,6 +57,18 @@ Notes:
   - `warn` (default): keep cycles, print cycle counts/examples
   - `enforce`: deterministically drop cycle-closing edges in first-seen order
   - available on both `clean_concept_list.py` and `sync_concept_data.py`
+- Quality report metrics include:
+  - malformed lines, meta leaks, self-edges
+  - duplicate edge counts + duplicate variant counts
+  - fanout distribution, cycle edges/examples, root candidates, line counts
+- Threshold defaults when using `--fail-on-threshold`:
+  - `malformed_line_count <= 0`
+  - `meta_line_count <= 0`
+  - `self_edge_count <= 0`
+  - cycle and duplicate-variant thresholds are opt-in (`--max-cycle-edges`, `--max-duplicate-variant-extras`)
+- Interpretation guideline:
+  - raw files should generally pass default gate
+  - cleaned files may intentionally keep cycles under `--cycle-policy warn`; enforce cycle threshold only when desired
 
 Identity contract:
 - canonical display label: `canonical_concept_label(text)` from `concept_identity.py`
