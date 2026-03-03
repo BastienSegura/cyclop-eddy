@@ -8,8 +8,8 @@ import { VIEWPORT_HEIGHT, VIEWPORT_WIDTH } from "./viewport-constants";
 
 const DRAG_THRESHOLD_PX = 6;
 const VIEWPORT_MARGIN_PX = 140;
-const COLLISION_ITERATIONS = 7;
-const BASE_NODE_DISTANCE_PX = 41;
+const COLLISION_ITERATIONS = 14;
+const BASE_NODE_DISTANCE_PX = 82;
 const OVERVIEW_NODE_RADIUS_PX = 3;
 const LABEL_OFFSET_X = 14;
 const LABEL_OFFSET_Y = -14;
@@ -308,13 +308,13 @@ function buildAdjustedVisiblePositions(
 
         let minDistance = BASE_NODE_DISTANCE_PX;
         if (aNodeId === selectedNodeId || bNodeId === selectedNodeId) {
-          minDistance += 9;
+          minDistance += 22;
         }
 
         const aDepth = neighborhoodDepths.get(aNodeId);
         const bDepth = neighborhoodDepths.get(bNodeId);
         if (aDepth === 1 || bDepth === 1) {
-          minDistance += 5;
+          minDistance += 12;
         }
 
         if (distance >= minDistance) {
@@ -352,8 +352,8 @@ function buildAdjustedVisiblePositions(
         continue;
       }
 
-      current.x += (base.x - current.x) * 0.08;
-      current.y += (base.y - current.y) * 0.08;
+      current.x += (base.x - current.x) * 0.045;
+      current.y += (base.y - current.y) * 0.045;
     }
   }
 
