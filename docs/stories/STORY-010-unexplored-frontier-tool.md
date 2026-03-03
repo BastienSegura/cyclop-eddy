@@ -25,10 +25,15 @@ Updated: `2026-03-03`
 - Provide a simple CLI tool that ranks unexplored/under-explored graph zones.
 - Output should be actionable for follow-up generation commands.
 
+Boundary:
+- This story owns frontier ranking and root suggestion output only.
+- General dataset quality reporting remains owned by STORY-006.
+
 ## Out of Scope
 
 - GUI integration.
 - Interactive visualization.
+- Building a full quality report replacement.
 
 ## Acceptance Criteria
 
@@ -49,7 +54,7 @@ Updated: `2026-03-03`
 ## Dependencies
 
 - STORY-009 for two-phase coverage workflow.
-- STORY-006 for shared metric conventions.
+- STORY-006 for shared metric conventions and terminology alignment.
 
 ## Risks
 
