@@ -1,0 +1,67 @@
+{
+  "files": [
+    {
+      "path": "memory/two_phase/concept_list_two_phase.txt",
+      "mode_requested": "raw",
+      "mode_detected": "raw",
+      "line_count": 2863,
+      "parsed_edge_count": 2863,
+      "graph_unique_edge_count": 2863,
+      "node_count": 2265,
+      "parent_count": 409,
+      "malformed_line_count": 0,
+      "meta_line_count": 0,
+      "self_edge_count": 0,
+      "duplicate_edge_exact_count": 0,
+      "duplicate_edge_canonical_count": 0,
+      "duplicate_variant_group_count": 9,
+      "duplicate_variant_extra_count": 9,
+      "fanout": {
+        "min": 1,
+        "max": 32,
+        "avg": 7,
+        "distribution": {
+          "1": 6,
+          "2": 15,
+          "3": 18,
+          "4": 44,
+          "5": 42,
+          "6": 65,
+          "7": 90,
+          "8": 77,
+          "9": 7,
+          "10": 4,
+          "11": 6,
+          "12": 4,
+          "13": 7,
+          "14": 5,
+          "15": 4,
+          "16": 4,
+          "17": 1,
+          "18": 3,
+          "22": 2,
+          "24": 2,
+          "27": 2,
+          "32": 1
+        }
+      },
+      "cycle_edge_count": 229,
+      "cycle_examples": [
+        "Computer Science -> Algorithms -> Computer Science",
+        "Computer Science -> Artificial Intelligence -> Natural Language Processing -> Pattern Recognition -> Information Theory -> Communication Networks -> Network Topology -> System Design -> System Architecture -> Technical Stack -> Algorithms -> Computer Science",
+        "Computer Science -> Data Structures -> Software Engineering -> Computer Science",
+        "Computer Science -> Database Systems -> Cloud Computing -> Network Storage -> File Systems -> Data Structures -> Software Engineering -> Computer Science",
+        "Computer Science -> Formal Language Theory -> Automata Theory -> Computational Complexity -> Algorithmic Efficiency -> Parallel Processing -> Distributed Computing -> Cloud Computing -> Network Storage -> File Systems -> Data Structures -> Software Engineering -> Computer Science"
+      ],
+      "root_candidate_count": 1,
+      "root_candidates": [
+        "Databases"
+      ],
+      "samples": {
+        "malformed": [],
+        "meta": [],
+        "self_edges": []
+      }
+    }
+  ]
+}

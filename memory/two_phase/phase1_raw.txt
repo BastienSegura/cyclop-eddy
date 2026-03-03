@@ -1,0 +1,156 @@
+Computer Science: Algorithms
+Computer Science: Artificial Intelligence
+Computer Science: Cryptography
+Computer Science: Data Structures
+Computer Science: Database Systems
+Computer Science: Formal Language Theory
+Computer Science: Human-Computer Interaction
+Computer Science: Information Technology
+Computer Science: Machine Learning
+Computer Science: Mathematical Physics
+Computer Science: Networking Protocols
+Computer Science: Programming Languages
+Computer Science: Software Engineering
+Computer Science: Theory of Computation
+Algorithms: Computational Complexity
+Algorithms: Mathematical Modeling
+Algorithms: Logic Gates
+Algorithms: Formal Languages
+Algorithms: Symbolic Manipulation
+Algorithms: Information Theory
+Algorithms: Combinatorics
+Algorithms: Graph Theory
+Algorithms: Numerical Analysis
+Algorithms: Pattern Recognition
+Algorithms: Neural Networks
+Artificial Intelligence: Intelligent Systems
+Artificial Intelligence: Computer Vision
+Artificial Intelligence: Deep Learning
+Artificial Intelligence: Natural Language Processing
+Artificial Intelligence: Robotics
+Artificial Intelligence: Expert Systems
+Artificial Intelligence: Cognitive Computing
+Artificial Intelligence: Swarm Intelligence
+Artificial Intelligence: Decision Support Systems
+Artificial Intelligence: Knowledge Representation
+Artificial Intelligence: Autonomous Vehicles
+Cryptography: Secure Hash Algorithms
+Cryptography: Digital Signatures
+Cryptography: Encryption Methods
+Cryptography: Key Management Systems
+Cryptography: Public Key Infrastructure
+Cryptography: Data Encryption Standard
+Cryptography: Block Ciphers
+Cryptography: Stream Ciphers
+Cryptography: Symmetric Cryptography
+Cryptography: Asymmetric Cryptography
+Cryptography: Hash Functions
+Cryptography: Cryptanalysis Techniques
+Cryptography: Authentication Protocols
+Data Structures: Algorithmic Complexity
+Data Structures: Computational Geometry
+Data Structures: Abstract Data Types
+Data Structures: Information Retrieval
+Data Structures: Object-Oriented Programming
+Data Structures: Formal Systems
+Data Structures: Computational Logic
+Data Structures: Type Theory
+Database Systems: Data Modeling
+Database Systems: File System
+Database Systems: Computer Network
+Database Systems: Data Storage
+Database Systems: Cloud Computing
+Database Systems: SQL Language
+Database Systems: Database Design
+Database Systems: Data Analysis
+Database Systems: Big Data
+Database Systems: Data Mining
+Database Systems: Knowledge Graph
+Database Systems: Data Governance
+Database Systems: Schema Onboarding
+Formal Language Theory: Grammar Theory
+Formal Language Theory: Automata Theory
+Formal Language Theory: Lambda Calculus
+Formal Language Theory: Recursion Theory
+Formal Language Theory: Formal Grammar
+Formal Language Theory: Context-Free Grammar
+Formal Language Theory: Chomsky Hierarchy
+Formal Language Theory: Logic Programming
+Formal Language Theory: Algebraic Language
+Formal Language Theory: Category Theory
+Formal Language Theory: Proof Theory
+Human-Computer Interaction: User Experience Design
+Human-Computer Interaction: Interface Theory
+Human-Computer Interaction: Cognitive Psychology
+Human-Computer Interaction: Computational Linguistics
+Human-Computer Interaction: Graphical User Interfaces
+Human-Computer Interaction: Usability Engineering
+Human-Computer Interaction: Human Factors Engineering
+Human-Computer Interaction: Interaction Design Methodologies
+Human-Computer Interaction: Software Usability
+Human-Computer Interaction: Information Architecture
+Human-Computer Interaction: Computer-Mediated Communication
+Human-Computer Interaction: Multimodal Interaction
+Human-Computer Interaction: Cognitive Load Theory
+Human-Computer Interaction: Attention Management
+Information Technology: Data Processing
+Information Technology: Computer Networks
+Information Technology: Software Development
+Information Technology: Cybersecurity
+Information Technology: Database Management
+Information Technology: Computer Architecture
+Information Technology: System Administration
+Information Technology: IT Services
+Information Technology: Web Development
+Information Technology: Network Security
+Information Technology: Application Software
+Information Technology: Storage Technology
+Machine Learning: Supervised Learning
+Machine Learning: Unsupervised Learning
+Machine Learning: Reinforcement Learning
+Machine Learning: Image Classification
+Machine Learning: Speech Recognition
+Machine Learning: Predictive Modeling
+Mathematical Physics: Theoretical Mechanics
+Mathematical Physics: Hamiltonian Dynamics
+Mathematical Physics: Quantum Field Theory
+Mathematical Physics: Lagrangian Mechanics
+Mathematical Physics: Relativity
+Mathematical Physics: Classical Electrodynamics
+Mathematical Physics: Symplectic Geometry
+Mathematical Physics: Differential Geometry
+Mathematical Physics: Operator Algebras
+Mathematical Physics: Feynman Path Integrals
+Mathematical Physics: Wormholes
+Mathematical Physics: Black Holes
+Mathematical Physics: Gravitational Waves
+Networking Protocols: Transport Layer
+Networking Protocols: Socket Programming
+Networking Protocols: Data Link Layers
+Networking Protocols: Internet Architecture
+Networking Protocols: Network Topology
+Networking Protocols: IP Addressing
+Networking Protocols: Layered Communication
+Networking Protocols: Traffic Management
+Networking Protocols: Packet Switching
+Networking Protocols: Routing Algorithms
+Networking Protocols: TCP/IP Stack
+Networking Protocols: Flow Control
+Networking Protocols: Byte Sizing
+Programming Languages: Computer Systems
+Programming Languages: Compilers
+Programming Languages: Syntax Analysis
+Programming Languages: Functional Programming
+Programming Languages: Programming Paradigms
+Programming Languages: Mathematics
+Software Engineering: Algorithm Design
+Software Engineering: Code Analysis
+Software Engineering: Design Patterns
+Software Engineering: Information Systems
+Software Engineering: Interface Design
+Software Engineering: Modeling Languages
+Software Engineering: Process Management
+Software Engineering: System Architecture
+Software Engineering: User Experience
+Theory of Computation: Mathematical Logic
+Theory of Computation: Formal Verification
