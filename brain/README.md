@@ -11,6 +11,7 @@ Scripts:
 - `report_concept_quality.py`: deterministic quality report for raw/cleaned concept files.
 - `merge_concept_edges.py`: deterministic canonical merge for multiple raw edge files.
 - `run_two_phase_coverage.py`: two-phase coverage workflow (phase 1 wide, phase 2 refinement).
+- `find_unexplored_areas.py`: ranks under-explored nodes to pick next refinement roots.
 
 How to run:
 
@@ -62,6 +63,21 @@ python brain/run_two_phase_coverage.py \
   --phase2-roots "Operating Systems" "Databases" "Computer Networks" \
   --dry-run
 
+# Frontier detection from cleaned graph (table output + copy-ready roots list)
+python brain/find_unexplored_areas.py \
+  --input memory/concept_list_cleaned.txt \
+  --target-children 8 \
+  --top-n 25
+
+# JSON output + leaf filtering
+python brain/find_unexplored_areas.py \
+  --input memory/concept_list_cleaned.txt \
+  --target-children 8 \
+  --top-n 25 \
+  --exclude-leaves \
+  --output-format json \
+  --json-output memory/frontier_report.json
+
 # Brain regression tests
 python -m unittest discover -s brain/tests -p 'test_*.py'
 ```
@@ -92,6 +108,14 @@ Notes:
   - phase 1 quality snapshot
   - merged-output quality snapshot
   - optional baseline-vs-merged comparison (when `--baseline-input` is provided)
+- `find_unexplored_areas.py` ranking behavior:
+  - returns nodes where `out_degree < target_children` (including leaves unless `--exclude-leaves`).
+  - score prioritizes deficit first, then shallower depth, then reachable descendants.
+  - supports depth filters (`--min-depth`, `--max-depth`) to focus search areas.
+- Frontier-driven refinement workflow:
+  - run `find_unexplored_areas.py` on cleaned data
+  - copy suggested roots into `memory/frontier_roots.txt`
+  - run `run_two_phase_coverage.py --phase2-roots-file memory/frontier_roots.txt`
 - Use single-run mode when you want quick iterations or prompt tuning.
 - Use two-phase mode when the goal is broad coverage growth with measurable checkpoints.
 - Cleaner output path prefixes now use reversible encoded segments:
