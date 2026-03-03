@@ -17,6 +17,8 @@ python brain/build_concept_list.py \
   --root-concept "Computer Science" \
   --concept-list-length 25 \
   --max-depth 3 \
+  --exclude-strategy local \
+  --exclude-local-limit 64 \
   --output memory/concept_list.txt \
   --state-file memory/concept_list_state.json
 
@@ -50,6 +52,11 @@ Notes:
   - rejects formatting markers (for example bullets or numbered prefixes)
   - rejects malformed candidates (for example embedded `:` or >4 words)
   - caps accepted children per prompt call to `concept_list_length`
+- Prompt exclude strategy is configurable:
+  - `local` (default): include only current parent + that parent's accepted children, bounded by `--exclude-local-limit`.
+  - `global`: include full historical exclude list (old behavior, larger prompt payload).
+  - `none`: do not send an exclude block in the prompt.
+- Runtime dedup remains global in-engine (`seen_normalized`), independent of prompt exclude strategy.
 - Per prompt call, logs now include `accepted`, `rejected`, and rejection reasons.
 - Rejection observability is persisted in checkpoint state (`rejection_counts`, `rejection_events`).
 - Cleaner output path prefixes now use reversible encoded segments:
@@ -81,9 +88,13 @@ Identity contract:
 - Both `build_concept_list.py` and `clean_concept_list.py` use this same contract.
 
 State migration note:
-- Generator checkpoint state now uses canonical concept keys consistently (`version: 4`).
-- Resuming older state files (`version 1/2/3`) auto-migrates:
+- Generator checkpoint state now uses canonical concept keys and exclude strategy metadata (`version: 5`).
+- Resuming older state files (`version 1/2/3/4`) auto-migrates:
   - `root_concept`
   - `exclude_list`
   - `seen_normalized`
   - queue concept labels
+  - `exclude_strategy` (defaults to `local`)
+  - `exclude_local_limit` (defaults to `64`)
+- Resume behavior is stable by default: if a state file already stores strategy values, resume keeps those values.
+- For safety, resuming with conflicting `--exclude-strategy` or `--exclude-local-limit` exits with an error.
