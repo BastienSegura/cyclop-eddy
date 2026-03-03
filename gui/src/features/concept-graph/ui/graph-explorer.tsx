@@ -312,6 +312,8 @@ export function GraphExplorer() {
 
   const canGoBack = parentIds.length > 0;
   const firstParent = canGoBack ? parentIds[0] : null;
+  const rootNodeId = graph?.rootNodeId ?? null;
+  const canGoToRoot = Boolean(rootNodeId && currentNodeId !== rootNodeId);
   const hasDiscoveredAllNodes = visibleNodeIds.size >= totalNodes;
   const zoomSliderValueUnrounded = camera.zoom >= ZOOM_SLIDER_CENTER
     ? 50 + ((camera.zoom - ZOOM_SLIDER_CENTER) / Math.max(MAX_ZOOM - ZOOM_SLIDER_CENTER, 0.001)) * 50
@@ -453,6 +455,18 @@ export function GraphExplorer() {
                 }}
               >
                 Go to parent
+              </button>
+              <button
+                type="button"
+                className="ghost-button"
+                disabled={!canGoToRoot}
+                onClick={() => {
+                  if (rootNodeId) {
+                    focusNode(rootNodeId);
+                  }
+                }}
+              >
+                Go to root
               </button>
               <button
                 type="button"
