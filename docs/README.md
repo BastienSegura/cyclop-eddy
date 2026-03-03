@@ -3,6 +3,7 @@
 Start here:
 - [Project Manifest](manifest.md): mission, scope, workflow, and current product behavior.
 - [GUI Architecture](gui-architecture.md): frontend layering, data flow, and interaction model.
+- [Story Index](stories/index.md): prioritized, standalone implementation stories.
 
 Status:
 - Active docs are in English.
