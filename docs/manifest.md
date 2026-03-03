@@ -126,6 +126,26 @@ python brain/merge_concept_edges.py \
   --json-output memory/two_phase/reports/merge_stats.json
 ```
 
+Frontier detection for refinement root selection:
+- Rank under-explored nodes from cleaned data:
+
+```bash
+python brain/find_unexplored_areas.py \
+  --input memory/concept_list_cleaned.txt \
+  --target-children 8 \
+  --top-n 25
+```
+
+- Optional: focus on non-leaf underfilled branches:
+
+```bash
+python brain/find_unexplored_areas.py \
+  --input memory/concept_list_cleaned.txt \
+  --target-children 8 \
+  --top-n 25 \
+  --exclude-leaves
+```
+
 ## Resume / Save Behavior
 Current behavior is the expected behavior:
 - Progress is checkpointed to the state file.
