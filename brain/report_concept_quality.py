@@ -53,6 +53,37 @@ def infer_line_mode(parent_raw: str) -> str:
     return "raw"
 
 
+def infer_file_mode(path: Path, lines: list[str]) -> str:
+    if "cleaned" in path.name.casefold():
+        return "cleaned"
+
+    cleaned_hints = 0
+    raw_hints = 0
+
+    for raw_line in lines:
+        line = raw_line.strip()
+        if not line or ":" not in line:
+            continue
+
+        parent_raw, _ = line.split(":", 1)
+        parent = parent_raw.strip()
+        if not parent:
+            continue
+
+        if parent.startswith("~") or "." in parent:
+            cleaned_hints += 1
+            continue
+
+        if " " not in parent and "-" in parent:
+            # Legacy cleaned top-level segment (e.g. "Computer-Science")
+            cleaned_hints += 1
+            continue
+
+        raw_hints += 1
+
+    return "cleaned" if cleaned_hints >= raw_hints else "raw"
+
+
 def extract_parent_label(parent_raw: str, mode: str) -> str:
     if mode == "raw":
         return canonical_concept_label(parent_raw)
@@ -133,6 +164,7 @@ def analyze_cycles(
 
 def analyze_file(path: Path, mode: str) -> dict[str, Any]:
     lines = path.read_text(encoding="utf-8").splitlines()
+    effective_auto_mode = infer_file_mode(path, lines) if mode == "auto" else mode
 
     line_count = len(lines)
     malformed_line_count = 0
@@ -176,7 +208,7 @@ def analyze_file(path: Path, mode: str) -> dict[str, Any]:
                 malformed_samples.append(line)
             continue
 
-        line_mode = mode if mode != "auto" else infer_line_mode(parent_raw)
+        line_mode = effective_auto_mode
         mode_counter[line_mode] += 1
 
         parent_label = extract_parent_label(parent_raw, line_mode)
