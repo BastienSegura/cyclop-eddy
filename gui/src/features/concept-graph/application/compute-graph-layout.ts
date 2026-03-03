@@ -336,6 +336,35 @@ function runForceLayout(
   });
 }
 
+function scaleComponentPositions(
+  componentNodes: NodeId[],
+  positions: Record<NodeId, NodePosition>,
+  center: NodePosition,
+): void {
+  const nodeCount = componentNodes.length;
+  const scaleFactor = nodeCount > 600
+    ? 2.65
+    : nodeCount > 300
+      ? 2.35
+      : nodeCount > 160
+        ? 2.1
+        : nodeCount > 80
+          ? 1.85
+          : 1.65;
+
+  for (const nodeId of componentNodes) {
+    const current = positions[nodeId];
+    if (!current) {
+      continue;
+    }
+
+    positions[nodeId] = {
+      x: center.x + (current.x - center.x) * scaleFactor,
+      y: center.y + (current.y - center.y) * scaleFactor,
+    };
+  }
+}
+
 export function computeGraphLayout(graph: ConceptGraph): GraphLayout {
   const undirected = buildUndirectedNeighbors(graph);
   const components = getConnectedComponents(graph, undirected);
@@ -370,6 +399,8 @@ export function computeGraphLayout(graph: ConceptGraph): GraphLayout {
       center,
       anchorNodeId,
     );
+
+    scaleComponentPositions(componentNodes, componentPositions, center);
 
     for (const nodeId of componentNodes) {
       positions[nodeId] = componentPositions[nodeId];
