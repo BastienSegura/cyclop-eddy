@@ -91,7 +91,10 @@ export default function RegisterPage() {
             type="email"
             autoComplete="email"
             value={formState.email}
-            onChange={(event) => setFormState((prev) => ({ ...prev, email: event.currentTarget.value }))}
+            onChange={(event) => {
+              const nextValue = event.currentTarget.value;
+              setFormState((prev) => ({ ...prev, email: nextValue }));
+            }}
             required
           />
 
@@ -101,7 +104,10 @@ export default function RegisterPage() {
             type="password"
             autoComplete="new-password"
             value={formState.password}
-            onChange={(event) => setFormState((prev) => ({ ...prev, password: event.currentTarget.value }))}
+            onChange={(event) => {
+              const nextValue = event.currentTarget.value;
+              setFormState((prev) => ({ ...prev, password: nextValue }));
+            }}
             required
           />
 
@@ -111,7 +117,10 @@ export default function RegisterPage() {
             type="password"
             autoComplete="new-password"
             value={formState.confirmPassword}
-            onChange={(event) => setFormState((prev) => ({ ...prev, confirmPassword: event.currentTarget.value }))}
+            onChange={(event) => {
+              const nextValue = event.currentTarget.value;
+              setFormState((prev) => ({ ...prev, confirmPassword: nextValue }));
+            }}
             required
           />
 
