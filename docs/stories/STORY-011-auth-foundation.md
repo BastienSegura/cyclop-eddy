@@ -14,6 +14,7 @@ Updated: `2026-03-04`
 - `docs/manifest.md` explicitly marks production auth as out of scope in current scope.
 - The graph view is directly accessible and state is local React state in `gui/src/features/concept-graph/ui/graph-explorer.tsx`.
 - Graph data is currently loaded from a static file (`gui/src/features/concept-graph/infrastructure/load-graph.ts`).
+- The project needs an MVP foundation that is SQLite-first but keeps a low-friction path to Postgres later.
 
 ## Problem
 
@@ -22,7 +23,8 @@ Updated: `2026-03-04`
 
 ## Goal
 
-- Introduce the minimum server-side auth/data foundation needed for account features and progress persistence.
+- Introduce the minimum secure server-side auth/data foundation needed for account features and progress persistence.
+- Standardize foundation choices now: Prisma + migrations, SQLite for MVP, Postgres-compatible schema conventions.
 - Keep this story strictly focused on schema, server modules, and shared security primitives.
 
 ## Out of Scope
@@ -34,19 +36,27 @@ Updated: `2026-03-04`
 
 ## Acceptance Criteria
 
-- [ ] A database layer is added with migrations and a documented local setup path.
-- [ ] Schema includes `users`, `sessions`, and `progress_snapshots` tables with foreign keys and timestamps.
-- [ ] Shared auth server module exists for password hashing/verification and session token generation/validation.
-- [ ] Session storage stores token hashes (not raw tokens) and supports expiration checks.
-- [ ] Environment variables and local development defaults are documented.
+- [ ] Prisma is configured as the DB layer with migrations and a documented local bootstrap flow.
+- [ ] Initial schema includes `users`, `sessions`, and `progress_snapshots` with foreign keys, timestamps, and `ON DELETE CASCADE` where appropriate.
+- [ ] `users` includes unique `email` and unique normalized `emailLower` plus `passwordHash`.
+- [ ] `sessions` stores only `tokenHash` (no raw token), and includes `expiresAt`, optional `revokedAt`, plus indexes on `(userId, expiresAt)` and `expiresAt`, with `tokenHash` unique.
+- [ ] `progress_snapshots` includes `kind`, `graphVersion`, `schemaVersion`, and JSON `payload`, with index coverage for `(userId, kind, createdAt)`.
+- [ ] Shared auth server module exposes explicit primitives: `hashPassword`, `verifyPassword`, `createSession`, `validateSession`, `revokeSession`.
+- [ ] Session token hashing uses `sha256(token + pepper)` where pepper is read from environment configuration.
+- [ ] Foundation documentation defines required cookie policy for future auth routes: `HttpOnly`, `SameSite=Lax` (or stricter), `Path=/`, `Secure` in production, and `__Host-` cookie name guidance.
+- [ ] Foundation documentation states auth/password/session route handlers must run on Node.js runtime (not Edge runtime).
+- [ ] Unit tests cover password hash/verify and session token validation/expiration primitives.
 
 ## Subtasks
 
-- [ ] Choose DB adapter for MVP (`SQLite`) and define a Postgres-compatible schema style.
-- [ ] Add initial migration(s) for `users`, `sessions`, `progress_snapshots`.
-- [ ] Implement server-only helpers for password hashing (`argon2id`) and secure token hashing.
-- [ ] Implement a session repository API (`create`, `findValid`, `revoke`, `revokeAllForUser`).
-- [ ] Add developer docs for bootstrapping DB in local environment.
+- [ ] Add Prisma setup and migration tooling with SQLite MVP configuration.
+- [ ] Create initial migration for `users`, `sessions`, and `progress_snapshots` including required uniques and indexes.
+- [ ] Implement server-only password helpers using `argon2id`.
+- [ ] Implement server-only session helpers with hashed token persistence and expiry checks.
+- [ ] Implement session repository methods: `create`, `findValid`, `revoke`, `revokeAllForUser`.
+- [ ] Define environment variables (`DATABASE_URL`, `SESSION_TOKEN_PEPPER`, cookie/session settings) and local defaults guidance.
+- [ ] Document runtime and cookie policy contract for downstream auth stories.
+- [ ] Add unit tests for auth primitives and session expiry/revocation behavior.
 
 ## Dependencies
 
@@ -55,11 +65,14 @@ Updated: `2026-03-04`
 ## Risks
 
 - Risk: foundation choices lock in a difficult migration path.
-- Mitigation: keep schema relational and avoid framework-specific coupling in domain interfaces.
+- Mitigation: keep schema relational, use Prisma migrations, and enforce normalized identifiers early.
+- Risk: session implementation leaks sensitive token data.
+- Mitigation: store hashed session tokens only and avoid logging raw secrets.
 
 ## Validation
 
-- Run migrations from scratch on a clean environment.
-- Verify created tables and constraints exist.
-- Execute unit tests for password hash and session token helper utilities.
-- Manually verify that expired sessions are rejected by repository validation.
+- Run migrations from scratch on a clean environment and verify schema/indexes.
+- Verify `users.emailLower` and `sessions.tokenHash` uniqueness constraints work as expected.
+- Execute unit tests for password hash/verify primitives.
+- Execute unit tests for session creation, validation, expiration rejection, and revocation handling.
+- Confirm all foundation docs include runtime, cookie, and env configuration requirements.
