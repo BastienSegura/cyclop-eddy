@@ -13,6 +13,7 @@ Updated: `2026-03-04`
 - The graph explorer currently keeps progression in local component state only.
 - Current state includes selected concept, discovered nodes, and camera position in `graph-explorer.tsx`.
 - After reload or logout, this state is lost.
+- STORY-011 defines `progress_snapshots` with `kind`, `graphVersion`, `schemaVersion`, and JSON `payload`.
 
 ## Problem
 
@@ -33,18 +34,20 @@ Updated: `2026-03-04`
 ## Acceptance Criteria
 
 - [ ] A protected progress API exists (`GET /api/progress/me`, `PUT /api/progress/me`).
-- [ ] Stored payload includes at least `currentNodeId`, `visibleNodeIds`, and `camera` state.
-- [ ] Graph explorer loads saved progress after successful session restore.
-- [ ] Progress updates are persisted during usage with debounced writes.
+- [ ] Stored snapshot includes `kind`, `graphVersion`, `schemaVersion`, and payload fields for at least `currentNodeId`, `visibleNodeIds`, and `camera` state.
+- [ ] Graph explorer loads saved progress after successful session restore when snapshot compatibility checks pass.
+- [ ] Incompatible snapshots (graph or schema mismatch) are safely ignored with fallback to default root experience.
+- [ ] Progress updates are persisted during usage with debounced writes and change detection.
 - [ ] Logout clears in-memory authenticated progress and prevents further writes until next login.
 
 ## Subtasks
 
-- [ ] Define progress snapshot schema and serialization limits.
+- [ ] Define progress snapshot payload contract and serialization limits.
+- [ ] Define `graphVersion` derivation strategy (file hash or controlled version string).
 - [ ] Implement repository/API handlers for fetch and upsert per user.
 - [ ] Add client auth-aware boot sequence: session check then progress hydration.
 - [ ] Add debounced save trigger based on explorer state transitions.
-- [ ] Add fallback behavior when no snapshot exists (current default root flow).
+- [ ] Add fallback behavior for no snapshot and incompatible snapshot versions.
 
 ## Dependencies
 
@@ -55,10 +58,13 @@ Updated: `2026-03-04`
 
 - Risk: write frequency can cause noisy DB traffic.
 - Mitigation: debounce saves and skip writes when payload hash has not changed.
+- Risk: loading stale snapshot data can corrupt user experience after graph data changes.
+- Mitigation: enforce `graphVersion` and `schemaVersion` compatibility checks during hydration.
 
 ## Validation
 
 - Log in, navigate graph, refresh page, and verify state restores.
 - Log in as second user and verify progress isolation.
+- Change graph version and verify incompatible snapshot is skipped with safe fallback.
 - Log out and confirm no authenticated progress fetch/write occurs.
 - Corrupt or missing snapshot should gracefully fallback to default root experience.
