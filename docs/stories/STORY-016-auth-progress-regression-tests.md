@@ -22,7 +22,7 @@ Updated: `2026-03-04`
 ## Goal
 
 - Add deterministic automated tests for auth and progress lifecycle.
-- Cover both happy paths and key failure cases.
+- Cover both happy paths and key failure/security cases.
 
 ## Out of Scope
 
@@ -32,18 +32,23 @@ Updated: `2026-03-04`
 
 ## Acceptance Criteria
 
-- [ ] Automated tests cover: register, duplicate register, login success/failure, logout, `/api/auth/me` session checks.
+- [ ] Automated tests cover: register, duplicate register (including case-variant email), login success/failure, logout, `/api/auth/me` session checks.
+- [ ] Automated tests assert non-enumerating login failure semantics for unknown email vs wrong password.
+- [ ] Automated tests verify cookie policy on login response (`HttpOnly`, `SameSite`, `Path`, `Secure` in production contract).
 - [ ] Automated tests cover password change success/failure and session invalidation behavior.
-- [ ] Automated tests cover progress save/load and per-user isolation.
+- [ ] Automated tests cover progress save/load, snapshot compatibility handling, and per-user isolation.
+- [ ] Unit tests cover `hashPassword/verifyPassword` and session token hash + expiration validation logic.
 - [ ] Test commands are documented and integrated into repository docs.
 - [ ] CI/local run fails when auth/progress contracts break.
 
 ## Subtasks
 
 - [ ] Select test style for API routes (unit/integration with test DB).
-- [ ] Add fixtures/helpers for creating users/sessions/progress snapshots.
-- [ ] Add auth endpoint tests with explicit HTTP status assertions.
-- [ ] Add progress endpoint tests including isolation and fallback behavior.
+- [ ] Add fixtures/helpers for creating users, sessions, and progress snapshots.
+- [ ] Add auth endpoint tests with explicit HTTP status and cookie assertions.
+- [ ] Add login non-enumeration and throttling tests.
+- [ ] Add progress endpoint tests including compatibility checks and fallback behavior.
+- [ ] Add unit tests for auth primitives and token expiration/revocation behavior.
 - [ ] Update docs with exact test commands and expected outcomes.
 
 ## Dependencies
@@ -61,5 +66,5 @@ Updated: `2026-03-04`
 ## Validation
 
 - Run full auth/progress test suite locally from a clean state.
-- Intentionally break a contract (for example remove session cookie set) and verify tests fail.
+- Intentionally break a contract (for example remove session cookie set or skip token expiry check) and verify tests fail.
 - Restore implementation and verify suite returns to green.
