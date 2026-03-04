@@ -30,6 +30,39 @@ Run regression tests:
 npm run test
 ```
 
+## Auth Foundation (Story 11)
+
+This repository now includes auth/persistence foundation modules in `src/server/auth/`
+and Prisma schema/migrations in `prisma/`.
+
+Bootstrap local auth persistence:
+
+```bash
+cp .env.example .env
+npm run db:migrate:dev
+npm run db:generate
+```
+
+Migration scripts:
+
+```bash
+npm run db:migrate:dev
+npm run db:migrate:deploy
+npm run db:migrate:status
+```
+
+Security contracts established by the foundation:
+
+- Password hashing uses `argon2id` (`src/server/auth/password.ts`).
+- Session storage keeps only hashed session tokens (`sha256(token + pepper)`).
+- Session cookie policy (for future route handlers) is centralized in `src/server/auth/config.ts`:
+  - `HttpOnly`
+  - `SameSite=Lax` (or stricter in future)
+  - `Path=/`
+  - `Secure` in production
+  - `__Host-` cookie naming guidance
+- Auth/password/session handlers must run on Node.js runtime (`AUTH_RUNTIME = "nodejs"`).
+
 ## Architecture
 
 `src/features/concept-graph/` is split by responsibility:
