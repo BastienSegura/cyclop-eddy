@@ -1,0 +1,54 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String             @id @default(cuid())
+  email        String             @unique
+  emailLower   String             @unique @map("email_lower")
+  passwordHash String             @map("password_hash")
+  createdAt    DateTime           @default(now()) @map("created_at")
+  updatedAt    DateTime           @updatedAt @map("updated_at")
+
+  sessions  Session[]
+  snapshots ProgressSnapshot[]
+
+  @@map("users")
+}
+
+model Session {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  Bytes    @unique @map("token_hash")
+  createdAt  DateTime @default(now()) @map("created_at")
+  expiresAt  DateTime @map("expires_at")
+  lastSeenAt DateTime? @map("last_seen_at")
+  revokedAt  DateTime? @map("revoked_at")
+  userAgent  String?  @map("user_agent")
+  ipHash     Bytes?   @map("ip_hash")
+
+  @@index([userId, expiresAt])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model ProgressSnapshot {
+  id            String   @id @default(cuid())
+  userId        String   @map("user_id")
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind          String
+  graphVersion  String   @map("graph_version")
+  schemaVersion Int      @map("schema_version")
+  payload       Json
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@index([userId, kind, createdAt])
+  @@index([userId, createdAt])
+  @@map("progress_snapshots")
+}
