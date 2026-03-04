@@ -13,6 +13,7 @@ Updated: `2026-03-04`
 - Basic account lifecycle is incomplete without password maintenance.
 - Product requirement includes explicit ability to change password.
 - Existing codebase has no account settings page or password update endpoint.
+- STORY-011 provides shared password/session primitives intended to be reused here.
 
 ## Problem
 
@@ -35,16 +36,18 @@ Updated: `2026-03-04`
 - [ ] `POST /api/auth/change-password` exists and requires valid authenticated session.
 - [ ] Endpoint validates `currentPassword`, `newPassword`, and `confirmPassword` semantics.
 - [ ] Current password mismatch returns deterministic validation/auth error.
-- [ ] Password hash is updated atomically on success.
-- [ ] Other active sessions for the same user are revoked (or behavior is explicitly documented and tested).
+- [ ] Password hash is updated atomically on success using shared `hashPassword(...)` primitive.
+- [ ] Session revocation policy is explicit and tested: revoke all other sessions for the user after successful change.
+- [ ] Endpoint avoids raw password logging and runs on Node.js runtime.
 
 ## Subtasks
 
 - [ ] Define request validation schema and password policy reuse.
 - [ ] Implement authenticated route handler using shared session guard.
-- [ ] Verify current password hash before applying new hash.
+- [ ] Verify current password with shared `verifyPassword(...)` primitive before applying new hash.
 - [ ] Revoke non-current sessions after successful password change.
 - [ ] Add settings UI section for password update with success/error feedback.
+- [ ] Add unit/integration tests for transactional update + revocation behavior.
 
 ## Dependencies
 
@@ -60,4 +63,5 @@ Updated: `2026-03-04`
 
 - Change password with valid current password and verify subsequent login works only with new password.
 - Attempt change with incorrect current password and verify no hash update occurs.
-- Verify previously active sessions (except chosen policy for current session) are invalidated.
+- Verify previously active sessions (except current session) are invalidated.
+- Confirm endpoint runtime configuration is Node.js.
