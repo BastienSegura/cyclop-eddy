@@ -47,14 +47,15 @@ export function getAuthConfig(): AuthConfig {
 }
 
 export function getSessionCookiePolicy(): SessionCookiePolicy {
-  const config = getAuthConfig();
+  const sessionTtlSeconds = parseSessionTtlSeconds(process.env.SESSION_TTL_SECONDS);
+  const sessionCookieName = process.env.SESSION_COOKIE_NAME?.trim() || DEFAULT_SESSION_COOKIE_NAME;
 
   return {
-    name: config.sessionCookieName,
+    name: sessionCookieName,
     httpOnly: true,
     sameSite: "lax",
     path: "/",
     secure: process.env.NODE_ENV === "production",
-    maxAgeSeconds: Math.floor(config.sessionTtlMs / 1000),
+    maxAgeSeconds: sessionTtlSeconds,
   };
 }

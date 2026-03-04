@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 
-import { getSessionCookiePolicy, hashPassword } from "@/server/auth";
+import { getAuthConfig, getSessionCookiePolicy, hashPassword } from "@/server/auth";
 import { createSession } from "@/server/auth/session-service";
 import {
   defaultRegistrationThrottle,
@@ -65,6 +65,7 @@ export async function handleRegisterRequest(
 ): Promise<Response> {
   let cookiePolicy: ReturnType<typeof getSessionCookiePolicy>;
   try {
+    getAuthConfig();
     cookiePolicy = getSessionCookiePolicy();
   } catch (error) {
     const baseMessage = "Server auth configuration is incomplete.";
