@@ -2,7 +2,7 @@
 
 ID: `STORY-011`
 Title: `Add auth and persistence foundation`
-Status: `draft`
+Status: `done`
 Priority: `P1`
 Owner: `unassigned`
 Created: `2026-03-04`
@@ -36,27 +36,27 @@ Updated: `2026-03-04`
 
 ## Acceptance Criteria
 
-- [ ] Prisma is configured as the DB layer with migrations and a documented local bootstrap flow.
-- [ ] Initial schema includes `users`, `sessions`, and `progress_snapshots` with foreign keys, timestamps, and `ON DELETE CASCADE` where appropriate.
-- [ ] `users` includes unique `email` and unique normalized `emailLower` plus `passwordHash`.
-- [ ] `sessions` stores only `tokenHash` (no raw token), and includes `expiresAt`, optional `revokedAt`, plus indexes on `(userId, expiresAt)` and `expiresAt`, with `tokenHash` unique.
-- [ ] `progress_snapshots` includes `kind`, `graphVersion`, `schemaVersion`, and JSON `payload`, with index coverage for `(userId, kind, createdAt)`.
-- [ ] Shared auth server module exposes explicit primitives: `hashPassword`, `verifyPassword`, `createSession`, `validateSession`, `revokeSession`.
-- [ ] Session token hashing uses `sha256(token + pepper)` where pepper is read from environment configuration.
-- [ ] Foundation documentation defines required cookie policy for future auth routes: `HttpOnly`, `SameSite=Lax` (or stricter), `Path=/`, `Secure` in production, and `__Host-` cookie name guidance.
-- [ ] Foundation documentation states auth/password/session route handlers must run on Node.js runtime (not Edge runtime).
-- [ ] Unit tests cover password hash/verify and session token validation/expiration primitives.
+- [x] Prisma is configured as the DB layer with migrations and a documented local bootstrap flow.
+- [x] Initial schema includes `users`, `sessions`, and `progress_snapshots` with foreign keys, timestamps, and `ON DELETE CASCADE` where appropriate.
+- [x] `users` includes unique `email` and unique normalized `emailLower` plus `passwordHash`.
+- [x] `sessions` stores only `tokenHash` (no raw token), and includes `expiresAt`, optional `revokedAt`, plus indexes on `(userId, expiresAt)` and `expiresAt`, with `tokenHash` unique.
+- [x] `progress_snapshots` includes `kind`, `graphVersion`, `schemaVersion`, and JSON `payload`, with index coverage for `(userId, kind, createdAt)`.
+- [x] Shared auth server module exposes explicit primitives: `hashPassword`, `verifyPassword`, `createSession`, `validateSession`, `revokeSession`.
+- [x] Session token hashing uses `sha256(token + pepper)` where pepper is read from environment configuration.
+- [x] Foundation documentation defines required cookie policy for future auth routes: `HttpOnly`, `SameSite=Lax` (or stricter), `Path=/`, `Secure` in production, and `__Host-` cookie name guidance.
+- [x] Foundation documentation states auth/password/session route handlers must run on Node.js runtime (not Edge runtime).
+- [x] Unit tests cover password hash/verify and session token validation/expiration primitives.
 
 ## Subtasks
 
-- [ ] Add Prisma setup and migration tooling with SQLite MVP configuration.
-- [ ] Create initial migration for `users`, `sessions`, and `progress_snapshots` including required uniques and indexes.
-- [ ] Implement server-only password helpers using `argon2id`.
-- [ ] Implement server-only session helpers with hashed token persistence and expiry checks.
-- [ ] Implement session repository methods: `create`, `findValid`, `revoke`, `revokeAllForUser`.
-- [ ] Define environment variables (`DATABASE_URL`, `SESSION_TOKEN_PEPPER`, cookie/session settings) and local defaults guidance.
-- [ ] Document runtime and cookie policy contract for downstream auth stories.
-- [ ] Add unit tests for auth primitives and session expiry/revocation behavior.
+- [x] Add Prisma setup and migration tooling with SQLite MVP configuration.
+- [x] Create initial migration for `users`, `sessions`, and `progress_snapshots` including required uniques and indexes.
+- [x] Implement server-only password helpers using `argon2id`.
+- [x] Implement server-only session helpers with hashed token persistence and expiry checks.
+- [x] Implement session repository methods: `create`, `findValid`, `revoke`, `revokeAllForUser`.
+- [x] Define environment variables (`DATABASE_URL`, `SESSION_TOKEN_PEPPER`, cookie/session settings) and local defaults guidance.
+- [x] Document runtime and cookie policy contract for downstream auth stories.
+- [x] Add unit tests for auth primitives and session expiry/revocation behavior.
 
 ## Dependencies
 
@@ -76,3 +76,31 @@ Updated: `2026-03-04`
 - Execute unit tests for password hash/verify primitives.
 - Execute unit tests for session creation, validation, expiration rejection, and revocation handling.
 - Confirm all foundation docs include runtime, cookie, and env configuration requirements.
+
+Implemented with:
+
+- Prisma stack and schema:
+  - `gui/prisma/schema.prisma`
+  - `gui/prisma/migrations/20260304180758_init_auth_foundation/migration.sql`
+  - `gui/prisma/migrations/migration_lock.toml`
+- Server foundation modules:
+  - `gui/src/server/db/prisma.ts`
+  - `gui/src/server/auth/config.ts`
+  - `gui/src/server/auth/password.ts`
+  - `gui/src/server/auth/session-token.ts`
+  - `gui/src/server/auth/session-repository.ts`
+  - `gui/src/server/auth/session-service.ts`
+  - `gui/src/server/auth/index.ts`
+- Tests:
+  - `gui/src/server/auth/password.test.ts`
+  - `gui/src/server/auth/session-service.test.ts`
+- Documentation/env:
+  - `gui/.env.example`
+  - `gui/README.md`
+
+Validation evidence:
+
+- `cd gui && DATABASE_URL=\"file:./dev.db\" npm run db:generate`
+- `cd gui && DATABASE_URL=\"file:./dev.db\" npm run db:migrate:deploy`
+- `cd gui && npm run test`
+- `cd gui && npm run typecheck`
