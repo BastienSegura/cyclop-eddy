@@ -2,7 +2,7 @@
 
 ID: `STORY-012`
 Title: `Add account registration flow`
-Status: `draft`
+Status: `done`
 Priority: `P1`
 Owner: `unassigned`
 Created: `2026-03-04`
@@ -33,21 +33,21 @@ Updated: `2026-03-04`
 
 ## Acceptance Criteria
 
-- [ ] `POST /api/auth/register` endpoint exists and creates a user with hashed password.
-- [ ] Registration normalizes email (`trim + lowercase`) and enforces uniqueness via `emailLower`.
-- [ ] Password policy is enforced server-side (minimum length + basic strength guardrails).
-- [ ] Endpoint implements deterministic error mapping (`400`, `409`, `429`, `500`) and no raw password logging.
-- [ ] Client registration page/form exists with clear success and failure states.
-- [ ] On successful registration, user lands in authenticated state (auto-login or explicit redirect to login, chosen and documented).
+- [x] `POST /api/auth/register` endpoint exists and creates a user with hashed password.
+- [x] Registration normalizes email (`trim + lowercase`) and enforces uniqueness via `emailLower`.
+- [x] Password policy is enforced server-side (minimum length + basic strength guardrails).
+- [x] Endpoint implements deterministic error mapping (`400`, `409`, `429`, `500`) and no raw password logging.
+- [x] Client registration page/form exists with clear success and failure states.
+- [x] On successful registration, user lands in authenticated state (auto-login or explicit redirect to login, chosen and documented).
 
 ## Subtasks
 
-- [ ] Define registration payload contract and validation schema.
-- [ ] Implement user repository create/find-by-normalized-email functions.
-- [ ] Add route handler that uses `hashPassword(...)` from STORY-011 primitives.
-- [ ] Add basic registration throttling (per IP and/or per normalized email key).
-- [ ] Add App Router registration page and form handling.
-- [ ] Add unit tests for validation, normalization, and endpoint behavior.
+- [x] Define registration payload contract and validation schema.
+- [x] Implement user repository create/find-by-normalized-email functions.
+- [x] Add route handler that uses `hashPassword(...)` from STORY-011 primitives.
+- [x] Add basic registration throttling (per IP and/or per normalized email key).
+- [x] Add App Router registration page and form handling.
+- [x] Add unit tests for validation, normalization, and endpoint behavior.
 
 ## Dependencies
 
@@ -67,3 +67,28 @@ Updated: `2026-03-04`
 - Submit invalid payloads and verify stable validation error responses.
 - Trigger throttling threshold and verify `429` response behavior.
 - Verify password hash is stored, never plain text.
+
+Implementation decision:
+
+- Registration success uses auto-login + redirect to `/`.
+- `POST /api/auth/register` creates the user, creates a session, sets the session cookie, and the client page navigates to the graph page.
+
+Implemented with:
+
+- Route:
+  - `gui/src/app/api/auth/register/route.ts`
+- Server auth modules:
+  - `gui/src/server/auth/user-repository.ts`
+  - `gui/src/server/auth/registration.ts`
+  - `gui/src/server/auth/registration-throttle.ts`
+- UI:
+  - `gui/src/app/register/page.tsx`
+  - `gui/src/app/globals.css` (auth page styles)
+- Tests:
+  - `gui/src/server/auth/registration.test.ts`
+  - `gui/src/app/api/auth/register/route.test.ts`
+
+Validation evidence:
+
+- `cd gui && npm run test` (registration route and validation tests pass)
+- `cd gui && npm run typecheck` (no type errors)
