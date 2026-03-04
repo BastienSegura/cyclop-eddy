@@ -1,7 +1,7 @@
-import { Algorithm, hash, verify } from "@node-rs/argon2";
+import { hash, verify } from "@node-rs/argon2";
 
 const PASSWORD_HASH_OPTIONS = {
-  algorithm: Algorithm.Argon2id,
+  // Argon2id is the library default algorithm.
   memoryCost: 19_456,
   timeCost: 2,
   parallelism: 1,
