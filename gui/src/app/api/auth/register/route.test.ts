@@ -4,16 +4,18 @@ import test from "node:test";
 import type { User } from "@prisma/client";
 
 import type { RegistrationThrottle, ThrottleResult } from "@/server/auth/registration-throttle";
-import { handleRegisterRequest } from "./route";
+import { handleRegisterRequest } from "@/server/auth/register-handler";
 
 class InMemoryUserRepository {
   private users = new Map<string, User>();
+  public createdCount = 0;
 
   async findByEmailLower(emailLower: string): Promise<User | null> {
     return this.users.get(emailLower) ?? null;
   }
 
   async create(input: { email: string; emailLower: string; passwordHash: string }): Promise<User> {
+    this.createdCount += 1;
     const user: User = {
       id: `user-${this.users.size + 1}`,
       email: input.email,
@@ -168,4 +170,31 @@ test("register route returns 429 and retry-after when throttled", async () => {
 
   assert.equal(response.status, 429);
   assert.equal(response.headers.get("Retry-After"), "120");
+});
+
+test("register route returns 500 with actionable message when auth config is missing", async () => {
+  delete process.env.SESSION_TOKEN_PEPPER;
+
+  const repository = new InMemoryUserRepository();
+  const response = await handleRegisterRequest(
+    buildJsonRequest({
+      email: "user@example.com",
+      password: "StrongPassword123",
+      confirmPassword: "StrongPassword123",
+    }),
+    {
+      now: () => new Date("2026-03-04T12:00:00.000Z"),
+      userRepository: repository,
+      registrationThrottle: new TestThrottle(() => ({ allowed: true, retryAfterSeconds: 0 })),
+      hashPasswordFn: async () => "hashed-password",
+      createSessionFn: async () => {
+        throw new Error("should not attempt session creation when config is missing");
+      },
+    },
+  );
+
+  assert.equal(response.status, 500);
+  const body = await response.json();
+  assert.match(String(body.error), /Server auth configuration is incomplete/);
+  assert.equal(repository.createdCount, 0);
 });
