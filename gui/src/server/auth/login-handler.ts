@@ -92,41 +92,45 @@ export async function handleLoginRequest(
     return tooManyRequestsResponse(emailDecision.retryAfterSeconds);
   }
 
-  const user = await dependencies.userRepository.findByEmailLower(parsed.data.emailLower);
-  if (!user) {
-    return NextResponse.json({ error: INVALID_CREDENTIALS_ERROR }, { status: 401 });
-  }
+  try {
+    const user = await dependencies.userRepository.findByEmailLower(parsed.data.emailLower);
+    if (!user) {
+      return NextResponse.json({ error: INVALID_CREDENTIALS_ERROR }, { status: 401 });
+    }
 
-  const isPasswordValid = await dependencies.verifyPasswordFn(parsed.data.password, user.passwordHash);
-  if (!isPasswordValid) {
-    return NextResponse.json({ error: INVALID_CREDENTIALS_ERROR }, { status: 401 });
-  }
+    const isPasswordValid = await dependencies.verifyPasswordFn(parsed.data.password, user.passwordHash);
+    if (!isPasswordValid) {
+      return NextResponse.json({ error: INVALID_CREDENTIALS_ERROR }, { status: 401 });
+    }
 
-  const session = await dependencies.createSessionFn(user.id, {
-    userAgent: request.headers.get("user-agent") ?? undefined,
-  });
+    const session = await dependencies.createSessionFn(user.id, {
+      userAgent: request.headers.get("user-agent") ?? undefined,
+    });
 
-  const response = NextResponse.json(
-    {
-      ok: true,
-      user: {
-        id: user.id,
-        email: user.email,
+    const response = NextResponse.json(
+      {
+        ok: true,
+        user: {
+          id: user.id,
+          email: user.email,
+        },
       },
-    },
-    { status: 200 },
-  );
+      { status: 200 },
+    );
 
-  response.cookies.set({
-    name: cookiePolicy.name,
-    value: session.token,
-    httpOnly: cookiePolicy.httpOnly,
-    sameSite: cookiePolicy.sameSite,
-    path: cookiePolicy.path,
-    secure: cookiePolicy.secure,
-    maxAge: cookiePolicy.maxAgeSeconds,
-    expires: session.expiresAt,
-  });
+    response.cookies.set({
+      name: cookiePolicy.name,
+      value: session.token,
+      httpOnly: cookiePolicy.httpOnly,
+      sameSite: cookiePolicy.sameSite,
+      path: cookiePolicy.path,
+      secure: cookiePolicy.secure,
+      maxAge: cookiePolicy.maxAgeSeconds,
+      expires: session.expiresAt,
+    });
 
-  return response;
+    return response;
+  } catch {
+    return NextResponse.json({ error: "Login failed unexpectedly." }, { status: 500 });
+  }
 }

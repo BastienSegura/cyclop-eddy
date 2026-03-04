@@ -181,3 +181,24 @@ test("login route returns 429 when throttled", async () => {
   assert.equal(response.status, 429);
   assert.equal(response.headers.get("Retry-After"), "60");
 });
+
+test("login route returns 500 with actionable message when auth config is missing", async () => {
+  delete process.env.SESSION_TOKEN_PEPPER;
+
+  const response = await handleLoginRequest(
+    buildJsonRequest({ email: "user@example.com", password: "Secret123" }),
+    {
+      now: () => new Date("2026-03-04T12:00:00.000Z"),
+      userRepository: new InMemoryUserRepository(),
+      loginThrottle: new TestThrottle(() => ({ allowed: true, retryAfterSeconds: 0 })),
+      verifyPasswordFn: async () => false,
+      createSessionFn: async () => {
+        throw new Error("session should not be created");
+      },
+    },
+  );
+
+  assert.equal(response.status, 500);
+  const body = await response.json();
+  assert.match(String(body.error), /Server auth configuration is incomplete/);
+});
