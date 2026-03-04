@@ -17,7 +17,7 @@ This is the canonical backlog for implementation stories.
 | STORY-009 | Add two-phase coverage generation strategy | done | P1 | [STORY-009](STORY-009-two-phase-coverage-generation.md) |
 | STORY-010 | Add unexplored frontier detection tool | done | P1 | [STORY-010](STORY-010-unexplored-frontier-tool.md) |
 | STORY-011 | Add auth and persistence foundation | done | P1 | [STORY-011](STORY-011-auth-foundation.md) |
-| STORY-012 | Add account registration flow | draft | P1 | [STORY-012](STORY-012-account-registration.md) |
+| STORY-012 | Add account registration flow | done | P1 | [STORY-012](STORY-012-account-registration.md) |
 | STORY-013 | Add login logout and session lifecycle | draft | P1 | [STORY-013](STORY-013-login-logout-session.md) |
 | STORY-014 | Add change password flow | draft | P1 | [STORY-014](STORY-014-change-password.md) |
 | STORY-015 | Persist user exploration progress | draft | P1 | [STORY-015](STORY-015-user-progress-persistence.md) |
