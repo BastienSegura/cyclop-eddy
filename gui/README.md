@@ -83,6 +83,27 @@ npm run dev
 # Open /register, create an account, confirm redirect to /
 ```
 
+## Session Lifecycle (Story 13)
+
+Current auth/session endpoints:
+
+- `POST /api/auth/login`
+- `POST /api/auth/logout`
+- `GET /api/auth/me`
+
+Current pages and shell behavior:
+
+- `/login` provides credential login.
+- `/register` provides account creation.
+- Explorer header now shows logged-in/logged-out state and a logout button.
+
+Session contract:
+
+- login sets the session cookie.
+- logout revokes current session and clears session cookie.
+- `/api/auth/me` returns `401` when unauthenticated and user profile when authenticated.
+- login uses non-enumerating credential errors (unknown email and wrong password share the same message).
+
 ## Architecture
 
 `src/features/concept-graph/` is split by responsibility:
