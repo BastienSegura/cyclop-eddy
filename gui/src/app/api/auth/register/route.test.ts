@@ -10,6 +10,16 @@ class InMemoryUserRepository {
   private users = new Map<string, User>();
   public createdCount = 0;
 
+  async findById(id: string): Promise<User | null> {
+    for (const user of this.users.values()) {
+      if (user.id === id) {
+        return user;
+      }
+    }
+
+    return null;
+  }
+
   async findByEmailLower(emailLower: string): Promise<User | null> {
     return this.users.get(emailLower) ?? null;
   }
