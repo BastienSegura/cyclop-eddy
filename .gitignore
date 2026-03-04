@@ -1,2 +1,4 @@
 .venv/
 *.tsbuildinfo
+__pycache__/
+*.py[cod]
