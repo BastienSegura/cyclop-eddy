@@ -132,8 +132,10 @@ export default function RegisterPage() {
         {errorMessage ? <p className="auth-feedback auth-feedback-error">{errorMessage}</p> : null}
         {successMessage ? <p className="auth-feedback auth-feedback-success">{successMessage}</p> : null}
 
-        <p className="auth-page-footnote">
-          Login page is planned next. For now registration automatically signs you in.
+        <p className="auth-page-footnote">Registration automatically signs you in.</p>
+
+        <p className="auth-page-link">
+          <Link href="/login">Already have an account? Login</Link>
         </p>
 
         <p className="auth-page-link">
