@@ -9,6 +9,7 @@ import { loadConceptGraphFromPublicFile } from "../infrastructure/load-graph";
 import type { ConceptGraph, NodeId } from "../domain/types";
 import { ConstellationView } from "./constellation-view";
 import { VIEWPORT_HEIGHT, VIEWPORT_WIDTH } from "./viewport-constants";
+import { SessionStatus } from "@/features/auth/ui/session-status";
 
 type LoadStatus = "loading" | "ready" | "error";
 
@@ -438,6 +439,7 @@ export function GraphExplorer() {
           <span>{totalEdges} edges</span>
           <span>{leafNodeIds.size} dead ends</span>
         </div>
+        <SessionStatus />
       </header>
 
       <section className="explorer-layout">
