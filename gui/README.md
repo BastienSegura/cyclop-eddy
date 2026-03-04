@@ -63,6 +63,26 @@ Security contracts established by the foundation:
   - `__Host-` cookie naming guidance
 - Auth/password/session handlers must run on Node.js runtime (`AUTH_RUNTIME = "nodejs"`).
 
+## Registration Flow (Story 12)
+
+Current registration surface:
+
+- API: `POST /api/auth/register`
+- Page: `/register`
+
+Behavior:
+
+- Valid registration creates the user and auto-creates a session.
+- The route sets the session cookie and the registration page redirects to `/`.
+- Error mapping is deterministic: `400` (invalid payload), `409` (duplicate), `429` (throttled), `500` (unexpected).
+
+Manual check:
+
+```bash
+npm run dev
+# Open /register, create an account, confirm redirect to /
+```
+
 ## Architecture
 
 `src/features/concept-graph/` is split by responsibility:
