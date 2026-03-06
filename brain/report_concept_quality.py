@@ -13,13 +13,14 @@ from __future__ import annotations
 
 import argparse
 import json
-from collections import Counter, defaultdict, deque
+from collections import Counter, defaultdict
 from pathlib import Path
 from statistics import mean
 from typing import Any
-from urllib.parse import unquote
 
 from concept_identity import canonical_concept_key, canonical_concept_label, is_meta_concept_text
+from graph_analysis import analyze_cycle_edges, build_adjacency_list, build_indegree_map
+from graph_file_utils import infer_file_mode, parse_graph_edge_line, split_edge_line
 
 DEFAULT_INPUT_CANDIDATES = [
     "memory/runtime/concept_list.txt",
@@ -28,139 +29,6 @@ DEFAULT_INPUT_CANDIDATES = [
 
 MAX_ROOT_CANDIDATES = 20
 MAX_SAMPLE_ITEMS = 5
-
-
-def decode_path_segment(segment: str) -> str:
-    trimmed = segment.strip()
-
-    if trimmed.startswith("~"):
-        encoded = trimmed[1:]
-        try:
-            return unquote(encoded).strip()
-        except Exception:
-            return encoded.strip()
-
-    # Legacy cleaned format fallback.
-    return trimmed.replace("-", " ").strip()
-
-
-def infer_line_mode(parent_raw: str) -> str:
-    parent = parent_raw.strip()
-    if parent.startswith("~"):
-        return "cleaned"
-    if "." in parent:
-        return "cleaned"
-    return "raw"
-
-
-def infer_file_mode(path: Path, lines: list[str]) -> str:
-    if "cleaned" in path.name.casefold():
-        return "cleaned"
-
-    cleaned_hints = 0
-    raw_hints = 0
-
-    for raw_line in lines:
-        line = raw_line.strip()
-        if not line or ":" not in line:
-            continue
-
-        parent_raw, _ = line.split(":", 1)
-        parent = parent_raw.strip()
-        if not parent:
-            continue
-
-        if parent.startswith("~") or "." in parent:
-            cleaned_hints += 1
-            continue
-
-        if " " not in parent and "-" in parent:
-            # Legacy cleaned top-level segment (e.g. "Computer-Science")
-            cleaned_hints += 1
-            continue
-
-        raw_hints += 1
-
-    return "cleaned" if cleaned_hints >= raw_hints else "raw"
-
-
-def extract_parent_label(parent_raw: str, mode: str) -> str:
-    if mode == "raw":
-        return canonical_concept_label(parent_raw)
-
-    if mode == "cleaned":
-        segments = [segment.strip() for segment in parent_raw.split(".") if segment.strip()]
-        if not segments:
-            return canonical_concept_label(parent_raw)
-        return canonical_concept_label(decode_path_segment(segments[-1]))
-
-    raise ValueError(f"Unsupported mode: {mode}")
-
-
-def find_path(
-    adjacency: dict[str, list[str]],
-    source: str,
-    target: str,
-) -> list[str] | None:
-    if source == target:
-        return [source]
-
-    queue: deque[list[str]] = deque([[source]])
-    visited: set[str] = {source}
-
-    while queue:
-        path = queue.popleft()
-        node = path[-1]
-
-        for neighbor in adjacency.get(node, []):
-            if neighbor == target:
-                return path + [neighbor]
-            if neighbor in visited:
-                continue
-            visited.add(neighbor)
-            queue.append(path + [neighbor])
-
-    return None
-
-
-def canonical_cycle_key(cycle_nodes_closed: list[str]) -> tuple[str, ...]:
-    body = cycle_nodes_closed[:-1]
-    if not body:
-        return tuple()
-    rotations = [tuple(body[index:] + body[:index]) for index in range(len(body))]
-    return min(rotations)
-
-
-def analyze_cycles(
-    unique_edges: list[tuple[str, str]],
-    labels_by_key: dict[str, str],
-    max_examples: int = MAX_SAMPLE_ITEMS,
-) -> tuple[int, list[str]]:
-    adjacency: dict[str, list[str]] = defaultdict(list)
-    for parent, child in unique_edges:
-        adjacency[parent].append(child)
-
-    cycle_edge_count = 0
-    seen_cycles: set[tuple[str, ...]] = set()
-    examples: list[str] = []
-
-    for parent, child in unique_edges:
-        path_child_to_parent = find_path(adjacency, child, parent)
-        if not path_child_to_parent:
-            continue
-
-        cycle_edge_count += 1
-        cycle_nodes_closed = [parent] + path_child_to_parent
-        cycle_key = canonical_cycle_key(cycle_nodes_closed)
-        if cycle_key in seen_cycles:
-            continue
-
-        seen_cycles.add(cycle_key)
-        if len(examples) < max_examples:
-            examples.append(" -> ".join(labels_by_key.get(node, node) for node in cycle_nodes_closed))
-
-    return cycle_edge_count, examples
-
 
 def analyze_file(path: Path, mode: str) -> dict[str, Any]:
     lines = path.read_text(encoding="utf-8").splitlines()
@@ -192,33 +60,21 @@ def analyze_file(path: Path, mode: str) -> dict[str, Any]:
         if not line:
             continue
 
-        if ":" not in line:
+        if not split_edge_line(line):
             malformed_line_count += 1
             if len(malformed_samples) < MAX_SAMPLE_ITEMS:
                 malformed_samples.append(line)
             continue
 
-        parent_raw, child_raw = line.split(":", 1)
-        parent_raw = parent_raw.strip()
-        child_raw = child_raw.strip()
-
-        if not parent_raw or not child_raw:
+        parsed = parse_graph_edge_line(line, effective_auto_mode)
+        if not parsed:
             malformed_line_count += 1
             if len(malformed_samples) < MAX_SAMPLE_ITEMS:
                 malformed_samples.append(line)
             continue
 
-        line_mode = effective_auto_mode
+        parent_label, child_label, line_mode = parsed
         mode_counter[line_mode] += 1
-
-        parent_label = extract_parent_label(parent_raw, line_mode)
-        child_label = canonical_concept_label(child_raw).rstrip(":").strip()
-
-        if not parent_label or not child_label:
-            malformed_line_count += 1
-            if len(malformed_samples) < MAX_SAMPLE_ITEMS:
-                malformed_samples.append(line)
-            continue
 
         parsed_edge_count += 1
 
@@ -261,13 +117,10 @@ def analyze_file(path: Path, mode: str) -> dict[str, Any]:
     duplicate_variant_group_count = len(variant_groups)
     duplicate_variant_extra_count = sum(len(labels) - 1 for labels in variant_groups)
 
-    adjacency: dict[str, list[str]] = defaultdict(list)
-    indegree: dict[str, int] = defaultdict(int)
     nodes: set[str] = set()
+    adjacency = build_adjacency_list(unique_graph_edges)
+    indegree = build_indegree_map(unique_graph_edges)
     for parent_key, child_key in unique_graph_edges:
-        adjacency[parent_key].append(child_key)
-        indegree[child_key] += 1
-        indegree.setdefault(parent_key, indegree.get(parent_key, 0))
         nodes.add(parent_key)
         nodes.add(child_key)
 
@@ -288,7 +141,11 @@ def analyze_file(path: Path, mode: str) -> dict[str, Any]:
         key=lambda node: (-len(adjacency.get(node, [])), labels_by_key.get(node, node)),
     )
 
-    cycle_edge_count, cycle_examples = analyze_cycles(unique_graph_edges, labels_by_key)
+    cycle_edge_count, cycle_examples = analyze_cycle_edges(
+        unique_graph_edges,
+        labels_by_key,
+        MAX_SAMPLE_ITEMS,
+    )
 
     mode_detected = "mixed"
     if not mode_counter:

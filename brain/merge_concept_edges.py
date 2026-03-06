@@ -15,21 +15,12 @@ import json
 from pathlib import Path
 from typing import Any
 
-from concept_identity import canonical_concept_key, canonical_concept_label
+from concept_identity import canonical_concept_key
+from graph_file_utils import parse_raw_edge_line
 
 
 def parse_raw_edge(raw_line: str) -> tuple[str, str] | None:
-    if ":" not in raw_line:
-        return None
-
-    raw_parent, raw_child = raw_line.split(":", 1)
-    parent = canonical_concept_label(raw_parent)
-    child = canonical_concept_label(raw_child).rstrip(":").strip()
-
-    if not parent or not child:
-        return None
-
-    return parent, child
+    return parse_raw_edge_line(raw_line)
 
 
 def merge_raw_edge_files(input_paths: list[Path]) -> tuple[list[str], dict[str, Any]]:

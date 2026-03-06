@@ -11,158 +11,13 @@ from __future__ import annotations
 
 import argparse
 import json
-from collections import Counter, defaultdict, deque
+from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
-from urllib.parse import unquote
 
 from concept_identity import canonical_concept_key, canonical_concept_label
-
-
-def decode_path_segment(segment: str) -> str:
-    trimmed = segment.strip()
-    if trimmed.startswith("~"):
-        encoded = trimmed[1:]
-        try:
-            return unquote(encoded).strip()
-        except Exception:
-            return encoded.strip()
-    # Legacy cleaned format fallback.
-    return trimmed.replace("-", " ").strip()
-
-
-def infer_line_mode(parent_raw: str) -> str:
-    parent = parent_raw.strip()
-    if parent.startswith("~"):
-        return "cleaned"
-    if "." in parent:
-        return "cleaned"
-    return "raw"
-
-
-def infer_file_mode(path: Path, lines: list[str]) -> str:
-    if "cleaned" in path.name.casefold():
-        return "cleaned"
-
-    cleaned_hints = 0
-    raw_hints = 0
-    for raw_line in lines:
-        line = raw_line.strip()
-        if not line or ":" not in line:
-            continue
-        parent_raw, _ = line.split(":", 1)
-        parent = parent_raw.strip()
-        if not parent:
-            continue
-
-        if parent.startswith("~") or "." in parent:
-            cleaned_hints += 1
-            continue
-
-        if " " not in parent and "-" in parent:
-            # Legacy cleaned top-level segment (e.g. "Computer-Science")
-            cleaned_hints += 1
-            continue
-
-        raw_hints += 1
-
-    return "cleaned" if cleaned_hints >= raw_hints else "raw"
-
-
-def extract_parent_label(parent_raw: str, mode: str) -> str:
-    if mode == "raw":
-        return canonical_concept_label(parent_raw)
-
-    if mode == "cleaned":
-        segments = [segment.strip() for segment in parent_raw.split(".") if segment.strip()]
-        if not segments:
-            return canonical_concept_label(parent_raw)
-        return canonical_concept_label(decode_path_segment(segments[-1]))
-
-    raise ValueError(f"Unsupported mode: {mode}")
-
-
-def parse_edge_line(raw_line: str, mode: str) -> tuple[str, str, str] | None:
-    line = raw_line.strip()
-    if not line or ":" not in line:
-        return None
-
-    parent_raw, child_raw = line.split(":", 1)
-    parent_raw = parent_raw.strip()
-    child_raw = child_raw.strip()
-    if not parent_raw or not child_raw:
-        return None
-
-    line_mode = infer_line_mode(parent_raw) if mode == "auto" else mode
-    parent_label = extract_parent_label(parent_raw, line_mode)
-    child_label = canonical_concept_label(child_raw).rstrip(":").strip()
-
-    if not parent_label or not child_label:
-        return None
-
-    return parent_label, child_label, line_mode
-
-
-def compute_depths(
-    nodes: set[str],
-    adjacency: dict[str, set[str]],
-    indegree: dict[str, int],
-    labels_by_key: dict[str, str],
-) -> dict[str, int]:
-    sort_key = lambda node: (labels_by_key.get(node, node).casefold(), labels_by_key.get(node, node))
-    depths: dict[str, int] = {}
-    queue: deque[str] = deque()
-
-    roots = sorted(
-        [node for node in nodes if indegree.get(node, 0) == 0],
-        key=sort_key,
-    )
-    for root in roots:
-        depths[root] = 0
-        queue.append(root)
-
-    while queue:
-        node = queue.popleft()
-        child_depth = depths[node] + 1
-        for child in sorted(adjacency.get(node, set()), key=sort_key):
-            current_depth = depths.get(child)
-            if current_depth is None or child_depth < current_depth:
-                depths[child] = child_depth
-                queue.append(child)
-
-    for seed in sorted([node for node in nodes if node not in depths], key=sort_key):
-        depths[seed] = 0
-        queue = deque([seed])
-        while queue:
-            node = queue.popleft()
-            child_depth = depths[node] + 1
-            for child in sorted(adjacency.get(node, set()), key=sort_key):
-                current_depth = depths.get(child)
-                if current_depth is None or child_depth < current_depth:
-                    depths[child] = child_depth
-                    queue.append(child)
-
-    return depths
-
-
-def reachable_descendant_count(
-    source: str,
-    adjacency: dict[str, set[str]],
-) -> int:
-    seen: set[str] = {source}
-    queue: deque[str] = deque([source])
-    count = 0
-
-    while queue:
-        node = queue.popleft()
-        for child in adjacency.get(node, set()):
-            if child in seen:
-                continue
-            seen.add(child)
-            queue.append(child)
-            count += 1
-
-    return count
+from graph_analysis import compute_depths, reachable_descendant_count
+from graph_file_utils import infer_file_mode, parse_graph_edge_line
 
 
 def analyze_frontier(
@@ -190,7 +45,7 @@ def analyze_frontier(
     self_edge_count = 0
 
     for raw_line in lines:
-        parsed = parse_edge_line(raw_line, effective_mode)
+        parsed = parse_graph_edge_line(raw_line, effective_mode)
         if not parsed:
             malformed_line_count += 1
             continue

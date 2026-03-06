@@ -40,6 +40,8 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import quote
 from concept_identity import canonical_concept_key, canonical_concept_label, collapse_spaces, is_meta_concept_text
+from graph_analysis import analyze_cycle_edges, find_path
+from graph_file_utils import parse_raw_edge_line
 
 
 def to_path_segment(text: str) -> str:
@@ -52,15 +54,11 @@ def is_meta_concept(text: str) -> bool:
 
 
 def parse_edge(raw_line: str) -> tuple[str, str] | None:
-    if ":" not in raw_line:
+    parsed = parse_raw_edge_line(raw_line)
+    if not parsed:
         return None
 
-    parent_raw, child_raw = raw_line.split(":", 1)
-    parent = canonical_concept_label(parent_raw)
-    child = canonical_concept_label(child_raw).rstrip(":").strip()
-
-    if not parent or not child:
-        return None
+    parent, child = parsed
 
     if is_meta_concept(child):
         return None
@@ -130,74 +128,12 @@ def build_paths(
 
     return paths
 
-
-def build_adjacency(edges: list[tuple[str, str]]) -> dict[str, list[str]]:
-    adjacency: dict[str, list[str]] = defaultdict(list)
-    for parent, child in edges:
-        adjacency[parent].append(child)
-    return adjacency
-
-
-def find_path(
-    adjacency: dict[str, list[str]],
-    source: str,
-    target: str,
-) -> list[str] | None:
-    if source == target:
-        return [source]
-
-    queue: deque[list[str]] = deque([[source]])
-    visited: set[str] = {source}
-
-    while queue:
-        path = queue.popleft()
-        node = path[-1]
-
-        for neighbor in adjacency.get(node, []):
-            if neighbor == target:
-                return path + [neighbor]
-            if neighbor in visited:
-                continue
-            visited.add(neighbor)
-            queue.append(path + [neighbor])
-
-    return None
-
-
-def canonical_cycle_key(cycle_nodes_closed: list[str]) -> tuple[str, ...]:
-    body = cycle_nodes_closed[:-1]
-    if not body:
-        return tuple()
-    rotations = [tuple(body[index:] + body[:index]) for index in range(len(body))]
-    return min(rotations)
-
-
 def analyze_cycle_stats(
     edges: list[tuple[str, str]],
     labels: dict[str, str],
     max_examples: int,
 ) -> dict[str, Any]:
-    adjacency = build_adjacency(edges)
-    cycle_edge_count = 0
-    seen_cycles: set[tuple[str, ...]] = set()
-    examples: list[str] = []
-
-    for parent, child in edges:
-        path_child_to_parent = find_path(adjacency, child, parent)
-        if not path_child_to_parent:
-            continue
-
-        cycle_edge_count += 1
-        cycle_nodes_closed = [parent] + path_child_to_parent
-        cycle_key = canonical_cycle_key(cycle_nodes_closed)
-        if cycle_key in seen_cycles:
-            continue
-
-        seen_cycles.add(cycle_key)
-        if len(examples) < max_examples:
-            rendered = " -> ".join(labels.get(node, node) for node in cycle_nodes_closed)
-            examples.append(rendered)
-
+    cycle_edge_count, examples = analyze_cycle_edges(edges, labels, max_examples)
     return {
         "cycle_edge_count": cycle_edge_count,
         "cycle_examples": examples,

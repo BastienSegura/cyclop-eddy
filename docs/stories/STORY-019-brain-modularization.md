@@ -2,7 +2,7 @@
 
 ID: `STORY-019`
 Title: `Extract shared brain utilities and split generator responsibilities`
-Status: `ready`
+Status: `done`
 Priority: `P1`
 Owner: `unassigned`
 Created: `2026-03-06`
@@ -45,24 +45,24 @@ Updated: `2026-03-06`
 
 ## Acceptance Criteria
 
-- [ ] Shared helpers for raw/cleaned graph-file parsing live in one module and are imported by `find_unexplored_areas.py`, `report_concept_quality.py`, and any other active script that needs them.
-- [ ] Shared graph-analysis helpers for adjacency/path/cycle primitives live in one module and replace duplicated local implementations where behavior is meant to match.
-- [ ] `brain/build_concept_list.py` delegates prompt construction, checkpoint/state handling, and generation runtime behavior to internal modules instead of keeping all concerns inline.
-- [ ] The refactor preserves current CLI behavior for `python brain/build_concept_list.py`, `python brain/report_concept_quality.py`, `python brain/find_unexplored_areas.py`, and `python brain/run_two_phase_coverage.py`.
-- [ ] Existing checkpoint resume behavior remains compatible with current state version handling.
-- [ ] Brain test coverage is expanded or updated to cover the newly extracted shared modules and any migrated generator state logic.
-- [ ] All active `brain` README/docs references remain accurate after the refactor.
+- [x] Shared helpers for raw/cleaned graph-file parsing live in one module and are imported by `find_unexplored_areas.py`, `report_concept_quality.py`, and any other active script that needs them.
+- [x] Shared graph-analysis helpers for adjacency/path/cycle primitives live in one module and replace duplicated local implementations where behavior is meant to match.
+- [x] `brain/build_concept_list.py` delegates prompt construction, checkpoint/state handling, and generation runtime behavior to internal modules instead of keeping all concerns inline.
+- [x] The refactor preserves current CLI behavior for `python brain/build_concept_list.py`, `python brain/report_concept_quality.py`, `python brain/find_unexplored_areas.py`, and `python brain/run_two_phase_coverage.py`.
+- [x] Existing checkpoint resume behavior remains compatible with current state version handling.
+- [x] Brain test coverage is expanded or updated to cover the newly extracted shared modules and any migrated generator state logic.
+- [x] All active `brain` README/docs references remain accurate after the refactor.
 
 ## Subtasks
 
-- [ ] Create a shared graph-file utility module for path-segment decoding, file/line mode inference, parent extraction, and parsed edge normalization.
-- [ ] Create a shared graph-analysis module for adjacency building, path search, cycle key generation, and any other intentionally shared primitives.
-- [ ] Replace duplicate helper implementations in `find_unexplored_areas.py` and `report_concept_quality.py` with imports from the new shared modules.
-- [ ] Extract generator prompt/client logic from `build_concept_list.py` into dedicated internal module(s).
-- [ ] Extract generator state creation, persistence, migration, and output reconstruction from `build_concept_list.py` into dedicated internal module(s).
-- [ ] Leave `build_concept_list.py` responsible only for CLI parsing and high-level orchestration.
-- [ ] Add or update tests for shared parsing helpers, shared cycle/path helpers, and checkpoint migration behavior.
-- [ ] Run all existing brain commands documented in `brain/README.md` to confirm no CLI regressions.
+- [x] Create a shared graph-file utility module for path-segment decoding, file/line mode inference, parent extraction, and parsed edge normalization.
+- [x] Create a shared graph-analysis module for adjacency building, path search, cycle key generation, and any other intentionally shared primitives.
+- [x] Replace duplicate helper implementations in `find_unexplored_areas.py` and `report_concept_quality.py` with imports from the new shared modules.
+- [x] Extract generator prompt/client logic from `build_concept_list.py` into dedicated internal module(s).
+- [x] Extract generator state creation, persistence, migration, and output reconstruction from `build_concept_list.py` into dedicated internal module(s).
+- [x] Leave `build_concept_list.py` responsible only for CLI parsing and high-level orchestration.
+- [x] Add or update tests for shared parsing helpers, shared cycle/path helpers, and checkpoint migration behavior.
+- [x] Run all existing brain commands documented in `brain/README.md` to confirm no CLI regressions.
 
 ## Dependencies
 
