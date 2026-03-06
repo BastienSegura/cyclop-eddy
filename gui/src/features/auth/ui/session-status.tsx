@@ -104,6 +104,7 @@ export function SessionStatus() {
 
   return (
     <div className="session-status session-status-authenticated">
+      <Link href="/settings/account">Settings</Link>
       <span title={state.user.email}>{state.user.email}</span>
       <button type="button" onClick={handleLogout} disabled={isLoggingOut}>
         {isLoggingOut ? "Logging out..." : "Logout"}
