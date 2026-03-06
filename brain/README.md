@@ -22,10 +22,10 @@ python brain/build_concept_list.py \
   --max-depth 3 \
   --exclude-strategy local \
   --exclude-local-limit 64 \
-  --output memory/concept_list.txt \
-  --state-file memory/concept_list_state.json
+  --output memory/runtime/concept_list.txt \
+  --state-file memory/runtime/concept_list_state.json
 
-python brain/build_concept_list.py --resume --state-file memory/concept_list_state.json
+python brain/build_concept_list.py --resume --state-file memory/runtime/concept_list_state.json
 
 python brain/sync_concept_data.py
 
@@ -33,20 +33,20 @@ python brain/sync_concept_data.py
 python brain/sync_concept_data.py --cycle-policy enforce
 
 # Quality report (markdown stdout + optional files)
-python brain/report_concept_quality.py --input memory/concept_list.txt memory/concept_list_cleaned.txt \
-  --output memory/concept_quality_report.md \
-  --json-output memory/concept_quality_report.json
+python brain/report_concept_quality.py --input memory/runtime/concept_list.txt memory/runtime/concept_list_cleaned.txt \
+  --output memory/runtime/concept_quality_report.md \
+  --json-output memory/runtime/concept_quality_report.json
 
 # CI/manual gate examples
-python brain/report_concept_quality.py --input memory/concept_list.txt --fail-on-threshold
-python brain/report_concept_quality.py --input memory/concept_list_cleaned.txt --mode cleaned \
+python brain/report_concept_quality.py --input memory/runtime/concept_list.txt --fail-on-threshold
+python brain/report_concept_quality.py --input memory/runtime/concept_list_cleaned.txt --mode cleaned \
   --fail-on-threshold --max-cycle-edges 0
 
 # Merge multiple raw runs into one deduplicated raw edge list
 python brain/merge_concept_edges.py \
-  --input memory/two_phase/phase1_raw.txt memory/two_phase/phase2/phase2_raw_01_algorithms.txt \
-  --output memory/concept_list_merged.txt \
-  --json-output memory/concept_list_merged.stats.json
+  --input memory/runtime/two_phase/phase1_raw.txt memory/runtime/two_phase/phase2/phase2_raw_01_algorithms.txt \
+  --output memory/runtime/concept_list_merged.txt \
+  --json-output memory/runtime/concept_list_merged.stats.json
 
 # Two-phase coverage workflow (recommended for broad coverage)
 python brain/run_two_phase_coverage.py \
@@ -55,8 +55,8 @@ python brain/run_two_phase_coverage.py \
   --phase1-depth 2 \
   --phase2-children 8 \
   --phase2-depth 3 \
-  --phase2-roots-file memory/frontier_roots.txt \
-  --baseline-input memory/concept_list_baseline.txt
+  --phase2-roots-file memory/runtime/frontier_roots.txt \
+  --baseline-input memory/runtime/concept_list_baseline.txt
 
 # Preview the two-phase commands without executing generation
 python brain/run_two_phase_coverage.py \
@@ -65,18 +65,18 @@ python brain/run_two_phase_coverage.py \
 
 # Frontier detection from cleaned graph (table output + copy-ready roots list)
 python brain/find_unexplored_areas.py \
-  --input memory/concept_list_cleaned.txt \
+  --input memory/runtime/concept_list_cleaned.txt \
   --target-children 8 \
   --top-n 25
 
 # JSON output + leaf filtering
 python brain/find_unexplored_areas.py \
-  --input memory/concept_list_cleaned.txt \
+  --input memory/runtime/concept_list_cleaned.txt \
   --target-children 8 \
   --top-n 25 \
   --exclude-leaves \
   --output-format json \
-  --json-output memory/frontier_report.json
+  --json-output memory/runtime/frontier_report.json
 
 # Brain regression tests
 python -m unittest discover -s brain/tests -p 'test_*.py'
@@ -86,6 +86,9 @@ Notes:
 - During generation, progress is printed in real time (`generated/estimated`, prompts, queue, speed).
 - `Ctrl+C` saves state so generation can be resumed safely.
 - Run `python brain/sync_concept_data.py` after any completed generation (new or resumed).
+- Runtime outputs now live under `memory/runtime/` by default.
+- Intentionally committed example artifacts live under `memory/fixtures/`.
+- `brain/sync_concept_data.py` treats `memory/runtime/concept_list_cleaned.txt` as the canonical cleaned artifact and `gui/public/data/concept_list_cleaned.txt` as the derived GUI sync target.
 - Generation now enforces a strict candidate contract before enqueueing:
   - rejects meta/instruction lines (for example `Here is ...`)
   - rejects formatting markers (for example bullets or numbered prefixes)
@@ -114,8 +117,8 @@ Notes:
   - supports depth filters (`--min-depth`, `--max-depth`) to focus search areas.
 - Frontier-driven refinement workflow:
   - run `find_unexplored_areas.py` on cleaned data
-  - copy suggested roots into `memory/frontier_roots.txt`
-  - run `run_two_phase_coverage.py --phase2-roots-file memory/frontier_roots.txt`
+  - copy suggested roots into `memory/runtime/frontier_roots.txt`
+  - run `run_two_phase_coverage.py --phase2-roots-file memory/runtime/frontier_roots.txt`
 - Use single-run mode when you want quick iterations or prompt tuning.
 - Use two-phase mode when the goal is broad coverage growth with measurable checkpoints.
 - Cleaner output path prefixes now use reversible encoded segments:
@@ -163,10 +166,10 @@ Two-phase dry-run transcript example:
 ```text
 [two-phase] Dry run. Planned commands:
   1. /usr/bin/python .../brain/build_concept_list.py --root-concept 'Computer Science' --concept-list-length 14 --max-depth 2 ...
-  2. /usr/bin/python .../brain/report_concept_quality.py --input memory/two_phase/phase1_raw.txt --mode raw ...
+  2. /usr/bin/python .../brain/report_concept_quality.py --input memory/runtime/two_phase/phase1_raw.txt --mode raw ...
   3. /usr/bin/python .../brain/build_concept_list.py --root-concept 'Operating Systems' --concept-list-length 8 --max-depth 3 ...
   4. /usr/bin/python .../brain/build_concept_list.py --root-concept Databases --concept-list-length 8 --max-depth 3 ...
-  5. /usr/bin/python .../brain/merge_concept_edges.py --input ... --output memory/two_phase/concept_list_two_phase.txt ...
-  6. /usr/bin/python .../brain/report_concept_quality.py --input memory/two_phase/concept_list_two_phase.txt --mode raw ...
+  5. /usr/bin/python .../brain/merge_concept_edges.py --input ... --output memory/runtime/two_phase/concept_list_two_phase.txt ...
+  6. /usr/bin/python .../brain/report_concept_quality.py --input memory/runtime/two_phase/concept_list_two_phase.txt --mode raw ...
 [two-phase] Phase2 roots (2): Operating Systems, Databases
 ```

@@ -35,7 +35,7 @@ Out of scope now:
 
 ## Repository Responsibilities
 - `brain/`: Python engine (generation + cleaning scripts).
-- `memory/`: generated artifacts and runtime state (concept files, checkpoint/save files).
+- `memory/`: runtime outputs under `memory/runtime/` plus intentionally committed fixtures under `memory/fixtures/`.
 - `archive/`: legacy experiments, historical snapshots, and deprecated material.
 
 ## Engine Workflow
@@ -46,22 +46,22 @@ python brain/build_concept_list.py \
   --root-concept "Computer Science" \
   --concept-list-length 25 \
   --max-depth 3 \
-  --output memory/concept_list.txt \
-  --state-file memory/concept_list_state.json
+  --output memory/runtime/concept_list.txt \
+  --state-file memory/runtime/concept_list_state.json
 ```
 
 Pause and resume generation:
 
 ```bash
-python brain/build_concept_list.py --resume --state-file memory/concept_list_state.json
+python brain/build_concept_list.py --resume --state-file memory/runtime/concept_list_state.json
 ```
 
 Clean generated graph edges:
 
 ```bash
 python brain/clean_concept_list.py \
-  --input memory/concept_list.txt \
-  --output memory/concept_list_cleaned.txt \
+  --input memory/runtime/concept_list.txt \
+  --output memory/runtime/concept_list_cleaned.txt \
   --root "Computer Science"
 ```
 
@@ -72,8 +72,8 @@ Cycle policy on cleaned edges:
 
 ```bash
 python brain/clean_concept_list.py \
-  --input memory/concept_list.txt \
-  --output memory/concept_list_cleaned.txt \
+  --input memory/runtime/concept_list.txt \
+  --output memory/runtime/concept_list_cleaned.txt \
   --root "Computer Science" \
   --cycle-policy enforce
 ```
@@ -83,9 +83,9 @@ Quality reporting:
 
 ```bash
 python brain/report_concept_quality.py \
-  --input memory/concept_list.txt memory/concept_list_cleaned.txt \
-  --output memory/concept_quality_report.md \
-  --json-output memory/concept_quality_report.json
+  --input memory/runtime/concept_list.txt memory/runtime/concept_list_cleaned.txt \
+  --output memory/runtime/concept_quality_report.md \
+  --json-output memory/runtime/concept_quality_report.json
 ```
 
 - Optional gate mode (`--fail-on-threshold`) defaults to:
@@ -121,9 +121,9 @@ python brain/run_two_phase_coverage.py \
 
 ```bash
 python brain/merge_concept_edges.py \
-  --input memory/two_phase/phase1_raw.txt memory/two_phase/phase2/phase2_raw_01_operating_systems.txt \
-  --output memory/two_phase/concept_list_two_phase.txt \
-  --json-output memory/two_phase/reports/merge_stats.json
+  --input memory/runtime/two_phase/phase1_raw.txt memory/runtime/two_phase/phase2/phase2_raw_01_operating_systems.txt \
+  --output memory/runtime/two_phase/concept_list_two_phase.txt \
+  --json-output memory/runtime/two_phase/reports/merge_stats.json
 ```
 
 Frontier detection for refinement root selection:
@@ -131,7 +131,7 @@ Frontier detection for refinement root selection:
 
 ```bash
 python brain/find_unexplored_areas.py \
-  --input memory/concept_list_cleaned.txt \
+  --input memory/runtime/concept_list_cleaned.txt \
   --target-children 8 \
   --top-n 25
 ```
@@ -140,11 +140,18 @@ python brain/find_unexplored_areas.py \
 
 ```bash
 python brain/find_unexplored_areas.py \
-  --input memory/concept_list_cleaned.txt \
+  --input memory/runtime/concept_list_cleaned.txt \
   --target-children 8 \
   --top-n 25 \
   --exclude-leaves
 ```
+
+## Artifact Ownership
+
+- Canonical cleaned graph artifact: `memory/runtime/concept_list_cleaned.txt`
+- Derived GUI sync target: `gui/public/data/concept_list_cleaned.txt`
+- Committed GUI fallback fixture: `gui/public/data/fixtures/demo_concept_list_cleaned.txt`
+- Intentionally committed example pipeline artifacts: `memory/fixtures/`
 
 ## Resume / Save Behavior
 Current behavior is the expected behavior:

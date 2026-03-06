@@ -12,7 +12,7 @@ Cyclop Eddy is a concept-universe project focused on making learning feel engagi
 
 - `brain/`: active Python engine (`build_concept_list.py`, `clean_concept_list.py`, `sync_concept_data.py`).
 - `gui/`: Next.js App Router prototype for concept constellation exploration.
-- `memory/`: generated runtime data and checkpoint/save files.
+- `memory/`: runtime pipeline outputs under `memory/runtime/` and committed example artifacts under `memory/fixtures/`.
 - `archive/`: old experiments, historical snapshots, deprecated material.
 - `docs/`: active project documentation.
 
@@ -68,6 +68,12 @@ cd gui
 npm run dev
 ```
 
+`python brain/sync_concept_data.py` writes the canonical cleaned artifact to
+`memory/runtime/concept_list_cleaned.txt` and syncs the derived GUI file at
+`gui/public/data/concept_list_cleaned.txt`. On a fresh clone, the GUI falls back
+to `gui/public/data/fixtures/demo_concept_list_cleaned.txt` until that derived file
+is regenerated.
+
 Local-only files produced by the current workflow are ignored in git, including
 `gui/.env`, `gui/.next/`, `gui/node_modules/`, and local Prisma SQLite files.
 
@@ -82,7 +88,7 @@ python brain/build_concept_list.py
 Resume paused generation:
 
 ```bash
-python brain/build_concept_list.py --resume --state-file memory/concept_list_state.json
+python brain/build_concept_list.py --resume --state-file memory/runtime/concept_list_state.json
 ```
 
 Two-phase coverage workflow (recommended for broad concept coverage growth):
@@ -95,7 +101,7 @@ python brain/run_two_phase_coverage.py \
 Find under-explored graph zones and get ranked refinement roots:
 
 ```bash
-python brain/find_unexplored_areas.py --input memory/concept_list_cleaned.txt --target-children 8 --top-n 20
+python brain/find_unexplored_areas.py --input memory/runtime/concept_list_cleaned.txt --target-children 8 --top-n 20
 ```
 
 When to use each mode:
@@ -113,8 +119,8 @@ Example output:
 ```text
 [sync] Input lines: 417
 [sync] Cleaned lines: 413
-[sync] Memory output: memory/concept_list_cleaned.txt
-[sync] GUI output: gui/public/data/concept_list_cleaned.txt
+[sync] Canonical cleaned artifact: memory/runtime/concept_list_cleaned.txt
+[sync] Derived GUI target: gui/public/data/concept_list_cleaned.txt
 [sync] Line parity: 413 == 413 (OK)
 [sync] Byte parity: OK
 ```

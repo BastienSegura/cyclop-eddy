@@ -6,6 +6,7 @@ __pycache__/
 .mypy_cache/
 .coverage
 coverage/
+memory/runtime/
 
 gui/.env
 gui/.env.local
@@ -14,6 +15,7 @@ gui/.env.test.local
 gui/.env.production.local
 gui/.next/
 gui/node_modules/
+gui/public/data/concept_list_cleaned.txt
 gui/dev.db
 gui/dev.db-*
 gui/prisma/dev.db

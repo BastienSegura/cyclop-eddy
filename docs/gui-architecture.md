@@ -34,7 +34,7 @@ This document defines the baseline architecture for the `gui/` frontend.
 
 ## Current Data Flow
 
-1. `load-graph.ts` fetches `public/data/concept_list_cleaned.txt`.
+1. `load-graph.ts` fetches the derived GUI graph file at `public/data/concept_list_cleaned.txt` and falls back to `public/data/fixtures/demo_concept_list_cleaned.txt` when the derived file is absent.
 2. `parse-edge-list.ts` converts raw lines into structured entries.
 3. `build-concept-graph.ts` builds nodes and directional links.
 4. `compute-graph-layout.ts` generates world coordinates using a force-directed pass to reduce long confusing edges.

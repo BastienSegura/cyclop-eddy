@@ -149,21 +149,27 @@ This split keeps business logic testable and reusable when UI evolves.
 
 ## Data Source
 
-Prototype uses:
+Prototype loading order:
 
-- `public/data/concept_list_cleaned.txt`
+- First try the derived sync target: `public/data/concept_list_cleaned.txt`
+- Fall back to the committed demo fixture: `public/data/fixtures/demo_concept_list_cleaned.txt`
 
 Path prefix compatibility:
 - New cleaner format encodes each path segment as `~<percent-encoded-label>` to preserve literal hyphens.
 - Legacy files using `-` as a space substitute are still supported by fallback parsing.
-- A regression fixture is available at `public/data/concept_list_cleaned_hyphen_fixture.txt`.
+- A regression fixture is available at `public/data/fixtures/concept_list_cleaned_hyphen_fixture.txt`.
 
-You can replace this file with newer generated data from `memory/concept_list_cleaned.txt`.
+Runtime artifact policy:
+- `public/data/concept_list_cleaned.txt` is a derived file written by `brain/sync_concept_data.py` and is git-ignored.
+- `public/data/fixtures/` contains the committed GUI data fixtures that remain versioned.
+
+Refresh the derived GUI data from the canonical cleaned artifact from the repo root:
 
 Example:
 
 ```bash
-cp ../memory/concept_list_cleaned.txt public/data/concept_list_cleaned.txt
+cd ..
+python brain/sync_concept_data.py
 ```
 
 ## Current UX

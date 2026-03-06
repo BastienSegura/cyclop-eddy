@@ -4,8 +4,8 @@
 Usage:
     python brain/merge_concept_edges.py \
       --input memory/phase1.txt memory/phase2_a.txt memory/phase2_b.txt \
-      --output memory/concept_list_merged.txt \
-      --json-output memory/concept_list_merged.stats.json
+      --output memory/runtime/concept_list_merged.txt \
+      --json-output memory/runtime/concept_list_merged.stats.json
 """
 
 from __future__ import annotations
@@ -126,8 +126,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--output",
-        default="memory/concept_list_merged.txt",
-        help="Merged raw output file path (default: memory/concept_list_merged.txt).",
+        default="memory/runtime/concept_list_merged.txt",
+        help="Merged raw output file path (default: memory/runtime/concept_list_merged.txt).",
     )
     parser.add_argument(
         "--json-output",

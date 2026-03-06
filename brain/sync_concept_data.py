@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Clean generated concept data, sync it to GUI, and verify parity.
+"""Clean generated concept data, sync the canonical cleaned artifact to the GUI, and verify parity.
 
 Usage:
     python brain/sync_concept_data.py
@@ -20,22 +20,22 @@ def line_count(path: Path) -> int:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Clean concept data, copy to GUI data source, and verify sync parity.",
+        description="Clean concept data, write the canonical cleaned artifact, sync it to the derived GUI file, and verify parity.",
     )
     parser.add_argument(
         "--input",
-        default="memory/concept_list.txt",
-        help="Raw concept edge list (default: memory/concept_list.txt)",
+        default="memory/runtime/concept_list.txt",
+        help="Raw concept edge list (default: memory/runtime/concept_list.txt)",
     )
     parser.add_argument(
         "--cleaned-output",
-        default="memory/concept_list_cleaned.txt",
-        help="Cleaned concept edge list output (default: memory/concept_list_cleaned.txt)",
+        default="memory/runtime/concept_list_cleaned.txt",
+        help="Canonical cleaned artifact output (default: memory/runtime/concept_list_cleaned.txt)",
     )
     parser.add_argument(
         "--gui-output",
         default="gui/public/data/concept_list_cleaned.txt",
-        help="GUI data target (default: gui/public/data/concept_list_cleaned.txt)",
+        help="Derived GUI data target (default: gui/public/data/concept_list_cleaned.txt)",
     )
     parser.add_argument(
         "--root",
@@ -104,8 +104,8 @@ def main() -> None:
         f"after={stats['cycle_edge_count_after']}, "
         f"dropped={stats['dropped_cycle_edge_count']})"
     )
-    print(f"[sync] Memory output: {cleaned_output_path}")
-    print(f"[sync] GUI output: {gui_output_path}")
+    print(f"[sync] Canonical cleaned artifact: {cleaned_output_path}")
+    print(f"[sync] Derived GUI target: {gui_output_path}")
     print(f"[sync] Line parity: {memory_line_count} == {gui_line_count} (OK)")
     print("[sync] Byte parity: OK")
 

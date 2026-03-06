@@ -113,8 +113,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--work-dir",
-        default="memory/two_phase",
-        help="Workspace directory for phase artifacts (default: memory/two_phase).",
+        default="memory/runtime/two_phase",
+        help="Workspace directory for phase artifacts (default: memory/runtime/two_phase).",
     )
     parser.add_argument(
         "--baseline-input",

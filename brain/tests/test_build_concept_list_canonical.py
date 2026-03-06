@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 import tempfile
@@ -248,6 +249,67 @@ class BuildConceptListCanonicalTests(unittest.TestCase):
                 )
 
         self.assertIn("different exclude strategy", str(ctx.exception))
+
+    def test_resume_migrates_legacy_memory_output_path_to_runtime_directory(self) -> None:
+        prompts: list[str] = []
+        persisted_output_paths: list[str] = []
+
+        def fake_prompt(prompt: str) -> str:
+            prompts.append(prompt)
+            return ""
+
+        original_prompt = builder.simple_prompt
+        original_save_state = builder.save_generation_state
+        builder.simple_prompt = fake_prompt
+
+        def tracking_save_generation_state(state_file: str, state: dict[str, object]) -> None:
+            output_path = state.get("output_path")
+            if isinstance(output_path, str):
+                persisted_output_paths.append(output_path)
+            original_save_state(state_file, state)
+
+        builder.save_generation_state = tracking_save_generation_state
+        try:
+            with tempfile.TemporaryDirectory() as temp_dir:
+                temp_path = Path(temp_dir)
+                legacy_memory_dir = temp_path / "memory"
+                legacy_memory_dir.mkdir()
+                runtime_memory_dir = legacy_memory_dir / "runtime"
+                state_path = temp_path / "state.json"
+
+                cwd = Path.cwd()
+                try:
+                    os.chdir(temp_path)
+                    state = builder.build_new_state(
+                        root_concept="Computer Science",
+                        concept_list_length=2,
+                        max_depth=1,
+                        output_path="memory/concept_list.txt",
+                        exclude_strategy="local",
+                        exclude_local_limit=5,
+                    )
+                    builder.save_generation_state(str(state_path), state)
+
+                    builder.generate_concept_graph(
+                        root_concept="Computer Science",
+                        concept_list_length=2,
+                        max_depth=1,
+                        output_path="memory/runtime/concept_list.txt",
+                        state_file=str(state_path),
+                        resume=True,
+                    )
+                finally:
+                    os.chdir(cwd)
+
+                migrated_output_path = runtime_memory_dir / "concept_list.txt"
+                migrated_output_exists = migrated_output_path.exists()
+        finally:
+            builder.simple_prompt = original_prompt
+            builder.save_generation_state = original_save_state
+
+        self.assertEqual(len(prompts), 1)
+        self.assertIn("memory/runtime/concept_list.txt", persisted_output_paths)
+        self.assertTrue(migrated_output_exists)
 
 
 if __name__ == "__main__":

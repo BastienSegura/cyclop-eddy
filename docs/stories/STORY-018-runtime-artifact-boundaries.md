@@ -2,7 +2,7 @@
 
 ID: `STORY-018`
 Title: `Separate runtime artifacts from versioned data fixtures`
-Status: `ready`
+Status: `done`
 Priority: `P1`
 Owner: `unassigned`
 Created: `2026-03-06`
@@ -40,23 +40,23 @@ Updated: `2026-03-06`
 
 ## Acceptance Criteria
 
-- [ ] The repository defines one canonical cleaned graph artifact path and one clearly documented derived GUI-served copy path.
-- [ ] `memory/README.md` is updated to distinguish runtime-only artifacts, optional preserved run artifacts, and committed fixtures/examples.
-- [ ] Runtime checkpoint files, ad-hoc run outputs, and disposable report outputs are excluded from git by default unless they are intentionally moved into a dedicated fixture/example location.
-- [ ] If committed sample graph data must remain for local GUI/demo use, it lives in a clearly named fixture/example location with a short README note explaining why it is versioned.
-- [ ] `brain/sync_concept_data.py` help text and output messages explicitly state which path is canonical and which path is the synced GUI target.
-- [ ] Root docs and GUI docs describe the exact command for refreshing GUI-served graph data from the canonical cleaned artifact.
-- [ ] After running the documented data refresh workflow, a contributor can tell which files are expected to change and which files should remain untouched.
+- [x] The repository defines one canonical cleaned graph artifact path and one clearly documented derived GUI-served copy path.
+- [x] `memory/README.md` is updated to distinguish runtime-only artifacts, optional preserved run artifacts, and committed fixtures/examples.
+- [x] Runtime checkpoint files, ad-hoc run outputs, and disposable report outputs are excluded from git by default unless they are intentionally moved into a dedicated fixture/example location.
+- [x] If committed sample graph data must remain for local GUI/demo use, it lives in a clearly named fixture/example location with a short README note explaining why it is versioned.
+- [x] `brain/sync_concept_data.py` help text and output messages explicitly state which path is canonical and which path is the synced GUI target.
+- [x] Root docs and GUI docs describe the exact command for refreshing GUI-served graph data from the canonical cleaned artifact.
+- [x] After running the documented data refresh workflow, a contributor can tell which files are expected to change and which files should remain untouched.
 
 ## Subtasks
 
-- [ ] Inventory all currently versioned generated artifacts in `memory/` and classify each as runtime output, fixture/example, or documentation artifact.
-- [ ] Decide the canonical cleaned graph path to keep after cleanup and document that decision in `memory/README.md`, `README.md`, and `gui/README.md`.
-- [ ] Decide whether the GUI-served graph file remains versioned, moves to a dedicated fixture/example location, or becomes a derived local-only artifact.
-- [ ] Update `.gitignore` rules to match the chosen policy for runtime outputs, checkpoints, and generated reports.
-- [ ] Update `brain/sync_concept_data.py` wording so the sync summary names the canonical source and the derived GUI destination explicitly.
-- [ ] Move any long-lived example data that must remain committed into a clearly named fixture/example location if the current paths are ambiguous.
-- [ ] Verify the documented workflow still supports local GUI development without manual file hunting.
+- [x] Inventory all currently versioned generated artifacts in `memory/` and classify each as runtime output, fixture/example, or documentation artifact.
+- [x] Decide the canonical cleaned graph path to keep after cleanup and document that decision in `memory/README.md`, `README.md`, and `gui/README.md`.
+- [x] Decide whether the GUI-served graph file remains versioned, moves to a dedicated fixture/example location, or becomes a derived local-only artifact.
+- [x] Update `.gitignore` rules to match the chosen policy for runtime outputs, checkpoints, and generated reports.
+- [x] Update `brain/sync_concept_data.py` wording so the sync summary names the canonical source and the derived GUI destination explicitly.
+- [x] Move any long-lived example data that must remain committed into a clearly named fixture/example location if the current paths are ambiguous.
+- [x] Verify the documented workflow still supports local GUI development without manual file hunting.
 
 ## Dependencies
 

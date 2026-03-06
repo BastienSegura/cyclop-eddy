@@ -8,11 +8,11 @@ How to run
      --root-concept "Computer Science" \
      --concept-list-length 25 \
      --max-depth 3 \
-     --output memory/concept_list.txt \
-     --state-file memory/concept_list_state.json
+     --output memory/runtime/concept_list.txt \
+     --state-file memory/runtime/concept_list_state.json
 
 2. Resume after interruption (Ctrl+C):
-   python brain/build_concept_list.py --resume --state-file memory/concept_list_state.json
+   python brain/build_concept_list.py --resume --state-file memory/runtime/concept_list_state.json
 
 What this script provides
 -------------------------
@@ -378,8 +378,8 @@ def generate_concept_graph(
     root_concept: str,
     concept_list_length: int,
     max_depth: int,
-    output_path: str = "memory/concept_list.txt",
-    state_file: str = "memory/concept_list_state.json",
+    output_path: str = "memory/runtime/concept_list.txt",
+    state_file: str = "memory/runtime/concept_list_state.json",
     resume: bool = False,
     exclude_strategy: str | None = None,
     exclude_local_limit: int | None = None,
@@ -476,6 +476,14 @@ def generate_concept_graph(
         resumed_output_path = state.get("output_path", output_path)
         if resumed_output_path.startswith("src/"):
             migrated_output_path = resumed_output_path.replace("src/", "memory/", 1)
+            if Path(migrated_output_path).exists() or not Path(resumed_output_path).exists():
+                resumed_output_path = migrated_output_path
+        if (
+            resumed_output_path.startswith("memory/")
+            and not resumed_output_path.startswith("memory/runtime/")
+            and not resumed_output_path.startswith("memory/fixtures/")
+        ):
+            migrated_output_path = resumed_output_path.replace("memory/", "memory/runtime/", 1)
             if Path(migrated_output_path).exists() or not Path(resumed_output_path).exists():
                 resumed_output_path = migrated_output_path
 
@@ -667,8 +675,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--root-concept", default="Computer Science")
     parser.add_argument("--concept-list-length", type=int, default=25)
     parser.add_argument("--max-depth", type=int, default=3)
-    parser.add_argument("--output", default="memory/concept_list.txt")
-    parser.add_argument("--state-file", default="memory/concept_list_state.json")
+    parser.add_argument("--output", default="memory/runtime/concept_list.txt")
+    parser.add_argument("--state-file", default="memory/runtime/concept_list_state.json")
     parser.add_argument("--resume", action="store_true")
     parser.add_argument(
         "--exclude-strategy",

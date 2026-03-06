@@ -2,7 +2,7 @@
 
 ID: `STORY-017`
 Title: `Tighten repository hygiene and bootstrap contracts`
-Status: `ready`
+Status: `done`
 Priority: `P1`
 Owner: `unassigned`
 Created: `2026-03-06`
@@ -36,22 +36,22 @@ Updated: `2026-03-06`
 
 ## Acceptance Criteria
 
-- [ ] Repository-level ignore rules explicitly cover local GUI env files, Next.js build output, dependency directories, Prisma/SQLite local database files, and common local test/build artifacts produced by the current toolchain.
-- [ ] The Python side has a committed dependency manifest (`requirements.txt` or `pyproject.toml`) that declares all third-party packages required to run active `brain/` scripts and tests.
-- [ ] `README.md` documents a clean local bootstrap flow for the Python environment, including virtualenv creation, dependency installation, and the command used to run brain tests.
-- [ ] `gui/README.md` documents which files are local-only artifacts and must not be committed during normal development.
-- [ ] After following the documented bootstrap steps on a clean clone, `python -m unittest discover -s brain/tests -p 'test_*.py'` and `cd gui && npm test` both run without undocumented setup steps.
-- [ ] Repo docs identify the canonical bootstrap order for a new contributor: Python env, GUI env, test commands, then app commands.
+- [x] Repository-level ignore rules explicitly cover local GUI env files, Next.js build output, dependency directories, Prisma/SQLite local database files, and common local test/build artifacts produced by the current toolchain.
+- [x] The Python side has a committed dependency manifest (`requirements.txt` or `pyproject.toml`) that declares all third-party packages required to run active `brain/` scripts and tests.
+- [x] `README.md` documents a clean local bootstrap flow for the Python environment, including virtualenv creation, dependency installation, and the command used to run brain tests.
+- [x] `gui/README.md` documents which files are local-only artifacts and must not be committed during normal development.
+- [x] After following the documented bootstrap steps on a clean clone, `python -m unittest discover -s brain/tests -p 'test_*.py'` and `cd gui && npm test` both run without undocumented setup steps.
+- [x] Repo docs identify the canonical bootstrap order for a new contributor: Python env, GUI env, test commands, then app commands.
 
 ## Subtasks
 
-- [ ] Inventory all repo-local artifacts created by current workflows: Python caches, GUI install/build output, Prisma SQLite files, env files, and test artifacts.
-- [ ] Expand root `.gitignore` with scoped path rules that match the current repo layout instead of relying on global excludes.
-- [ ] Choose and add a Python dependency manifest format for the active `brain/` scripts.
-- [ ] Verify the manifest includes at minimum `requests` and any other third-party imports used by active scripts or tests.
-- [ ] Add a Python bootstrap section to `README.md` with exact commands for venv creation and dependency install.
-- [ ] Add a short “local-only files” section to `gui/README.md` covering `.env`, local SQLite files, build output, and dependency directories.
-- [ ] Run the documented bootstrap and test commands from a clean state and capture any missing steps before marking the story done.
+- [x] Inventory all repo-local artifacts created by current workflows: Python caches, GUI install/build output, Prisma SQLite files, env files, and test artifacts.
+- [x] Expand root `.gitignore` with scoped path rules that match the current repo layout instead of relying on global excludes.
+- [x] Choose and add a Python dependency manifest format for the active `brain/` scripts.
+- [x] Verify the manifest includes at minimum `requests` and any other third-party imports used by active scripts or tests.
+- [x] Add a Python bootstrap section to `README.md` with exact commands for venv creation and dependency install.
+- [x] Add a short “local-only files” section to `gui/README.md` covering `.env`, local SQLite files, build output, and dependency directories.
+- [x] Run the documented bootstrap and test commands from a clean state and capture any missing steps before marking the story done.
 
 ## Dependencies
 

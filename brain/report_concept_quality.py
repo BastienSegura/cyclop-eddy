@@ -2,11 +2,11 @@
 """Generate deterministic quality reports for concept graph edge files.
 
 Examples:
-    python brain/report_concept_quality.py --input memory/concept_list.txt
-    python brain/report_concept_quality.py --input memory/concept_list_cleaned.txt --mode cleaned
-    python brain/report_concept_quality.py --input memory/concept_list.txt memory/concept_list_cleaned.txt \
-      --output memory/concept_quality_report.md --json-output memory/concept_quality_report.json
-    python brain/report_concept_quality.py --input memory/concept_list.txt --fail-on-threshold
+    python brain/report_concept_quality.py --input memory/runtime/concept_list.txt
+    python brain/report_concept_quality.py --input memory/runtime/concept_list_cleaned.txt --mode cleaned
+    python brain/report_concept_quality.py --input memory/runtime/concept_list.txt memory/runtime/concept_list_cleaned.txt \
+      --output memory/runtime/concept_quality_report.md --json-output memory/runtime/concept_quality_report.json
+    python brain/report_concept_quality.py --input memory/runtime/concept_list.txt --fail-on-threshold
 """
 
 from __future__ import annotations
@@ -22,8 +22,8 @@ from urllib.parse import unquote
 from concept_identity import canonical_concept_key, canonical_concept_label, is_meta_concept_text
 
 DEFAULT_INPUT_CANDIDATES = [
-    "memory/concept_list.txt",
-    "memory/concept_list_cleaned.txt",
+    "memory/runtime/concept_list.txt",
+    "memory/runtime/concept_list_cleaned.txt",
 ]
 
 MAX_ROOT_CANDIDATES = 20
