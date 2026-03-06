@@ -1,4 +1,5 @@
-const MIN_PASSWORD_LENGTH = 12;
+import { validatePasswordStrength } from "./password-policy";
+
 const MAX_EMAIL_LENGTH = 254;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -32,18 +33,6 @@ export interface ParseRegistrationFailure {
 }
 
 export type ParseRegistrationResult = ParseRegistrationSuccess | ParseRegistrationFailure;
-
-function hasUppercase(text: string): boolean {
-  return /[A-Z]/.test(text);
-}
-
-function hasLowercase(text: string): boolean {
-  return /[a-z]/.test(text);
-}
-
-function hasDigit(text: string): boolean {
-  return /[0-9]/.test(text);
-}
 
 function normalizeEmail(email: string): { email: string; emailLower: string } {
   const trimmed = email.trim();
@@ -85,22 +74,7 @@ export function parseRegistrationPayload(raw: unknown): ParseRegistrationResult 
     }
   }
 
-  if (!password) {
-    issues.push({ field: "password", message: "Password is required." });
-  } else {
-    if (password.length < MIN_PASSWORD_LENGTH) {
-      issues.push({ field: "password", message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters.` });
-    }
-    if (!hasUppercase(password)) {
-      issues.push({ field: "password", message: "Password must include at least one uppercase letter." });
-    }
-    if (!hasLowercase(password)) {
-      issues.push({ field: "password", message: "Password must include at least one lowercase letter." });
-    }
-    if (!hasDigit(password)) {
-      issues.push({ field: "password", message: "Password must include at least one number." });
-    }
-  }
+  issues.push(...validatePasswordStrength(password, "password"));
 
   if (!confirmPassword) {
     issues.push({ field: "confirmPassword", message: "Password confirmation is required." });
