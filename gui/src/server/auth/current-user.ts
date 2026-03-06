@@ -12,6 +12,11 @@ interface CurrentUserDependencies {
   userRepository: UserRepository;
 }
 
+export interface AuthenticatedSessionUser {
+  sessionId: string;
+  user: SessionUser;
+}
+
 function defaultDependencies(): CurrentUserDependencies {
   return {
     validateSessionFn: validateSession,
@@ -23,6 +28,14 @@ export async function resolveSessionUserFromToken(
   token: string,
   dependencies: CurrentUserDependencies = defaultDependencies(),
 ): Promise<SessionUser | null> {
+  const authenticated = await resolveAuthenticatedSessionUserFromToken(token, dependencies);
+  return authenticated?.user ?? null;
+}
+
+export async function resolveAuthenticatedSessionUserFromToken(
+  token: string,
+  dependencies: CurrentUserDependencies = defaultDependencies(),
+): Promise<AuthenticatedSessionUser | null> {
   const session = await dependencies.validateSessionFn(token);
   if (!session) {
     return null;
@@ -34,8 +47,11 @@ export async function resolveSessionUserFromToken(
   }
 
   return {
-    id: user.id,
-    email: user.email,
+    sessionId: session.sessionId,
+    user: {
+      id: user.id,
+      email: user.email,
+    },
   };
 }
 
@@ -43,10 +59,18 @@ export async function resolveSessionUserFromRequest(
   request: Request,
   dependencies: CurrentUserDependencies = defaultDependencies(),
 ): Promise<SessionUser | null> {
+  const authenticated = await resolveAuthenticatedSessionUserFromRequest(request, dependencies);
+  return authenticated?.user ?? null;
+}
+
+export async function resolveAuthenticatedSessionUserFromRequest(
+  request: Request,
+  dependencies: CurrentUserDependencies = defaultDependencies(),
+): Promise<AuthenticatedSessionUser | null> {
   const token = readSessionTokenFromRequest(request);
   if (!token) {
     return null;
   }
 
-  return resolveSessionUserFromToken(token, dependencies);
+  return resolveAuthenticatedSessionUserFromToken(token, dependencies);
 }
