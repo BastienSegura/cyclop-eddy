@@ -22,3 +22,8 @@ This is the canonical backlog for implementation stories.
 | STORY-014 | Add change password flow | done | P1 | [STORY-014](STORY-014-change-password.md) |
 | STORY-015 | Persist user exploration progress | draft | P1 | [STORY-015](STORY-015-user-progress-persistence.md) |
 | STORY-016 | Add auth and progress regression test coverage | draft | P2 | [STORY-016](STORY-016-auth-progress-regression-tests.md) |
+| STORY-017 | Tighten repository hygiene and bootstrap contracts | ready | P1 | [STORY-017](STORY-017-repo-hygiene-and-bootstrap.md) |
+| STORY-018 | Separate runtime artifacts from versioned data fixtures | ready | P1 | [STORY-018](STORY-018-runtime-artifact-boundaries.md) |
+| STORY-019 | Extract shared brain utilities and split generator responsibilities | ready | P1 | [STORY-019](STORY-019-brain-modularization.md) |
+| STORY-020 | Decompose oversized concept-graph frontend modules | ready | P2 | [STORY-020](STORY-020-graph-frontend-decomposition.md) |
+| STORY-021 | Align active documentation with current implementation and cleanup rules | ready | P2 | [STORY-021](STORY-021-docs-architecture-sync.md) |
