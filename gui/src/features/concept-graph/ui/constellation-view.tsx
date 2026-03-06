@@ -1,26 +1,27 @@
 "use client";
 
-import { type CSSProperties, useMemo, useRef, useState } from "react";
+import { type CSSProperties, useMemo, useRef } from "react";
 
-import type { GraphLayout, NodePosition } from "../application/compute-graph-layout";
+import type { GraphLayout, NodePosition } from "../application/graph-layout-types";
 import type { ConceptGraph, NodeId } from "../domain/types";
+import {
+  LABEL_OFFSET_X,
+  LABEL_OFFSET_Y,
+  buildAdjustedVisiblePositions,
+  buildVisibleLabelSet,
+  shouldShowLabel,
+} from "./constellation-label-layout";
+import {
+  OVERVIEW_NODE_RADIUS_PX,
+  buildFourPointStarPoints,
+  buildOverviewNodeStyle,
+  buildVisibleNodeStyle,
+  edgeClass,
+  nodeClass,
+} from "./constellation-node-styles";
+import type { CameraState } from "./graph-explorer-helpers";
+import { useConstellationInteractions } from "./use-constellation-interactions";
 import { VIEWPORT_HEIGHT, VIEWPORT_WIDTH } from "./viewport-constants";
-
-const DRAG_THRESHOLD_PX = 6;
-const VIEWPORT_MARGIN_PX = 140;
-const COLLISION_ITERATIONS = 14;
-const BASE_NODE_DISTANCE_PX = 82;
-const OVERVIEW_NODE_RADIUS_PX = 3;
-const LABEL_OFFSET_X = 14;
-const LABEL_OFFSET_Y = -14;
-const LABEL_HEIGHT_PX = 14;
-const LABEL_PADDING_PX = 5;
-
-interface CameraState {
-  x: number;
-  y: number;
-  zoom: number;
-}
 
 interface ConstellationViewProps {
   graph: ConceptGraph;
@@ -35,418 +36,6 @@ interface ConstellationViewProps {
   onZoomAtPoint: (screenX: number, screenY: number, multiplier: number) => void;
 }
 
-interface ScreenPoint {
-  x: number;
-  y: number;
-}
-
-interface LabelBox {
-  left: number;
-  top: number;
-  right: number;
-  bottom: number;
-}
-
-interface EdgeHoverTooltip {
-  label: string;
-  screenX: number;
-  screenY: number;
-}
-
-interface RGBColor {
-  r: number;
-  g: number;
-  b: number;
-}
-
-const NODE_COLOR_PALETTE_HEX = [
-  "#3B4A8F", // adjusted from #131862 for node visibility
-  "#4A5FA8", // adjusted from #2E4482 for node visibility
-  "#546BAB",
-  "#BEA9DE",
-  "#5B3FA8", // adjusted from #14E81E for a more celestial tone
-  "#1F5BD8", // adjusted from #00EA8D for a deep-blue celestial tone
-  "#017ED5",
-  "#E5CD8A",
-] as const;
-
-function hashNodeId(nodeId: NodeId): number {
-  let hash = 2166136261;
-
-  for (let index = 0; index < nodeId.length; index += 1) {
-    hash ^= nodeId.charCodeAt(index);
-    hash = Math.imul(hash, 16777619);
-  }
-
-  return hash >>> 0;
-}
-
-function hexToRgb(hex: string): RGBColor {
-  const normalized = hex.replace("#", "");
-  const parsed = Number.parseInt(normalized, 16);
-
-  return {
-    r: (parsed >> 16) & 255,
-    g: (parsed >> 8) & 255,
-    b: parsed & 255,
-  };
-}
-
-function mixTowardWhite(color: RGBColor, ratio: number): RGBColor {
-  const clamped = Math.max(0, Math.min(1, ratio));
-
-  return {
-    r: Math.round(color.r + (255 - color.r) * clamped),
-    g: Math.round(color.g + (255 - color.g) * clamped),
-    b: Math.round(color.b + (255 - color.b) * clamped),
-  };
-}
-
-function rgbToken(color: RGBColor): string {
-  return `${color.r} ${color.g} ${color.b}`;
-}
-
-function buildFourPointStarPoints(outerRadius: number): string {
-  const innerOffset = outerRadius * 0.31;
-  const points = [
-    [0, -outerRadius],
-    [innerOffset, -innerOffset],
-    [outerRadius, 0],
-    [innerOffset, innerOffset],
-    [0, outerRadius],
-    [-innerOffset, innerOffset],
-    [-outerRadius, 0],
-    [-innerOffset, -innerOffset],
-  ];
-
-  return points.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`).join(" ");
-}
-
-function colorForNode(nodeId: NodeId): RGBColor {
-  const paletteColorHex = NODE_COLOR_PALETTE_HEX[hashNodeId(nodeId) % NODE_COLOR_PALETTE_HEX.length];
-  return hexToRgb(paletteColorHex);
-}
-
-function buildVisibleNodeStyle(nodeId: NodeId): CSSProperties {
-  const baseColor = colorForNode(nodeId);
-  const strokeColor = mixTowardWhite(baseColor, 0.35);
-  const glowColor = mixTowardWhite(baseColor, 0.22);
-
-  return {
-    ["--node-fill-rgb" as string]: rgbToken(baseColor),
-    ["--node-stroke-rgb" as string]: rgbToken(strokeColor),
-    ["--node-glow-rgb" as string]: rgbToken(glowColor),
-  } as CSSProperties;
-}
-
-function buildOverviewNodeStyle(nodeId: NodeId): CSSProperties {
-  const seed = hashNodeId(nodeId);
-  const baseColor = colorForNode(nodeId);
-  const fillColor = mixTowardWhite(baseColor, 0.1);
-  const strokeColor = mixTowardWhite(baseColor, 0.44);
-  const glowColor = mixTowardWhite(baseColor, 0.25);
-  const durationMs = 4800 + (seed % 6200);
-  const delayMs = seed % durationMs;
-  const idleOpacity = 0.31 + ((seed >>> 8) % 15) / 100;
-  const flashOpacity = 0.86 + ((seed >>> 16) % 14) / 100;
-  const idleGlowRadiusPx = 4 + ((seed >>> 4) % 4);
-  const flashGlowRadiusPx = idleGlowRadiusPx + 10 + (seed % 5);
-  const idleGlowAlpha = 0.4 + ((seed >>> 24) % 20) / 100;
-  const flashGlowAlpha = 0.92 + ((seed >>> 12) % 9) / 100;
-
-  return {
-    animationDuration: `${durationMs}ms`,
-    animationDelay: `-${delayMs}ms`,
-    ["--overview-node-fill-rgb" as string]: rgbToken(fillColor),
-    ["--overview-node-stroke-rgb" as string]: rgbToken(strokeColor),
-    ["--overview-node-glow-rgb" as string]: rgbToken(glowColor),
-    ["--overview-node-idle-opacity" as string]: idleOpacity.toFixed(2),
-    ["--overview-node-flash-opacity" as string]: flashOpacity.toFixed(2),
-    ["--overview-node-idle-glow-alpha" as string]: idleGlowAlpha.toFixed(2),
-    ["--overview-node-flash-glow-alpha" as string]: flashGlowAlpha.toFixed(2),
-    ["--overview-node-idle-glow-radius" as string]: `${idleGlowRadiusPx}px`,
-    ["--overview-node-flash-glow-radius" as string]: `${flashGlowRadiusPx}px`,
-  } as CSSProperties;
-}
-
-function edgeClass(
-  from: NodeId,
-  to: NodeId,
-  selectedNodeId: NodeId,
-  neighborhoodDepths: Map<NodeId, number>,
-): string {
-  const fromDepth = neighborhoodDepths.get(from);
-  const toDepth = neighborhoodDepths.get(to);
-
-  if (from === selectedNodeId || to === selectedNodeId) {
-    return "edge-near";
-  }
-
-  if (fromDepth === undefined && toDepth === undefined) {
-    return "edge-far";
-  }
-
-  if (fromDepth !== undefined && toDepth !== undefined) {
-    return "edge-near";
-  }
-
-  return "edge-mid";
-}
-
-function nodeClass(nodeId: NodeId, selectedNodeId: NodeId, neighborhoodDepths: Map<NodeId, number>): string {
-  if (nodeId === selectedNodeId) {
-    return "node-selected";
-  }
-
-  const depth = neighborhoodDepths.get(nodeId);
-  if (depth === undefined) {
-    return "node-far";
-  }
-
-  if (depth === 1) {
-    return "node-near";
-  }
-
-  return "node-mid";
-}
-
-function shouldShowLabel(nodeId: NodeId, selectedNodeId: NodeId, neighborhoodDepths: Map<NodeId, number>): boolean {
-  if (nodeId === selectedNodeId) {
-    return true;
-  }
-
-  const depth = neighborhoodDepths.get(nodeId);
-  return depth !== undefined && depth <= 1;
-}
-
-function screenFromWorld(world: NodePosition, camera: CameraState): ScreenPoint {
-  return {
-    x: (world.x - camera.x) * camera.zoom + VIEWPORT_WIDTH / 2,
-    y: (world.y - camera.y) * camera.zoom + VIEWPORT_HEIGHT / 2,
-  };
-}
-
-function worldFromScreen(screen: ScreenPoint, camera: CameraState): NodePosition {
-  return {
-    x: camera.x + (screen.x - VIEWPORT_WIDTH / 2) / camera.zoom,
-    y: camera.y + (screen.y - VIEWPORT_HEIGHT / 2) / camera.zoom,
-  };
-}
-
-function isWithinViewport(point: ScreenPoint, margin: number): boolean {
-  return (
-    point.x >= -margin
-    && point.x <= VIEWPORT_WIDTH + margin
-    && point.y >= -margin
-    && point.y <= VIEWPORT_HEIGHT + margin
-  );
-}
-
-function boxesOverlap(a: LabelBox, b: LabelBox): boolean {
-  return !(a.right < b.left || b.right < a.left || a.bottom < b.top || b.bottom < a.top);
-}
-
-function buildAdjustedVisiblePositions(
-  visibleNodeIds: NodeId[],
-  layout: GraphLayout,
-  selectedNodeId: NodeId,
-  neighborhoodDepths: Map<NodeId, number>,
-  camera: CameraState,
-): Record<NodeId, NodePosition> {
-  const adjustedByNodeId: Record<NodeId, NodePosition> = {};
-
-  const baseScreenByNodeId = new Map<NodeId, ScreenPoint>();
-  for (const nodeId of visibleNodeIds) {
-    const world = layout.positions[nodeId];
-    if (!world) {
-      continue;
-    }
-
-    baseScreenByNodeId.set(nodeId, screenFromWorld(world, camera));
-    adjustedByNodeId[nodeId] = world;
-  }
-
-  const activeNodeIds = visibleNodeIds.filter((nodeId) => {
-    const screen = baseScreenByNodeId.get(nodeId);
-    if (!screen) {
-      return false;
-    }
-
-    if (nodeId === selectedNodeId) {
-      return true;
-    }
-
-    const depth = neighborhoodDepths.get(nodeId);
-    if (depth !== undefined && depth <= 1) {
-      return true;
-    }
-
-    return isWithinViewport(screen, VIEWPORT_MARGIN_PX);
-  });
-
-  if (activeNodeIds.length <= 1 || camera.zoom <= 0) {
-    return adjustedByNodeId;
-  }
-
-  const currentByNodeId = new Map<NodeId, ScreenPoint>();
-  for (const nodeId of activeNodeIds) {
-    const base = baseScreenByNodeId.get(nodeId);
-    if (base) {
-      currentByNodeId.set(nodeId, { ...base });
-    }
-  }
-
-  for (let iteration = 0; iteration < COLLISION_ITERATIONS; iteration += 1) {
-    for (let i = 0; i < activeNodeIds.length; i += 1) {
-      for (let j = i + 1; j < activeNodeIds.length; j += 1) {
-        const aNodeId = activeNodeIds[i];
-        const bNodeId = activeNodeIds[j];
-
-        const a = currentByNodeId.get(aNodeId);
-        const b = currentByNodeId.get(bNodeId);
-        if (!a || !b) {
-          continue;
-        }
-
-        const dx = a.x - b.x;
-        const dy = a.y - b.y;
-        const distance = Math.sqrt(dx * dx + dy * dy + 0.01);
-
-        let minDistance = BASE_NODE_DISTANCE_PX;
-        if (aNodeId === selectedNodeId || bNodeId === selectedNodeId) {
-          minDistance += 22;
-        }
-
-        const aDepth = neighborhoodDepths.get(aNodeId);
-        const bDepth = neighborhoodDepths.get(bNodeId);
-        if (aDepth === 1 || bDepth === 1) {
-          minDistance += 12;
-        }
-
-        if (distance >= minDistance) {
-          continue;
-        }
-
-        const overlap = (minDistance - distance) * 0.5;
-        const unitX = dx / distance;
-        const unitY = dy / distance;
-
-        const aFixed = aNodeId === selectedNodeId;
-        const bFixed = bNodeId === selectedNodeId;
-
-        if (!aFixed) {
-          const factor = bFixed ? 2 : 1;
-          a.x += unitX * overlap * factor;
-          a.y += unitY * overlap * factor;
-        }
-        if (!bFixed) {
-          const factor = aFixed ? 2 : 1;
-          b.x -= unitX * overlap * factor;
-          b.y -= unitY * overlap * factor;
-        }
-      }
-    }
-
-    for (const nodeId of activeNodeIds) {
-      if (nodeId === selectedNodeId) {
-        continue;
-      }
-
-      const base = baseScreenByNodeId.get(nodeId);
-      const current = currentByNodeId.get(nodeId);
-      if (!base || !current) {
-        continue;
-      }
-
-      current.x += (base.x - current.x) * 0.045;
-      current.y += (base.y - current.y) * 0.045;
-    }
-  }
-
-  for (const nodeId of activeNodeIds) {
-    const current = currentByNodeId.get(nodeId);
-    if (!current) {
-      continue;
-    }
-
-    adjustedByNodeId[nodeId] = worldFromScreen(current, camera);
-  }
-
-  return adjustedByNodeId;
-}
-
-function buildVisibleLabelSet(
-  graph: ConceptGraph,
-  visibleNodeIds: NodeId[],
-  adjustedPositions: Record<NodeId, NodePosition>,
-  selectedNodeId: NodeId,
-  neighborhoodDepths: Map<NodeId, number>,
-  camera: CameraState,
-): Set<NodeId> {
-  const candidates = visibleNodeIds
-    .filter((nodeId) => shouldShowLabel(nodeId, selectedNodeId, neighborhoodDepths))
-    .sort((a, b) => {
-      if (a === selectedNodeId) {
-        return -1;
-      }
-      if (b === selectedNodeId) {
-        return 1;
-      }
-
-      const aDepth = neighborhoodDepths.get(a) ?? 99;
-      const bDepth = neighborhoodDepths.get(b) ?? 99;
-      if (aDepth !== bDepth) {
-        return aDepth - bDepth;
-      }
-
-      const aDegree = (graph.neighborsByNode[a]?.length ?? 0) + (graph.reverseNeighborsByNode[a]?.length ?? 0);
-      const bDegree = (graph.neighborsByNode[b]?.length ?? 0) + (graph.reverseNeighborsByNode[b]?.length ?? 0);
-      if (bDegree !== aDegree) {
-        return bDegree - aDegree;
-      }
-
-      return graph.nodes[a].label.localeCompare(graph.nodes[b].label);
-    });
-
-  const acceptedLabelBoxes: LabelBox[] = [];
-  const visibleLabelIds = new Set<NodeId>();
-
-  for (const nodeId of candidates) {
-    const world = adjustedPositions[nodeId];
-    if (!world) {
-      continue;
-    }
-
-    const screen = screenFromWorld(world, camera);
-
-    if (nodeId !== selectedNodeId && !isWithinViewport(screen, VIEWPORT_MARGIN_PX / 2)) {
-      continue;
-    }
-
-    const label = graph.nodes[nodeId].label;
-    const estimatedWidth = Math.min(240, Math.max(48, label.length * 6.8 + 12));
-
-    const box: LabelBox = {
-      left: screen.x + LABEL_OFFSET_X - LABEL_PADDING_PX,
-      top: screen.y + LABEL_OFFSET_Y - LABEL_HEIGHT_PX - LABEL_PADDING_PX,
-      right: screen.x + LABEL_OFFSET_X + estimatedWidth + LABEL_PADDING_PX,
-      bottom: screen.y + LABEL_OFFSET_Y + LABEL_PADDING_PX,
-    };
-
-    if (nodeId !== selectedNodeId) {
-      const overlaps = acceptedLabelBoxes.some((acceptedBox) => boxesOverlap(box, acceptedBox));
-      if (overlaps) {
-        continue;
-      }
-    }
-
-    acceptedLabelBoxes.push(box);
-    visibleLabelIds.add(nodeId);
-  }
-
-  return visibleLabelIds;
-}
-
 export function ConstellationView({
   graph,
   layout,
@@ -459,15 +48,24 @@ export function ConstellationView({
   onPan,
   onZoomAtPoint,
 }: ConstellationViewProps) {
-  const [isDragging, setIsDragging] = useState(false);
-  const [edgeHoverTooltip, setEdgeHoverTooltip] = useState<EdgeHoverTooltip | null>(null);
   const shellRef = useRef<HTMLDivElement | null>(null);
-
-  const interactionRef = useRef({
-    pointerId: -1,
-    lastClientX: 0,
-    lastClientY: 0,
-    dragDistance: 0,
+  const {
+    isDragging,
+    edgeHoverTooltip,
+    handlePointerDown,
+    handlePointerMove,
+    finishPointerInteraction,
+    handleWheel,
+    updateEdgeHoverTooltip,
+    clearEdgeHoverTooltip,
+  } = useConstellationInteractions({
+    camera,
+    graph,
+    selectedNodeId,
+    shellRef,
+    onSelectNode,
+    onPan,
+    onZoomAtPoint,
   });
 
   const {
@@ -567,8 +165,14 @@ export function ConstellationView({
   );
 
   const adjustedPositions = useMemo(
-    () => buildAdjustedVisiblePositions(visibleNodeIdList, layout, selectedNodeId, neighborhoodDepths, camera),
-    [visibleNodeIdList, layout, selectedNodeId, neighborhoodDepths, camera],
+    () => buildAdjustedVisiblePositions(
+      visibleNodeIdList,
+      layout.positions,
+      selectedNodeId,
+      neighborhoodDepths,
+      camera,
+    ),
+    [visibleNodeIdList, layout.positions, selectedNodeId, neighborhoodDepths, camera],
   );
 
   const visibleLabelIds = useMemo(
@@ -577,153 +181,6 @@ export function ConstellationView({
   );
 
   const transform = `translate(${VIEWPORT_WIDTH / 2} ${VIEWPORT_HEIGHT / 2}) scale(${camera.zoom}) translate(${-camera.x} ${-camera.y})`;
-
-  function handlePointerDown(event: React.PointerEvent<HTMLDivElement>): void {
-    if (event.button !== 0) {
-      return;
-    }
-
-    if (interactionRef.current.pointerId !== -1) {
-      return;
-    }
-
-    event.currentTarget.setPointerCapture(event.pointerId);
-    setIsDragging(false);
-    interactionRef.current = {
-      pointerId: event.pointerId,
-      lastClientX: event.clientX,
-      lastClientY: event.clientY,
-      dragDistance: 0,
-    };
-  }
-
-  function handlePointerMove(event: React.PointerEvent<HTMLDivElement>): void {
-    if (interactionRef.current.pointerId !== event.pointerId) {
-      return;
-    }
-
-    const deltaScreenX = event.clientX - interactionRef.current.lastClientX;
-    const deltaScreenY = event.clientY - interactionRef.current.lastClientY;
-
-    interactionRef.current.lastClientX = event.clientX;
-    interactionRef.current.lastClientY = event.clientY;
-
-    const stepDistance = Math.hypot(deltaScreenX, deltaScreenY);
-    const nextDragDistance = interactionRef.current.dragDistance + stepDistance;
-    interactionRef.current.dragDistance = nextDragDistance;
-
-    if (stepDistance === 0) {
-      return;
-    }
-
-    if (nextDragDistance <= DRAG_THRESHOLD_PX) {
-      return;
-    }
-
-    setIsDragging(true);
-    setEdgeHoverTooltip(null);
-    event.preventDefault();
-    onPan(-deltaScreenX / camera.zoom, -deltaScreenY / camera.zoom);
-  }
-
-  function finishPointerInteraction(event: React.PointerEvent<HTMLDivElement>): void {
-    if (interactionRef.current.pointerId !== event.pointerId) {
-      return;
-    }
-
-    const dragDistance = interactionRef.current.dragDistance;
-
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-
-    interactionRef.current.pointerId = -1;
-    interactionRef.current.dragDistance = 0;
-    setIsDragging(false);
-
-    if (dragDistance <= DRAG_THRESHOLD_PX) {
-      const element = document.elementFromPoint(event.clientX, event.clientY) as HTMLElement | null;
-      const nodeElement = element?.closest("[data-node-id]") as HTMLElement | null;
-      const nodeId = nodeElement?.dataset.nodeId;
-      if (nodeId) {
-        onSelectNode(nodeId);
-        return;
-      }
-
-      const edgeElement = element?.closest("[data-edge-from-node-id][data-edge-to-node-id]") as HTMLElement | null;
-      const edgeFromNodeId = edgeElement?.dataset.edgeFromNodeId;
-      const edgeToNodeId = edgeElement?.dataset.edgeToNodeId;
-      if (edgeFromNodeId && edgeToNodeId) {
-        if (selectedNodeId === edgeFromNodeId) {
-          onSelectNode(edgeToNodeId);
-          return;
-        }
-
-        if (selectedNodeId === edgeToNodeId) {
-          onSelectNode(edgeFromNodeId);
-          return;
-        }
-
-        onSelectNode(edgeToNodeId);
-      }
-    }
-  }
-
-  function handleWheel(event: React.WheelEvent<HTMLDivElement>): void {
-    const rect = event.currentTarget.getBoundingClientRect();
-    if (rect.width <= 0 || rect.height <= 0) {
-      return;
-    }
-
-    event.preventDefault();
-
-    const xRatio = (event.clientX - rect.left) / rect.width;
-    const yRatio = (event.clientY - rect.top) / rect.height;
-
-    const screenX = xRatio * VIEWPORT_WIDTH;
-    const screenY = yRatio * VIEWPORT_HEIGHT;
-    const multiplier = Math.exp(-event.deltaY * 0.0015);
-
-    onZoomAtPoint(screenX, screenY, multiplier);
-  }
-
-  function edgeTargetNodeId(edgeFromNodeId: NodeId, edgeToNodeId: NodeId): NodeId {
-    if (selectedNodeId === edgeFromNodeId) {
-      return edgeToNodeId;
-    }
-
-    if (selectedNodeId === edgeToNodeId) {
-      return edgeFromNodeId;
-    }
-
-    return edgeToNodeId;
-  }
-
-  function updateEdgeHoverTooltip(
-    event: React.PointerEvent<SVGLineElement>,
-    edgeFromNodeId: NodeId,
-    edgeToNodeId: NodeId,
-  ): void {
-    if (interactionRef.current.pointerId !== -1) {
-      return;
-    }
-
-    const targetNodeId = edgeTargetNodeId(edgeFromNodeId, edgeToNodeId);
-    const targetNodeLabel = graph.nodes[targetNodeId]?.label ?? targetNodeId;
-    const shellRect = shellRef.current?.getBoundingClientRect();
-    if (!shellRect) {
-      return;
-    }
-
-    const localX = event.clientX - shellRect.left + 14;
-    const localY = event.clientY - shellRect.top + 14;
-
-    setEdgeHoverTooltip({
-      label: targetNodeLabel,
-      screenX: localX,
-      screenY: localY,
-    });
-  }
 
   return (
     <div
@@ -735,7 +192,7 @@ export function ConstellationView({
       onPointerUp={finishPointerInteraction}
       onPointerCancel={finishPointerInteraction}
       onLostPointerCapture={finishPointerInteraction}
-      onPointerLeave={() => setEdgeHoverTooltip(null)}
+      onPointerLeave={clearEdgeHoverTooltip}
       onWheel={handleWheel}
     >
       <svg className="constellation-lines" viewBox={`0 0 ${VIEWPORT_WIDTH} ${VIEWPORT_HEIGHT}`} preserveAspectRatio="xMidYMid meet">
@@ -811,7 +268,7 @@ export function ConstellationView({
                   className="constellation-line-hitzone"
                   onPointerEnter={(event) => updateEdgeHoverTooltip(event, edge.from, edge.to)}
                   onPointerMove={(event) => updateEdgeHoverTooltip(event, edge.from, edge.to)}
-                  onPointerLeave={() => setEdgeHoverTooltip(null)}
+                  onPointerLeave={clearEdgeHoverTooltip}
                 />
               </g>
             );

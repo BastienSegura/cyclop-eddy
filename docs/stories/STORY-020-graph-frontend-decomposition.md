@@ -2,7 +2,7 @@
 
 ID: `STORY-020`
 Title: `Decompose oversized concept-graph frontend modules`
-Status: `ready`
+Status: `done`
 Priority: `P2`
 Owner: `unassigned`
 Created: `2026-03-06`
@@ -39,24 +39,24 @@ Updated: `2026-03-06`
 
 ## Acceptance Criteria
 
-- [ ] `graph-explorer.tsx` becomes a composition shell that delegates loading, camera/fullscreen behavior, and secondary panel rendering to smaller modules or hooks.
-- [ ] `constellation-view.tsx` no longer owns color/style utilities, label-collision logic, pointer pan/zoom behavior, and SVG rendering details in one file.
-- [ ] `compute-graph-layout.ts` delegates force-layout internals and component-level layout helpers to smaller pure modules while preserving the public `computeGraphLayout(...)` contract.
-- [ ] Extracted pure helpers are placed in the existing concept-graph layer that best matches their responsibility (`application/` or `ui/` helper modules) rather than introducing a parallel architecture.
-- [ ] Existing graph behavior remains unchanged from a user perspective: graph load, node selection recentering, drag-pan, cursor-centered zoom, edge click navigation, fullscreen toggle, and prompt copy all still work.
-- [ ] Automated tests cover at least one newly extracted pure helper area beyond current parse/build tests.
-- [ ] `npm run test`, `npm run typecheck`, and `npm run build` all succeed after the refactor.
+- [x] `graph-explorer.tsx` becomes a composition shell that delegates loading, camera/fullscreen behavior, and secondary panel rendering to smaller modules or hooks.
+- [x] `constellation-view.tsx` no longer owns color/style utilities, label-collision logic, pointer pan/zoom behavior, and SVG rendering details in one file.
+- [x] `compute-graph-layout.ts` delegates force-layout internals and component-level layout helpers to smaller pure modules while preserving the public `computeGraphLayout(...)` contract.
+- [x] Extracted pure helpers are placed in the existing concept-graph layer that best matches their responsibility (`application/` or `ui/` helper modules) rather than introducing a parallel architecture.
+- [x] Existing graph behavior remains unchanged from a user perspective: graph load, node selection recentering, drag-pan, cursor-centered zoom, edge click navigation, fullscreen toggle, and prompt copy all still work.
+- [x] Automated tests cover at least one newly extracted pure helper area beyond current parse/build tests.
+- [x] `npm run test`, `npm run typecheck`, and `npm run build` all succeed after the refactor.
 
 ## Subtasks
 
-- [ ] Extract graph loading and initial-node selection behavior from `graph-explorer.tsx` into a dedicated hook or helper module.
-- [ ] Extract camera movement and fullscreen state handling from `graph-explorer.tsx` into dedicated hook/helper modules.
-- [ ] Extract panel/header/sidebar rendering pieces from `graph-explorer.tsx` where the markup is purely presentational.
-- [ ] Move color/style helper functions from `constellation-view.tsx` into a dedicated helper module.
-- [ ] Move label-collision and visible-label selection logic from `constellation-view.tsx` into pure helper modules that can be unit-tested.
-- [ ] Move pan/zoom pointer interaction logic from `constellation-view.tsx` into dedicated event-handling helpers or hooks.
-- [ ] Split `compute-graph-layout.ts` into smaller pure modules for component discovery, initial placement, and force-layout internals while keeping the exported entry point stable.
-- [ ] Add unit tests for extracted layout or label-selection helpers and keep existing graph build/parser tests green.
+- [x] Extract graph loading and initial-node selection behavior from `graph-explorer.tsx` into a dedicated hook or helper module.
+- [x] Extract camera movement and fullscreen state handling from `graph-explorer.tsx` into dedicated hook/helper modules.
+- [x] Extract panel/header/sidebar rendering pieces from `graph-explorer.tsx` where the markup is purely presentational.
+- [x] Move color/style helper functions from `constellation-view.tsx` into a dedicated helper module.
+- [x] Move label-collision and visible-label selection logic from `constellation-view.tsx` into pure helper modules that can be unit-tested.
+- [x] Move pan/zoom pointer interaction logic from `constellation-view.tsx` into dedicated event-handling helpers or hooks.
+- [x] Split `compute-graph-layout.ts` into smaller pure modules for component discovery, initial placement, and force-layout internals while keeping the exported entry point stable.
+- [x] Add unit tests for extracted layout or label-selection helpers and keep existing graph build/parser tests green.
 
 ## Dependencies
 
