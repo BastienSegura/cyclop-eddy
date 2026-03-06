@@ -104,6 +104,20 @@ Session contract:
 - `/api/auth/me` returns `401` when unauthenticated and user profile when authenticated.
 - login uses non-enumerating credential errors (unknown email and wrong password share the same message).
 
+## Password Change (Story 14)
+
+Current password maintenance surface:
+
+- API: `POST /api/auth/change-password`
+- Page: `/settings/account`
+
+Behavior:
+
+- Requires an authenticated session.
+- Verifies the current password before rotating the hash.
+- Reuses the shared password policy from registration.
+- Revokes all other active sessions for the same user after a successful change.
+
 ## Architecture
 
 `src/features/concept-graph/` is split by responsibility:
