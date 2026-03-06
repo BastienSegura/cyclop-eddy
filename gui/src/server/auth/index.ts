@@ -3,6 +3,7 @@ export { hashPassword, verifyPassword } from "./password";
 export {
   createSession,
   createSessionService,
+  revokeAllSessionsForUser,
   revokeSession,
   validateSession,
 } from "./session-service";

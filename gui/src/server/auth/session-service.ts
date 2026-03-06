@@ -136,3 +136,10 @@ export async function validateSession(token: string): Promise<ValidSession | nul
 export async function revokeSession(input: RevokeSessionInput): Promise<void> {
   await getDefaultSessionService().revokeSession(input);
 }
+
+export async function revokeAllSessionsForUser(
+  userId: string,
+  exceptSessionId?: string,
+): Promise<number> {
+  return getDefaultSessionService().revokeAllSessionsForUser(userId, exceptSessionId);
+}
