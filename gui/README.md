@@ -30,6 +30,9 @@ Run regression tests:
 npm run test
 ```
 
+For the full repository bootstrap order, use the root [`README.md`](../README.md):
+Python environment first, then GUI environment, then regression tests, then app commands.
+
 ## Auth Foundation (Story 11)
 
 This repository now includes auth/persistence foundation modules in `src/server/auth/`
@@ -42,6 +45,21 @@ cp .env.example .env
 npm run db:migrate:dev
 npm run db:generate
 ```
+
+## Local-only Files
+
+These files and directories are local development artifacts and should not be committed:
+
+- `.env`
+- `.env.local`
+- `.env.development.local`
+- `.env.test.local`
+- `.env.production.local`
+- `.next/`
+- `node_modules/`
+- `prisma/dev.db` and other `prisma/dev.db*` SQLite sidecar files
+
+Keep `.env.example` committed; it is the checked-in template for local setup.
 
 Migration scripts:
 

@@ -1,0 +1,2 @@
+# Active Python dependency manifest for the `brain/` scripts and tests.
+requests>=2.31,<3.0

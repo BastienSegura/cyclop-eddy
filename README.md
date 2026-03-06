@@ -21,6 +21,56 @@ Cyclop Eddy is a concept-universe project focused on making learning feel engagi
 - Project documentation index: [`docs/README.md`](docs/README.md)
 - Project manifest: [`docs/manifest.md`](docs/manifest.md)
 
+## Local Bootstrap
+
+Recommended order for a fresh clone:
+
+1. Python environment
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+2. GUI environment
+
+```bash
+cd gui
+npm install
+cp .env.example .env
+npm run db:migrate:dev
+npm run db:generate
+cd ..
+```
+
+3. Regression tests
+
+```bash
+# Brain tests
+python -m unittest discover -s brain/tests -p 'test_*.py'
+
+# GUI tests
+cd gui
+npm test
+cd ..
+```
+
+4. App commands
+
+```bash
+# Refresh graph data
+python brain/sync_concept_data.py
+
+# Run the GUI
+cd gui
+npm run dev
+```
+
+Local-only files produced by the current workflow are ignored in git, including
+`gui/.env`, `gui/.next/`, `gui/node_modules/`, and local Prisma SQLite files.
+
 ## Quick commands
 
 Generate concept graph edges:
@@ -73,7 +123,6 @@ Run GUI prototype:
 
 ```bash
 cd gui
-npm install
 npm run dev
 ```
 
