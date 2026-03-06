@@ -10,8 +10,8 @@ Cyclop Eddy is a concept-universe project focused on making learning feel engagi
 
 ## Repository layout
 
-- `brain/`: active Python engine (`build_concept_list.py`, `clean_concept_list.py`, `sync_concept_data.py`).
-- `gui/`: Next.js App Router prototype for concept constellation exploration.
+- `brain/`: active Python engine, shared graph utilities, and generator internals.
+- `gui/`: Next.js App Router prototype for concept constellation exploration plus auth pages/routes.
 - `memory/`: runtime pipeline outputs under `memory/runtime/` and committed example artifacts under `memory/fixtures/`.
 - `archive/`: old experiments, historical snapshots, deprecated material.
 - `docs/`: active project documentation.
@@ -54,6 +54,8 @@ python -m unittest discover -s brain/tests -p 'test_*.py'
 # GUI tests
 cd gui
 npm test
+npm run typecheck
+npm run build
 cd ..
 ```
 
@@ -108,7 +110,7 @@ When to use each mode:
 - Single run (`build_concept_list.py`): fast iteration on prompt/parameter tuning.
 - Two-phase (`run_two_phase_coverage.py`): planned coverage expansion with merge + quality checkpoints.
 
-After generation completes (new run or resumed run), clean and sync data to the GUI source of truth:
+After generation completes (new run or resumed run), clean the canonical artifact and sync the derived GUI target:
 
 ```bash
 python brain/sync_concept_data.py
@@ -145,6 +147,8 @@ npm run test
 
 ## Current exploration UX
 
+- Includes auth-aware routes/pages: `/login`, `/register`, and `/settings/account`.
+- Explorer header reflects current session state and exposes logout when authenticated.
 - Starts at `Computer Science` and reveals neighbors first.
 - Expands discovered graph progressively (fog-of-war feel).
 - Supports smooth camera move, drag-pan, cursor-centered zoom.

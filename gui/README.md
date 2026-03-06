@@ -73,7 +73,7 @@ Security contracts established by the foundation:
 
 - Password hashing uses `argon2id` (`src/server/auth/password.ts`).
 - Session storage keeps only hashed session tokens (`sha256(token + pepper)`).
-- Session cookie policy (for future route handlers) is centralized in `src/server/auth/config.ts`:
+- Session cookie policy is centralized in `src/server/auth/config.ts`:
   - `HttpOnly`
   - `SameSite=Lax` (or stricter in future)
   - `Path=/`
@@ -141,11 +141,17 @@ Behavior:
 `src/features/concept-graph/` is split by responsibility:
 
 - `domain/`: pure types + parsers (`parse-edge-list.ts`)
-- `application/`: graph assembly and reusable prompt template logic
+- `application/`: graph assembly, prompt generation, layout entrypoint, and pure layout helpers (`graph-layout-*.ts`)
 - `infrastructure/`: data loading from file source (`/public/data/...`)
-- `ui/`: React components (`graph-explorer`, `constellation-view`)
+- `ui/`: React composition shell, hooks, and rendering helpers (`graph-explorer-*`, `use-graph-*`, `constellation-*`)
 
 This split keeps business logic testable and reusable when UI evolves.
+
+Current auth/server shape lives outside the concept-graph feature folder:
+
+- `src/app/`: App Router pages and `api/auth/*` route handlers
+- `src/server/auth/`: Node-only auth services, handlers, throttling, session cookies, and repositories
+- `src/server/db/`: Prisma bootstrap
 
 ## Data Source
 
@@ -175,6 +181,8 @@ python brain/sync_concept_data.py
 ## Current UX
 
 - Loads concept graph from cleaned text file
+- Includes auth-aware routes/pages for login, registration, and account password change
+- Explorer header shows current session state and exposes logout when authenticated
 - Starts with `Computer Science` and its direct neighbors visible
 - Expands visible graph progressively as you select new nodes
 - Uses force-directed positioning so connected nodes stay spatially closer
@@ -193,7 +201,7 @@ python brain/sync_concept_data.py
 
 ## Next Iterations
 
-- Add dedicated auth flow (login) in App Router
 - Consider a larger-graph rendering engine (Sigma.js/Graphology) if dataset size grows
 - Persist user exploration state
+- Add authenticated exploration history / saved trails once story 15 lands
 - Add richer node details and learning progression indicators

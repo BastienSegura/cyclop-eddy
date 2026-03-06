@@ -6,6 +6,9 @@ Purpose:
 Layout:
 - `runtime/`: default location for generated raw/cleaned files, checkpoints, reports, and two-phase workspaces.
 - `fixtures/`: intentionally committed example artifacts kept for documentation, demo, or comparison.
+  - `fixtures/demo/`: committed raw/cleaned/report examples used in docs and validation.
+  - `fixtures/two_phase/`: committed two-phase sample outputs and reports.
+  - `fixtures/runs/`: preserved example run snapshots.
 
 Notes:
 - `memory/runtime/` is local-only and git-ignored by default.

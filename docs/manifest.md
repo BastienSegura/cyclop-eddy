@@ -15,7 +15,7 @@ Users move across a connected graph of concepts, stop on any node, and copy a re
 - Navigation should feel rewarding, not academic or static.
 - Dead ends should be quickly identifiable to avoid blind clicking.
 
-## Visual Direction (Upcoming GUI)
+## GUI Visual Direction
 - Skyrim-like skill-tree mood.
 - Concepts represented like stars.
 - Links represented like constellations.
@@ -26,16 +26,19 @@ In scope now:
 - Python engine to generate concept relationships.
 - Python cleaner to normalize generated concept files.
 - Next.js GUI prototype for constellation-style concept navigation with smooth travel.
+- Local auth/session surface for registration, login/logout, profile lookup, and password change.
 - Repository organization and documentation.
 
 Out of scope now:
-- Production authentication/account system.
+- Production auth hardening features such as email verification, recovery flows, and OAuth.
 - Persistent user progression backend.
 - Long-term roadmap planning (project is intentionally iterative / vibe-coded).
 
 ## Repository Responsibilities
 - `brain/`: Python engine (generation + cleaning scripts).
+- `gui/`: App Router frontend, auth pages/routes, and server-side auth modules.
 - `memory/`: runtime outputs under `memory/runtime/` plus intentionally committed fixtures under `memory/fixtures/`.
+- `docs/`: active repository documentation and implementation backlog.
 - `archive/`: legacy experiments, historical snapshots, and deprecated material.
 
 ## Engine Workflow
@@ -161,6 +164,8 @@ Current behavior is the expected behavior:
 - On successful completion, checkpoint is removed automatically.
 
 ## Current GUI Snapshot
+- Auth-aware surface includes `/login`, `/register`, `/settings/account`, and `api/auth/*` route handlers.
+- Explorer header reflects current session state and exposes logout when authenticated.
 - Starts centered on `Computer Science` and direct neighbors.
 - Progressive reveal expands the visible universe as users travel.
 - Smooth camera movement, drag-pan, and cursor-centered zoom.
@@ -171,6 +176,13 @@ Current behavior is the expected behavior:
   - farther discovered nodes faded
 - Dead-end concepts rendered with a distinct diamond marker.
 - Discreet starry-night graph background.
+
+## Current Frontend Structure
+- `gui/src/features/concept-graph/domain/`: parsers and model types.
+- `gui/src/features/concept-graph/application/`: graph build, prompt generation, and layout orchestration over `graph-layout-*.ts` helpers.
+- `gui/src/features/concept-graph/infrastructure/`: file loading adapters and fallback fixture loading.
+- `gui/src/features/concept-graph/ui/`: shell components, hooks, and rendering helpers (`graph-explorer-*`, `use-graph-*`, `constellation-*`).
+- `gui/src/server/auth/`: Node-only auth handlers, services, cookie policy, and repositories.
 
 ## Documentation Language
 All active documentation is English.

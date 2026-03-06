@@ -2,7 +2,7 @@
 
 ID: `STORY-021`
 Title: `Align active documentation with current implementation and cleanup rules`
-Status: `ready`
+Status: `done`
 Priority: `P2`
 Owner: `unassigned`
 Created: `2026-03-06`
@@ -36,23 +36,23 @@ Updated: `2026-03-06`
 
 ## Acceptance Criteria
 
-- [ ] `README.md` reflects the current bootstrap flow and active architecture without relying on outdated setup assumptions.
-- [ ] `docs/gui-architecture.md` describes the current auth-aware frontend/server shape accurately and removes items that are no longer future work.
-- [ ] `gui/README.md` “Current” vs “Next Iterations” sections are reconciled so implemented auth pages/routes are no longer listed as pending additions.
-- [ ] `memory/README.md` reflects the runtime-vs-fixture policy established in STORY-018.
-- [ ] `brain/README.md` reflects any module movement or shared utility extraction introduced by STORY-019.
-- [ ] `docs/stories/index.md` includes the cleanup stories with correct IDs, titles, priorities, and statuses.
-- [ ] Documentation uses exact commands and concrete file paths that match the implementation on disk.
+- [x] `README.md` reflects the current bootstrap flow and active architecture without relying on outdated setup assumptions.
+- [x] `docs/gui-architecture.md` describes the current auth-aware frontend/server shape accurately and removes items that are no longer future work.
+- [x] `gui/README.md` “Current” vs “Next Iterations” sections are reconciled so implemented auth pages/routes are no longer listed as pending additions.
+- [x] `memory/README.md` reflects the runtime-vs-fixture policy established in STORY-018.
+- [x] `brain/README.md` reflects any module movement or shared utility extraction introduced by STORY-019.
+- [x] `docs/stories/index.md` includes the cleanup stories with correct IDs, titles, priorities, and statuses.
+- [x] Documentation uses exact commands and concrete file paths that match the implementation on disk.
 
 ## Subtasks
 
-- [ ] Audit active docs for statements that now conflict with implemented auth pages, route handlers, or cleanup decisions.
-- [ ] Update `README.md` to match the final bootstrap and repo-hygiene rules from STORY-017.
-- [ ] Update `memory/README.md` and any related docs to match the artifact ownership model from STORY-018.
-- [ ] Update `brain/README.md` to describe any shared utility modules or refactored generator structure introduced by STORY-019.
-- [ ] Update `docs/gui-architecture.md` and `gui/README.md` to reflect the actual current auth surface and any frontend decomposition from STORY-020.
-- [ ] Review `docs/stories/index.md` for correct status/priority rows and add cleanup stories if missing.
-- [ ] Perform one final doc pass that checks every command and file path mentioned in active docs against the real tree.
+- [x] Audit active docs for statements that now conflict with implemented auth pages, route handlers, or cleanup decisions.
+- [x] Update `README.md` to match the final bootstrap and repo-hygiene rules from STORY-017.
+- [x] Update `memory/README.md` and any related docs to match the artifact ownership model from STORY-018.
+- [x] Update `brain/README.md` to describe any shared utility modules or refactored generator structure introduced by STORY-019.
+- [x] Update `docs/gui-architecture.md` and `gui/README.md` to reflect the actual current auth surface and any frontend decomposition from STORY-020.
+- [x] Review `docs/stories/index.md` for correct status/priority rows and add cleanup stories if missing.
+- [x] Perform one final doc pass that checks every command and file path mentioned in active docs against the real tree.
 
 ## Dependencies
 

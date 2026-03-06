@@ -26,4 +26,4 @@ This is the canonical backlog for implementation stories.
 | STORY-018 | Separate runtime artifacts from versioned data fixtures | done | P1 | [STORY-018](STORY-018-runtime-artifact-boundaries.md) |
 | STORY-019 | Extract shared brain utilities and split generator responsibilities | done | P1 | [STORY-019](STORY-019-brain-modularization.md) |
 | STORY-020 | Decompose oversized concept-graph frontend modules | done | P2 | [STORY-020](STORY-020-graph-frontend-decomposition.md) |
-| STORY-021 | Align active documentation with current implementation and cleanup rules | ready | P2 | [STORY-021](STORY-021-docs-architecture-sync.md) |
+| STORY-021 | Align active documentation with current implementation and cleanup rules | done | P2 | [STORY-021](STORY-021-docs-architecture-sync.md) |

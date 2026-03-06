@@ -25,6 +25,16 @@ This document defines the baseline architecture for the `gui/` frontend.
   - React client components and visual composition
   - Uses application/infrastructure APIs, not raw parsing logic
 
+Outside the feature folder, auth and persistence live in:
+
+- `gui/src/app/`
+  - App Router pages (`/`, `/login`, `/register`, `/settings/account`)
+  - Auth API routes under `api/auth/`
+- `gui/src/server/auth/`
+  - Node-only auth handlers, session services, repositories, and cookie policy
+- `gui/src/server/db/`
+  - Prisma client bootstrap
+
 ## Why this stays maintainable
 
 - Parsing or graph rules can evolve without rewriting UI.
@@ -37,14 +47,31 @@ This document defines the baseline architecture for the `gui/` frontend.
 1. `load-graph.ts` fetches the derived GUI graph file at `public/data/concept_list_cleaned.txt` and falls back to `public/data/fixtures/demo_concept_list_cleaned.txt` when the derived file is absent.
 2. `parse-edge-list.ts` converts raw lines into structured entries.
 3. `build-concept-graph.ts` builds nodes and directional links.
-4. `compute-graph-layout.ts` generates world coordinates using a force-directed pass to reduce long confusing edges.
-5. `graph-explorer.tsx` computes dead-end nodes (leaf concepts) and tracks progressive reveal state.
-6. `graph-explorer.tsx` animates a camera through the world when users select nodes.
-7. `constellation-view.tsx` handles drag-pan and cursor-centered wheel zoom gestures.
-8. `constellation-view.tsx` exposes edge-hit interactions so users can navigate by clicking links.
-9. `constellation-view.tsx` runs a local collision-avoidance pass for visible nodes/labels.
-10. `graph-explorer.tsx` applies fog-of-war style visibility (selected, near, far) on discovered nodes.
-11. Graph canvas styles in `globals.css` provide the starry-night backdrop and node state styling.
+4. `compute-graph-layout.ts` orchestrates connected-component discovery, initial placement, force simulation, and root-neighborhood shaping via the `graph-layout-*.ts` helper modules.
+5. `use-graph-explorer-data.ts` loads the graph, chooses the initial node, and owns progressive reveal state.
+6. `use-graph-camera.ts` owns camera state, fit-on-first-load behavior, and animated recentering.
+7. `use-graph-fullscreen.ts` keeps graph fullscreen state in sync with the browser fullscreen API.
+8. `graph-explorer.tsx` composes the shell from `GraphExplorerHeader`, `GraphExplorerToolbar`, `GraphExplorerSidebar`, and `ConstellationView`.
+9. `constellation-view.tsx` renders the SVG scene while `use-constellation-interactions.ts` handles pointer pan/zoom and edge hit interactions.
+10. `constellation-label-layout.ts` applies the local visible-node and label collision-avoidance pass.
+11. `constellation-node-styles.ts` owns color/style token generation and node/edge state classes.
+12. Graph canvas styles in `globals.css` provide the starry-night backdrop and node state styling.
+
+## Current Auth Surface
+
+- Pages:
+  - `/login`
+  - `/register`
+  - `/settings/account`
+- API routes:
+  - `POST /api/auth/register`
+  - `POST /api/auth/login`
+  - `POST /api/auth/logout`
+  - `GET /api/auth/me`
+  - `POST /api/auth/change-password`
+- Server modules:
+  - Request handlers, throttling, session cookies, and password/session primitives live under `gui/src/server/auth/`.
+  - These handlers are intended for Node.js runtime only.
 
 ## Current Interaction Model
 
@@ -56,7 +83,7 @@ This document defines the baseline architecture for the `gui/` frontend.
 
 ## Planned Evolution
 
-- Add authentication pages and session-aware exploration history.
 - Add persistent user progression (visited nodes, saved trails, notes).
+- Add server-backed exploration history for authenticated users.
 - Replace simple constellation renderer with scalable graph engine.
-- Add test coverage per layer (domain/application first).
+- Add browser-level interaction coverage for graph drag/zoom/fullscreen behavior.

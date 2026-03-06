@@ -4,7 +4,7 @@ Purpose:
 - Python engine for concept graph generation and cleaning.
 
 Scripts:
-- `build_concept_list.py`: generates concept relationships with live progress and resume support.
+- `build_concept_list.py`: thin CLI entrypoint for concept generation with live progress and resume support.
 - `clean_concept_list.py`: cleans/normalizes generated relationships and rebuilds tree-style prefixes.
 - `sync_concept_data.py`: canonical one-command flow to clean, copy to GUI data, and verify parity.
 - `concept_identity.py`: shared canonical label/key helpers used by generation and cleaning.
@@ -12,6 +12,13 @@ Scripts:
 - `merge_concept_edges.py`: deterministic canonical merge for multiple raw edge files.
 - `run_two_phase_coverage.py`: two-phase coverage workflow (phase 1 wide, phase 2 refinement).
 - `find_unexplored_areas.py`: ranks under-explored nodes to pick next refinement roots.
+
+Internal shared modules:
+- `build_concept_list_prompting.py`: Ollama client, prompt construction, and candidate validation.
+- `build_concept_list_state.py`: checkpoint state creation, normalization, migration, and output reconstruction.
+- `build_concept_list_runtime.py`: traversal/orchestration loop used by `build_concept_list.py`.
+- `graph_file_utils.py`: shared raw/cleaned graph line parsing and mode inference helpers.
+- `graph_analysis.py`: shared adjacency/path/cycle primitives used across active scripts.
 
 How to run:
 
@@ -44,7 +51,7 @@ python brain/report_concept_quality.py --input memory/runtime/concept_list_clean
 
 # Merge multiple raw runs into one deduplicated raw edge list
 python brain/merge_concept_edges.py \
-  --input memory/runtime/two_phase/phase1_raw.txt memory/runtime/two_phase/phase2/phase2_raw_01_algorithms.txt \
+  --input memory/runtime/two_phase/phase1_raw.txt memory/runtime/two_phase/phase2/phase2_raw_01_operating_systems.txt \
   --output memory/runtime/concept_list_merged.txt \
   --json-output memory/runtime/concept_list_merged.stats.json
 
@@ -86,6 +93,8 @@ Notes:
 - During generation, progress is printed in real time (`generated/estimated`, prompts, queue, speed).
 - `Ctrl+C` saves state so generation can be resumed safely.
 - Run `python brain/sync_concept_data.py` after any completed generation (new or resumed).
+- `build_concept_list.py` is intentionally thin now; generator behavior lives in `build_concept_list_prompting.py`, `build_concept_list_state.py`, and `build_concept_list_runtime.py`.
+- Shared graph parsing/analysis behavior now lives in `graph_file_utils.py` and `graph_analysis.py` so `find_unexplored_areas.py`, `report_concept_quality.py`, `clean_concept_list.py`, and `merge_concept_edges.py` do not drift independently.
 - Runtime outputs now live under `memory/runtime/` by default.
 - Intentionally committed example artifacts live under `memory/fixtures/`.
 - `brain/sync_concept_data.py` treats `memory/runtime/concept_list_cleaned.txt` as the canonical cleaned artifact and `gui/public/data/concept_list_cleaned.txt` as the derived GUI sync target.
