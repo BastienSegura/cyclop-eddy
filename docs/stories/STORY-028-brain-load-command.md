@@ -2,11 +2,11 @@
 
 ID: `STORY-028`
 Title: `Add brain load command`
-Status: `ready`
+Status: `done`
 Priority: `P1`
 Owner: `unassigned`
 Created: `2026-03-06`
-Updated: `2026-03-06`
+Updated: `2026-03-07`
 
 ## Context
 
@@ -31,19 +31,19 @@ Updated: `2026-03-06`
 
 ## Acceptance Criteria
 
-- [ ] `load cleaned` sets the active source to `memory/runtime/concept_list_cleaned.txt`.
-- [ ] `load raw` sets the active source to `memory/runtime/concept_list.txt`.
-- [ ] `load fixture` sets the active source to `memory/fixtures/demo/concept_list_cleaned.txt`.
-- [ ] `load <path>` accepts an explicit path and records it as the active source when the file exists.
-- [ ] The shell session stores active source path, source alias, and inferred parse mode without requiring the graph to be reparsed by every later command.
-- [ ] If the requested source cannot be loaded, the command reports the failure and leaves the previous session source unchanged.
+- [x] `load cleaned` sets the active source to `memory/runtime/concept_list_cleaned.txt`.
+- [x] `load raw` sets the active source to `memory/runtime/concept_list.txt`.
+- [x] `load fixture` sets the active source to `memory/fixtures/demo/concept_list_cleaned.txt`.
+- [x] `load <path>` accepts an explicit path and records it as the active source when the file exists.
+- [x] The shell session stores active source path, source alias, and inferred parse mode without requiring the graph to be reparsed by every later command.
+- [x] If the requested source cannot be loaded, the command reports the failure and leaves the previous session source unchanged.
 
 ## Subtasks
 
-- [ ] Define source aliases and their canonical paths.
-- [ ] Add graph parsing/loading helpers suitable for repeated REPL use.
-- [ ] Cache parsed graph/source metadata in `BrainCliSession`.
-- [ ] Add tests for alias loads, explicit path loads, and failed load rollback behavior.
+- [x] Define source aliases and their canonical paths.
+- [x] Add graph parsing/loading helpers suitable for repeated REPL use.
+- [x] Cache parsed graph/source metadata in `BrainCliSession`.
+- [x] Add tests for alias loads, explicit path loads, and failed load rollback behavior.
 
 ## Dependencies
 

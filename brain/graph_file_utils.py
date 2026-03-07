@@ -3,7 +3,10 @@ from __future__ import annotations
 from pathlib import Path
 from urllib.parse import unquote
 
-from concept_identity import canonical_concept_label
+try:
+    from .concept_identity import canonical_concept_label
+except ImportError:  # pragma: no cover - script-style imports for legacy entry points
+    from concept_identity import canonical_concept_label
 
 
 def split_edge_line(raw_line: str) -> tuple[str, str] | None:

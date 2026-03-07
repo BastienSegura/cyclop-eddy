@@ -5,6 +5,7 @@ from typing import Sequence
 
 from .doctor import handle_doctor
 from .errors import CommandNotImplementedError, UsageError
+from .load import handle_load
 from .output import CommandOutput, CommandResult
 from .registry import CommandArgContract, CommandRegistry, CommandSpec
 from .session import BrainCliSession
@@ -133,6 +134,8 @@ def build_default_registry() -> CommandRegistry:
             handler = _exit_handler
         elif definition.name == "doctor":
             handler = handle_doctor
+        elif definition.name == "load":
+            handler = handle_load
         elif definition.name == "status":
             handler = handle_status
 
