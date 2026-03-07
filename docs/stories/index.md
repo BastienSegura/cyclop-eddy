@@ -32,7 +32,7 @@ This is the canonical backlog for implementation stories.
 | STORY-024 | Add brain help command | done | P2 | [STORY-024](STORY-024-brain-help-command.md) |
 | STORY-025 | Add brain exit command | done | P1 | [STORY-025](STORY-025-brain-exit-command.md) |
 | STORY-026 | Add brain status command | done | P1 | [STORY-026](STORY-026-brain-status-command.md) |
-| STORY-027 | Add brain doctor command | ready | P1 | [STORY-027](STORY-027-brain-doctor-command.md) |
+| STORY-027 | Add brain doctor command | done | P1 | [STORY-027](STORY-027-brain-doctor-command.md) |
 | STORY-028 | Add brain load command | ready | P1 | [STORY-028](STORY-028-brain-load-command.md) |
 | STORY-029 | Add brain current command | ready | P2 | [STORY-029](STORY-029-brain-current-command.md) |
 | STORY-030 | Add brain search command | ready | P1 | [STORY-030](STORY-030-brain-search-command.md) |

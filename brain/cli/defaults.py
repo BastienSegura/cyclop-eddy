@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+DEFAULT_RUNTIME_DIR = Path("memory/runtime")
 DEFAULT_RAW_ARTIFACT_PATH = Path("memory/runtime/concept_list.txt")
 DEFAULT_ACTIVE_GRAPH_SOURCE_PATH = Path("memory/runtime/concept_list_cleaned.txt")
 DEFAULT_ACTIVE_GRAPH_SOURCE_ALIAS = "cleaned"

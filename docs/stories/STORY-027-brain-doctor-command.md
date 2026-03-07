@@ -2,11 +2,11 @@
 
 ID: `STORY-027`
 Title: `Add brain doctor command`
-Status: `ready`
+Status: `done`
 Priority: `P1`
 Owner: `unassigned`
 Created: `2026-03-06`
-Updated: `2026-03-06`
+Updated: `2026-03-07`
 
 ## Context
 
@@ -32,18 +32,18 @@ Updated: `2026-03-06`
 
 ## Acceptance Criteria
 
-- [ ] `doctor` checks that the runtime directory tree under `memory/runtime/` exists or can be created and is writable.
-- [ ] `doctor` checks that key repo paths used by the CLI are present where expected (for example fixture fallback files) and reports missing optional paths as warnings instead of crashes.
-- [ ] `doctor` checks Ollama reachability at the configured base URL without starting a generation run.
-- [ ] `doctor` reports a structured result with clear statuses (`PASS`, `WARN`, `FAIL`) and supports `--json`.
-- [ ] A failed doctor run exits non-zero outside the REPL handler path but does not terminate the interactive shell session when run inside the REPL.
+- [x] `doctor` checks that the runtime directory tree under `memory/runtime/` exists or can be created and is writable.
+- [x] `doctor` checks that key repo paths used by the CLI are present where expected (for example fixture fallback files) and reports missing optional paths as warnings instead of crashes.
+- [x] `doctor` checks Ollama reachability at the configured base URL without starting a generation run.
+- [x] `doctor` reports a structured result with clear statuses (`PASS`, `WARN`, `FAIL`) and supports `--json`.
+- [x] A failed doctor run exits non-zero outside the REPL handler path but does not terminate the interactive shell session when run inside the REPL.
 
 ## Subtasks
 
-- [ ] Define the check set and normalized doctor output shape.
-- [ ] Add an Ollama reachability probe suitable for diagnosis.
-- [ ] Add runtime-directory and fixture-path checks.
-- [ ] Add tests for healthy and unhealthy doctor results.
+- [x] Define the check set and normalized doctor output shape.
+- [x] Add an Ollama reachability probe suitable for diagnosis.
+- [x] Add runtime-directory and fixture-path checks.
+- [x] Add tests for healthy and unhealthy doctor results.
 
 ## Dependencies
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Sequence
 
+from .doctor import handle_doctor
 from .errors import CommandNotImplementedError, UsageError
 from .output import CommandOutput, CommandResult
 from .registry import CommandArgContract, CommandRegistry, CommandSpec
@@ -130,6 +131,8 @@ def build_default_registry() -> CommandRegistry:
             handler = _build_help_handler(registry)
         elif definition.name == "exit":
             handler = _exit_handler
+        elif definition.name == "doctor":
+            handler = handle_doctor
         elif definition.name == "status":
             handler = handle_status
 

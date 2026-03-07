@@ -4,6 +4,8 @@ from typing import Any
 
 import requests
 
+from ollama_config import DEFAULT_GENERATE_OPTIONS, resolve_ollama_base_url, resolve_ollama_model
+
 from concept_identity import (
     canonical_concept_key,
     canonical_concept_label,
@@ -12,16 +14,9 @@ from concept_identity import (
     is_meta_concept_text,
 )
 
-BASE_URL = "http://localhost:11434"
-MODEL = "llama3:8b"
-
-DEFAULTS = {
-    "temperature": 0.7,
-    "top_p": 0.9,
-    "top_k": 40,
-    "num_predict": 512,
-    "num_ctx": 4096,
-}
+BASE_URL = resolve_ollama_base_url()
+MODEL = resolve_ollama_model()
+DEFAULTS = dict(DEFAULT_GENERATE_OPTIONS)
 
 MAX_CONCEPT_WORDS = 4
 
