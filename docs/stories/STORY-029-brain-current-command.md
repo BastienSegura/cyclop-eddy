@@ -2,11 +2,11 @@
 
 ID: `STORY-029`
 Title: `Add brain current command`
-Status: `ready`
+Status: `done`
 Priority: `P2`
 Owner: `unassigned`
 Created: `2026-03-06`
-Updated: `2026-03-06`
+Updated: `2026-03-07`
 
 ## Context
 
@@ -30,16 +30,16 @@ Updated: `2026-03-06`
 
 ## Acceptance Criteria
 
-- [ ] `current` prints the active graph source path, source alias/mode, and current concept if one is selected.
-- [ ] If no current concept is selected, the command prints that state explicitly instead of implying a hidden default.
-- [ ] `current --json` returns the same session state in machine-readable form.
-- [ ] The command does not trigger filesystem mutations or expensive graph recomputation.
+- [x] `current` prints the active graph source path, source alias/mode, and current concept if one is selected.
+- [x] If no current concept is selected, the command prints that state explicitly instead of implying a hidden default.
+- [x] `current --json` returns the same session state in machine-readable form.
+- [x] The command does not trigger filesystem mutations or expensive graph recomputation.
 
 ## Subtasks
 
-- [ ] Define the session-state payload shape for `current`.
-- [ ] Render both text and JSON views.
-- [ ] Add tests for “no current concept” and “current concept selected” states.
+- [x] Define the session-state payload shape for `current`.
+- [x] Render both text and JSON views.
+- [x] Add tests for “no current concept” and “current concept selected” states.
 
 ## Dependencies
 

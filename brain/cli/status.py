@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Sequence
 
+from .current import build_current_payload
 from .defaults import (
     DEFAULT_CANONICAL_CLEANED_ARTIFACT_PATH,
     DEFAULT_CHECKPOINT_STATE_PATH,
@@ -62,7 +63,6 @@ def _build_artifact_entry(path: Path) -> dict[str, object]:
 
 
 def build_status_payload(session: BrainCliSession) -> dict[str, object]:
-    parsed_cache = session.parsed_graph_cache
     artifacts = {
         definition.key: {
             "label": definition.label,
@@ -72,15 +72,7 @@ def build_status_payload(session: BrainCliSession) -> dict[str, object]:
     }
 
     return {
-        "session": {
-            "active_graph_source_path": str(session.active_graph_source_path),
-            "active_graph_source_alias": session.active_graph_source_alias,
-            "active_graph_mode": session.active_graph_mode,
-            "current_concept": session.current_concept,
-            "parsed_graph_cache_loaded": parsed_cache is not None,
-            "parsed_graph_cache_source_path": str(parsed_cache.source_path) if parsed_cache else None,
-            "output_mode": session.output_mode.value,
-        },
+        "session": build_current_payload(session),
         "artifacts": artifacts,
     }
 

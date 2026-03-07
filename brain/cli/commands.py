@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Sequence
 
+from .current import handle_current
 from .doctor import handle_doctor
 from .errors import CommandNotImplementedError, UsageError
 from .load import handle_load
@@ -134,6 +135,8 @@ def build_default_registry() -> CommandRegistry:
             handler = _exit_handler
         elif definition.name == "doctor":
             handler = handle_doctor
+        elif definition.name == "current":
+            handler = handle_current
         elif definition.name == "load":
             handler = handle_load
         elif definition.name == "status":
