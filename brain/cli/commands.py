@@ -7,6 +7,7 @@ from .errors import CommandNotImplementedError, UsageError
 from .output import CommandOutput, CommandResult
 from .registry import CommandArgContract, CommandRegistry, CommandSpec
 from .session import BrainCliSession
+from .status import handle_status
 
 
 def _build_placeholder_handler(command_name: str):
@@ -129,6 +130,8 @@ def build_default_registry() -> CommandRegistry:
             handler = _build_help_handler(registry)
         elif definition.name == "exit":
             handler = _exit_handler
+        elif definition.name == "status":
+            handler = handle_status
 
         registry.register(
             CommandSpec(
