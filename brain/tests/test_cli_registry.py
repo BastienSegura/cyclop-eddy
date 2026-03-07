@@ -72,18 +72,17 @@ class BrainCliRegistryTests(unittest.TestCase):
         self.assertIsNone(session.current_concept)
         self.assertEqual(session.output_mode, OutputMode.TEXT)
 
-    def test_main_without_args_imports_and_exits_zero(self) -> None:
+    def test_one_shot_main_still_dispatches_registered_command(self) -> None:
         result = subprocess.run(
-            [sys.executable, "-m", "brain.cli"],
+            [sys.executable, "-m", "brain.cli", "generate", "start"],
             cwd=REPO_ROOT,
             capture_output=True,
             text=True,
             check=False,
         )
 
-        self.assertEqual(result.returncode, 0)
-        self.assertIn("Brain CLI foundation is installed.", result.stdout)
-        self.assertIn("Registered commands:", result.stdout)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("Command 'generate start' is registered but not implemented yet.", result.stderr)
 
     def test_main_returns_usage_error_for_unknown_command(self) -> None:
         stderr = io.StringIO()

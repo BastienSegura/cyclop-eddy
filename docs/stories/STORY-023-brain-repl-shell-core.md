@@ -2,11 +2,11 @@
 
 ID: `STORY-023`
 Title: `Add brain REPL shell core`
-Status: `ready`
+Status: `done`
 Priority: `P1`
 Owner: `unassigned`
 Created: `2026-03-06`
-Updated: `2026-03-06`
+Updated: `2026-03-07`
 
 ## Context
 
@@ -35,21 +35,21 @@ Updated: `2026-03-06`
 
 ## Acceptance Criteria
 
-- [ ] Running `python -m brain.cli` with no explicit command opens an interactive prompt rendered as `brain>`.
-- [ ] Input parsing uses shell-like quoting rules (`shlex`) so commands such as `use "Operating Systems"` and `generate start --root "Computer Science"` are parsed correctly.
-- [ ] Empty input is a no-op and does not print stack traces or duplicate prompts.
-- [ ] A single `BrainCliSession` instance lives for the full shell lifetime and preserves active graph source/current concept across commands.
-- [ ] `Ctrl+C` while waiting for input returns to a fresh prompt without exiting the shell or dropping session state.
-- [ ] `Ctrl+D` exits the shell cleanly with status code `0`.
-- [ ] Command history is stored in `memory/runtime/brain_cli/history.txt` so line history survives shell restarts without polluting git status.
+- [x] Running `python -m brain.cli` with no explicit command opens an interactive prompt rendered as `brain>`.
+- [x] Input parsing uses shell-like quoting rules (`shlex`) so commands such as `use "Operating Systems"` and `generate start --root "Computer Science"` are parsed correctly.
+- [x] Empty input is a no-op and does not print stack traces or duplicate prompts.
+- [x] A single `BrainCliSession` instance lives for the full shell lifetime and preserves active graph source/current concept across commands.
+- [x] `Ctrl+C` while waiting for input returns to a fresh prompt without exiting the shell or dropping session state.
+- [x] `Ctrl+D` exits the shell cleanly with status code `0`.
+- [x] Command history is stored in `memory/runtime/brain_cli/history.txt` so line history survives shell restarts without polluting git status.
 
 ## Subtasks
 
-- [ ] Add the REPL loop and prompt rendering on top of the STORY-022 dispatcher.
-- [ ] Wire `shlex`-based parsing into the prompt loop.
-- [ ] Add persistent history storage under `memory/runtime/brain_cli/`.
-- [ ] Define shell-level error rendering for unknown commands, bad arguments, and command failures.
-- [ ] Add tests or scripted harness coverage for prompt parsing and interrupt/EOF behavior where practical.
+- [x] Add the REPL loop and prompt rendering on top of the STORY-022 dispatcher.
+- [x] Wire `shlex`-based parsing into the prompt loop.
+- [x] Add persistent history storage under `memory/runtime/brain_cli/`.
+- [x] Define shell-level error rendering for unknown commands, bad arguments, and command failures.
+- [x] Add tests or scripted harness coverage for prompt parsing and interrupt/EOF behavior where practical.
 
 ## Dependencies
 

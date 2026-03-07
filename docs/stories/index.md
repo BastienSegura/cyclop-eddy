@@ -28,7 +28,7 @@ This is the canonical backlog for implementation stories.
 | STORY-020 | Decompose oversized concept-graph frontend modules | done | P2 | [STORY-020](STORY-020-graph-frontend-decomposition.md) |
 | STORY-021 | Align active documentation with current implementation and cleanup rules | done | P2 | [STORY-021](STORY-021-docs-architecture-sync.md) |
 | STORY-022 | Add brain CLI entry point and command registry | done | P1 | [STORY-022](STORY-022-brain-cli-entrypoint-and-command-registry.md) |
-| STORY-023 | Add brain REPL shell core | ready | P1 | [STORY-023](STORY-023-brain-repl-shell-core.md) |
+| STORY-023 | Add brain REPL shell core | done | P1 | [STORY-023](STORY-023-brain-repl-shell-core.md) |
 | STORY-024 | Add brain help command | ready | P2 | [STORY-024](STORY-024-brain-help-command.md) |
 | STORY-025 | Add brain exit command | ready | P1 | [STORY-025](STORY-025-brain-exit-command.md) |
 | STORY-026 | Add brain status command | ready | P1 | [STORY-026](STORY-026-brain-status-command.md) |
