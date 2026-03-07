@@ -9,6 +9,7 @@ from .errors import CommandNotImplementedError, UsageError
 from .load import handle_load
 from .output import CommandOutput, CommandResult
 from .registry import CommandArgContract, CommandRegistry, CommandSpec
+from .search import handle_search
 from .session import BrainCliSession
 from .status import handle_status
 
@@ -139,6 +140,8 @@ def build_default_registry() -> CommandRegistry:
             handler = handle_current
         elif definition.name == "load":
             handler = handle_load
+        elif definition.name == "search":
+            handler = handle_search
         elif definition.name == "status":
             handler = handle_status
 

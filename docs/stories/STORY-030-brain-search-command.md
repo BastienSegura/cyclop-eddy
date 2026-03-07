@@ -2,11 +2,11 @@
 
 ID: `STORY-030`
 Title: `Add brain search command`
-Status: `ready`
+Status: `done`
 Priority: `P1`
 Owner: `unassigned`
 Created: `2026-03-06`
-Updated: `2026-03-06`
+Updated: `2026-03-07`
 
 ## Context
 
@@ -33,19 +33,19 @@ Updated: `2026-03-06`
 
 ## Acceptance Criteria
 
-- [ ] `search <query>` searches concept labels from the active graph source using case-insensitive matching.
-- [ ] Search results are ranked deterministically in this order: exact case-insensitive match, prefix match, substring match; ties inside each bucket are sorted alphabetically by canonical label.
-- [ ] `search` returns at most 10 matches by default and supports `--limit <n>` to override that bound.
-- [ ] `search --json <query>` returns machine-readable results that include at minimum the matched label and match type.
-- [ ] If no active graph source is loaded or loadable, `search` returns a clear error that tells the user to run `load` or fix the active source path.
-- [ ] `search` does not modify the current concept selection or any files on disk.
+- [x] `search <query>` searches concept labels from the active graph source using case-insensitive matching.
+- [x] Search results are ranked deterministically in this order: exact case-insensitive match, prefix match, substring match; ties inside each bucket are sorted alphabetically by canonical label.
+- [x] `search` returns at most 10 matches by default and supports `--limit <n>` to override that bound.
+- [x] `search --json <query>` returns machine-readable results that include at minimum the matched label and match type.
+- [x] If no active graph source is loaded or loadable, `search` returns a clear error that tells the user to run `load` or fix the active source path.
+- [x] `search` does not modify the current concept selection or any files on disk.
 
 ## Subtasks
 
-- [ ] Define a shared concept-label lookup helper so `search` and later commands reuse the same matching and ranking rules.
-- [ ] Implement the `search` handler using the active session graph cache from `load`.
-- [ ] Add support for text output and `--json` output from the same result payload.
-- [ ] Add tests for exact-match, prefix-match, substring-match, limit, and no-graph cases.
+- [x] Define a shared concept-label lookup helper so `search` and later commands reuse the same matching and ranking rules.
+- [x] Implement the `search` handler using the active session graph cache from `load`.
+- [x] Add support for text output and `--json` output from the same result payload.
+- [x] Add tests for exact-match, prefix-match, substring-match, limit, and no-graph cases.
 
 ## Dependencies
 
