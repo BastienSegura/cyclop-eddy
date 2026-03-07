@@ -20,6 +20,18 @@ class LabelMatch:
     match_type: str
 
 
+def resolve_exact_label(labels: tuple[str, ...], query: str) -> str | None:
+    normalized_query = query.strip().casefold()
+    if not normalized_query:
+        return None
+
+    for label in labels:
+        if label.casefold() == normalized_query:
+            return label
+
+    return None
+
+
 def ensure_session_graph_cache(session: BrainCliSession) -> ParsedGraphCache:
     cache = session.parsed_graph_cache
     if cache is not None and cache.source_path == session.active_graph_source_path:

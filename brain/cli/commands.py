@@ -12,6 +12,7 @@ from .registry import CommandArgContract, CommandRegistry, CommandSpec
 from .search import handle_search
 from .session import BrainCliSession
 from .status import handle_status
+from .use import handle_use
 
 
 def _build_placeholder_handler(command_name: str):
@@ -44,7 +45,12 @@ COMMAND_DEFINITIONS = (
     CommandDefinition("load", "Set the active graph source.", "load <cleaned|raw|fixture|path>"),
     CommandDefinition("current", "Show current in-memory session state.", "current [--json]"),
     CommandDefinition("search", "Search concept labels in the active graph.", "search <query> [--limit <n>] [--json]"),
-    CommandDefinition("use", "Set the current concept in session state.", "use <concept>"),
+    CommandDefinition(
+        "use",
+        "Set the current concept in session state.",
+        "use <concept>",
+        notes="Changes session context for later omitted-argument graph commands such as `show`, `children`, `parents`, `neighbors`, and `prompt`.",
+    ),
     CommandDefinition("show", "Show a summary for one concept.", "show [concept] [--json]"),
     CommandDefinition("children", "List direct children for a concept.", "children [concept] [--limit <n>] [--json]"),
     CommandDefinition("parents", "List direct parents for a concept.", "parents [concept] [--limit <n>] [--json]"),
@@ -144,6 +150,8 @@ def build_default_registry() -> CommandRegistry:
             handler = handle_search
         elif definition.name == "status":
             handler = handle_status
+        elif definition.name == "use":
+            handler = handle_use
 
         registry.register(
             CommandSpec(

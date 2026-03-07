@@ -36,7 +36,7 @@ This is the canonical backlog for implementation stories.
 | STORY-028 | Add brain load command | done | P1 | [STORY-028](STORY-028-brain-load-command.md) |
 | STORY-029 | Add brain current command | done | P2 | [STORY-029](STORY-029-brain-current-command.md) |
 | STORY-030 | Add brain search command | done | P1 | [STORY-030](STORY-030-brain-search-command.md) |
-| STORY-031 | Add brain use command | ready | P1 | [STORY-031](STORY-031-brain-use-command.md) |
+| STORY-031 | Add brain use command | done | P1 | [STORY-031](STORY-031-brain-use-command.md) |
 | STORY-032 | Add brain show command | ready | P1 | [STORY-032](STORY-032-brain-show-command.md) |
 | STORY-033 | Add brain children command | ready | P2 | [STORY-033](STORY-033-brain-children-command.md) |
 | STORY-034 | Add brain parents command | ready | P2 | [STORY-034](STORY-034-brain-parents-command.md) |

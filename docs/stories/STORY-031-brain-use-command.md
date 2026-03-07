@@ -2,11 +2,11 @@
 
 ID: `STORY-031`
 Title: `Add brain use command`
-Status: `ready`
+Status: `done`
 Priority: `P1`
 Owner: `unassigned`
 Created: `2026-03-06`
-Updated: `2026-03-06`
+Updated: `2026-03-07`
 
 ## Context
 
@@ -32,18 +32,18 @@ Updated: `2026-03-06`
 
 ## Acceptance Criteria
 
-- [ ] `use <concept>` resolves the target label against the active graph using case-insensitive exact matching and stores the canonical matched label in `BrainCliSession`.
-- [ ] `use` accepts quoted multiword labels exactly as parsed by the shell (`use "Operating Systems"`).
-- [ ] If the requested concept does not resolve, `use` leaves the previous current concept unchanged and prints a clear error with a short ranked suggestion list derived from the shared search helper.
-- [ ] `current` and all later omitted-argument graph commands observe the newly selected concept after a successful `use`.
-- [ ] `use` does not mutate graph files, runtime artifacts, or the active graph source path.
+- [x] `use <concept>` resolves the target label against the active graph using case-insensitive exact matching and stores the canonical matched label in `BrainCliSession`.
+- [x] `use` accepts quoted multiword labels exactly as parsed by the shell (`use "Operating Systems"`).
+- [x] If the requested concept does not resolve, `use` leaves the previous current concept unchanged and prints a clear error with a short ranked suggestion list derived from the shared search helper.
+- [x] `current` and all later omitted-argument graph commands observe the newly selected concept after a successful `use`.
+- [x] `use` does not mutate graph files, runtime artifacts, or the active graph source path.
 
 ## Subtasks
 
-- [ ] Reuse the shared lookup helper from STORY-030 for exact resolution and suggestions.
-- [ ] Update `BrainCliSession` when selection succeeds.
-- [ ] Add tests for successful selection, quoted labels, failed resolution, and rollback of the previous current concept on failure.
-- [ ] Ensure `help use` documents that `use` changes session context for later commands.
+- [x] Reuse the shared lookup helper from STORY-030 for exact resolution and suggestions.
+- [x] Update `BrainCliSession` when selection succeeds.
+- [x] Add tests for successful selection, quoted labels, failed resolution, and rollback of the previous current concept on failure.
+- [x] Ensure `help use` documents that `use` changes session context for later commands.
 
 ## Dependencies
 
