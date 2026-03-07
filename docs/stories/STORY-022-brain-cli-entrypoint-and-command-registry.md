@@ -2,11 +2,11 @@
 
 ID: `STORY-022`
 Title: `Add brain CLI entry point and command registry`
-Status: `ready`
+Status: `done`
 Priority: `P1`
 Owner: `unassigned`
 Created: `2026-03-06`
-Updated: `2026-03-06`
+Updated: `2026-03-07`
 
 ## Context
 
@@ -35,20 +35,20 @@ Updated: `2026-03-06`
 
 ## Acceptance Criteria
 
-- [ ] A new `brain/cli/` package exists with a repo-local entry point (`python -m brain.cli`) and shared modules for registry/dispatch, session state, output helpers, and CLI-specific errors.
-- [ ] The command registry supports exact multiword command chains such as `generate start`, `generate resume`, `quality report`, and `coverage plan`.
-- [ ] Every registered command exposes metadata needed by later help/discovery features: canonical name, short description, argument contract, and handler reference.
-- [ ] A shared `BrainCliSession` contract exists and includes at minimum: active graph source path, active graph mode/source alias, optional parsed graph cache, current concept, and output mode.
-- [ ] The dispatcher resolves command chains deterministically and passes remaining arguments to the target handler without command-specific parsing logic leaking into the REPL loop.
-- [ ] Existing standalone `brain/*.py` commands remain callable exactly as they are today.
+- [x] A new `brain/cli/` package exists with a repo-local entry point (`python -m brain.cli`) and shared modules for registry/dispatch, session state, output helpers, and CLI-specific errors.
+- [x] The command registry supports exact multiword command chains such as `generate start`, `generate resume`, `quality report`, and `coverage plan`.
+- [x] Every registered command exposes metadata needed by later help/discovery features: canonical name, short description, argument contract, and handler reference.
+- [x] A shared `BrainCliSession` contract exists and includes at minimum: active graph source path, active graph mode/source alias, optional parsed graph cache, current concept, and output mode.
+- [x] The dispatcher resolves command chains deterministically and passes remaining arguments to the target handler without command-specific parsing logic leaking into the REPL loop.
+- [x] Existing standalone `brain/*.py` commands remain callable exactly as they are today.
 
 ## Subtasks
 
-- [ ] Add `brain/cli/` modules such as `__main__.py`, `registry.py`, `session.py`, `output.py`, and `errors.py` (or equivalent structure).
-- [ ] Define a typed command handler contract that works for both REPL and future one-shot invocation.
-- [ ] Implement exact command-chain resolution and unambiguous unknown-command errors.
-- [ ] Add command metadata storage that later stories can reuse for `help`.
-- [ ] Add unit tests for registry registration, dispatch resolution, and session default construction.
+- [x] Add `brain/cli/` modules such as `__main__.py`, `registry.py`, `session.py`, `output.py`, and `errors.py` (or equivalent structure).
+- [x] Define a typed command handler contract that works for both REPL and future one-shot invocation.
+- [x] Implement exact command-chain resolution and unambiguous unknown-command errors.
+- [x] Add command metadata storage that later stories can reuse for `help`.
+- [x] Add unit tests for registry registration, dispatch resolution, and session default construction.
 
 ## Dependencies
 
