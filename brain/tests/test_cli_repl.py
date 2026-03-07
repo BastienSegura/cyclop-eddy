@@ -170,6 +170,49 @@ class BrainCliReplTests(unittest.TestCase):
         self.assertIn("Unknown command: unknown.", stderr.getvalue())
         self.assertEqual(input_func.prompts, ["brain> ", "brain> "])
 
+    def test_repl_exit_command_exits_zero_and_flushes_history(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            history_path = Path(temp_dir) / "history.txt"
+            input_func = QueueInput(["exit"])
+            stdout = io.StringIO()
+            stderr = io.StringIO()
+
+            exit_code = main(
+                [],
+                registry=build_default_registry(),
+                input_func=input_func,
+                stdout=stdout,
+                stderr=stderr,
+                history_path=history_path,
+            )
+
+            self.assertEqual(exit_code, 0)
+            self.assertEqual(input_func.prompts, ["brain> "])
+            self.assertEqual(stdout.getvalue(), "")
+            self.assertEqual(stderr.getvalue(), "")
+            self.assertEqual(history_path.read_text(encoding="utf-8"), "exit\n")
+
+    def test_repl_exit_with_extra_arguments_returns_usage_error_and_keeps_running(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            history_path = Path(temp_dir) / "history.txt"
+            input_func = QueueInput(["exit now", EOFError()])
+            stdout = io.StringIO()
+            stderr = io.StringIO()
+
+            exit_code = main(
+                [],
+                registry=build_default_registry(),
+                input_func=input_func,
+                stdout=stdout,
+                stderr=stderr,
+                history_path=history_path,
+            )
+
+            self.assertEqual(exit_code, 0)
+            self.assertEqual(input_func.prompts, ["brain> ", "brain> "])
+            self.assertEqual(stdout.getvalue(), "\n")
+            self.assertIn("exit does not accept arguments. Usage: exit", stderr.getvalue())
+
     def test_python_m_brain_cli_opens_prompt_and_creates_history_file(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             history_path = Path(temp_dir) / "history.txt"

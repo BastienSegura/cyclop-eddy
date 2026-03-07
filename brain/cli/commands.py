@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Sequence
 
-from .errors import CommandNotImplementedError
-from .output import CommandResult
+from .errors import CommandNotImplementedError, UsageError
+from .output import CommandOutput, CommandResult
 from .registry import CommandArgContract, CommandRegistry, CommandSpec
 from .session import BrainCliSession
 
@@ -17,47 +18,60 @@ def _build_placeholder_handler(command_name: str):
     return handler
 
 
+@dataclass(frozen=True)
+class CommandDefinition:
+    name: str
+    summary: str
+    synopsis: str
+    notes: str = ""
+
+
 COMMAND_DEFINITIONS = (
-    ("help", "Show command help.", "help [command ...]"),
-    ("exit", "Exit the brain shell.", "exit"),
-    ("status", "Show shell state and key runtime artifacts.", "status [--json]"),
-    ("doctor", "Run non-destructive environment checks.", "doctor [--json]"),
-    ("load", "Set the active graph source.", "load <cleaned|raw|fixture|path>"),
-    ("current", "Show current in-memory session state.", "current [--json]"),
-    ("search", "Search concept labels in the active graph.", "search <query> [--limit <n>] [--json]"),
-    ("use", "Set the current concept in session state.", "use <concept>"),
-    ("show", "Show a summary for one concept.", "show [concept] [--json]"),
-    ("children", "List direct children for a concept.", "children [concept] [--limit <n>] [--json]"),
-    ("parents", "List direct parents for a concept.", "parents [concept] [--limit <n>] [--json]"),
-    ("neighbors", "List direct parents and children together.", "neighbors [concept] [--json]"),
-    ("path", "Find a directed path between two concepts.", "path <from> <to> [--json]"),
-    ("prompt", "Show the learning prompt template for a concept.", "prompt [concept] [--json]"),
-    (
+    CommandDefinition("help", "Show command help.", "help [command ...]"),
+    CommandDefinition(
+        "exit",
+        "Exit the brain shell.",
+        "exit",
+        notes="Use `exit` or `Ctrl+D` to leave the shell. `Ctrl+C` cancels the current input or command and returns to the prompt.",
+    ),
+    CommandDefinition("status", "Show shell state and key runtime artifacts.", "status [--json]"),
+    CommandDefinition("doctor", "Run non-destructive environment checks.", "doctor [--json]"),
+    CommandDefinition("load", "Set the active graph source.", "load <cleaned|raw|fixture|path>"),
+    CommandDefinition("current", "Show current in-memory session state.", "current [--json]"),
+    CommandDefinition("search", "Search concept labels in the active graph.", "search <query> [--limit <n>] [--json]"),
+    CommandDefinition("use", "Set the current concept in session state.", "use <concept>"),
+    CommandDefinition("show", "Show a summary for one concept.", "show [concept] [--json]"),
+    CommandDefinition("children", "List direct children for a concept.", "children [concept] [--limit <n>] [--json]"),
+    CommandDefinition("parents", "List direct parents for a concept.", "parents [concept] [--limit <n>] [--json]"),
+    CommandDefinition("neighbors", "List direct parents and children together.", "neighbors [concept] [--json]"),
+    CommandDefinition("path", "Find a directed path between two concepts.", "path <from> <to> [--json]"),
+    CommandDefinition("prompt", "Show the learning prompt template for a concept.", "prompt [concept] [--json]"),
+    CommandDefinition(
         "generate start",
         "Start a fresh concept-generation run.",
         "generate start [--root <concept>] [--children <n>] [--depth <n>] [options]",
     ),
-    (
+    CommandDefinition(
         "generate resume",
         "Resume concept generation from checkpoint state.",
         "generate resume [--state <path>]",
     ),
-    (
+    CommandDefinition(
         "sync",
         "Clean runtime graph data and sync it to the GUI artifact.",
         "sync [--input <path>] [--cleaned-output <path>] [--gui-output <path>] [options]",
     ),
-    (
+    CommandDefinition(
         "quality report",
         "Generate a graph quality report.",
         "quality report [--input <file> ...] [--mode <auto|raw|cleaned>] [options]",
     ),
-    (
+    CommandDefinition(
         "frontier",
         "Rank under-explored areas in the active graph.",
         "frontier [--input <path>] [--target <n>] [--top <n>] [--json] [options]",
     ),
-    (
+    CommandDefinition(
         "coverage plan",
         "Preview the two-phase coverage workflow without executing it.",
         "coverage plan --roots <concept> [<concept> ...] [options]",
@@ -65,16 +79,66 @@ COMMAND_DEFINITIONS = (
 )
 
 
+def _render_help_index(registry: CommandRegistry) -> str:
+    lines = ["Available commands:"]
+    for spec in registry.list_commands():
+        lines.append(f"- {spec.canonical_name}: {spec.summary}")
+        lines.append(f"  Usage: {spec.arg_contract.synopsis}")
+    return "\n".join(lines)
+
+
+def _render_command_help(spec: CommandSpec) -> str:
+    lines = [
+        f"Command: {spec.canonical_name}",
+        f"Summary: {spec.summary}",
+        f"Usage: {spec.arg_contract.synopsis}",
+    ]
+    if spec.arg_contract.notes:
+        lines.append(f"Notes: {spec.arg_contract.notes}")
+    return "\n".join(lines)
+
+
+def _build_help_handler(registry: CommandRegistry):
+    def handler(_session: BrainCliSession, args: Sequence[str]) -> CommandResult:
+        if not args:
+            return CommandResult(output=CommandOutput(text=_render_help_index(registry)))
+
+        spec = registry.get(args)
+        if spec is None:
+            raise UsageError(f"Unknown help topic: {' '.join(args)}")
+
+        return CommandResult(output=CommandOutput(text=_render_command_help(spec)))
+
+    return handler
+
+
+def _exit_handler(_session: BrainCliSession, args: Sequence[str]) -> CommandResult:
+    if args:
+        raise UsageError("exit does not accept arguments. Usage: exit")
+
+    return CommandResult(requests_exit=True)
+
+
 def build_default_registry() -> CommandRegistry:
     registry = CommandRegistry()
 
-    for command_name, summary, synopsis in COMMAND_DEFINITIONS:
+    for definition in COMMAND_DEFINITIONS:
+        name = tuple(definition.name.split())
+        handler = _build_placeholder_handler(definition.name)
+        if definition.name == "help":
+            handler = _build_help_handler(registry)
+        elif definition.name == "exit":
+            handler = _exit_handler
+
         registry.register(
             CommandSpec(
-                name=tuple(command_name.split()),
-                summary=summary,
-                arg_contract=CommandArgContract(synopsis=synopsis),
-                handler=_build_placeholder_handler(command_name),
+                name=name,
+                summary=definition.summary,
+                arg_contract=CommandArgContract(
+                    synopsis=definition.synopsis,
+                    notes=definition.notes,
+                ),
+                handler=handler,
             )
         )
 

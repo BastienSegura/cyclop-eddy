@@ -2,11 +2,11 @@
 
 ID: `STORY-024`
 Title: `Add brain help command`
-Status: `ready`
+Status: `done`
 Priority: `P2`
 Owner: `unassigned`
 Created: `2026-03-06`
-Updated: `2026-03-06`
+Updated: `2026-03-07`
 
 ## Context
 
@@ -33,18 +33,18 @@ Updated: `2026-03-06`
 
 ## Acceptance Criteria
 
-- [ ] `help` prints the registered command list grouped or ordered deterministically, including multiword commands.
-- [ ] `help <command>` works for exact single-word and multiword commands such as `help status` and `help quality report`.
-- [ ] Help output includes at minimum: canonical command name, short description, and argument synopsis.
-- [ ] Unknown help targets return a clear error without exiting the shell.
-- [ ] Help output is generated from command registry metadata instead of hand-maintained switch statements.
+- [x] `help` prints the registered command list grouped or ordered deterministically, including multiword commands.
+- [x] `help <command>` works for exact single-word and multiword commands such as `help status` and `help quality report`.
+- [x] Help output includes at minimum: canonical command name, short description, and argument synopsis.
+- [x] Unknown help targets return a clear error without exiting the shell.
+- [x] Help output is generated from command registry metadata instead of hand-maintained switch statements.
 
 ## Subtasks
 
-- [ ] Define the metadata fields required for help rendering if STORY-022 does not already finalize them.
-- [ ] Implement `help` for both command index and command-specific views.
-- [ ] Add tests for exact help lookup and unknown command behavior.
-- [ ] Ensure future command stories include metadata updates as part of completion.
+- [x] Define the metadata fields required for help rendering if STORY-022 does not already finalize them.
+- [x] Implement `help` for both command index and command-specific views.
+- [x] Add tests for exact help lookup and unknown command behavior.
+- [x] Ensure future command stories include metadata updates as part of completion.
 
 ## Dependencies
 

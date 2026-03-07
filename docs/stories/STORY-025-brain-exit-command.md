@@ -2,11 +2,11 @@
 
 ID: `STORY-025`
 Title: `Add brain exit command`
-Status: `ready`
+Status: `done`
 Priority: `P1`
 Owner: `unassigned`
 Created: `2026-03-06`
-Updated: `2026-03-06`
+Updated: `2026-03-07`
 
 ## Context
 
@@ -32,17 +32,17 @@ Updated: `2026-03-06`
 
 ## Acceptance Criteria
 
-- [ ] `exit` is a registered command and terminates the REPL with exit code `0`.
-- [ ] `exit` accepts no positional arguments; accidental extra arguments return a clear usage error instead of silently ignoring them.
-- [ ] Executing `exit` from the REPL performs the same cleanup path as `Ctrl+D`.
-- [ ] `Ctrl+C` does not trigger shell exit; it remains reserved for canceling the current prompt/command.
-- [ ] `help exit` documents the intended difference between `exit`, `Ctrl+D`, and `Ctrl+C`.
+- [x] `exit` is a registered command and terminates the REPL with exit code `0`.
+- [x] `exit` accepts no positional arguments; accidental extra arguments return a clear usage error instead of silently ignoring them.
+- [x] Executing `exit` from the REPL performs the same cleanup path as `Ctrl+D`.
+- [x] `Ctrl+C` does not trigger shell exit; it remains reserved for canceling the current prompt/command.
+- [x] `help exit` documents the intended difference between `exit`, `Ctrl+D`, and `Ctrl+C`.
 
 ## Subtasks
 
-- [ ] Add an `exit` handler to the command registry.
-- [ ] Define the shell-level mechanism for a handler to request process termination without throwing an unhandled exception.
-- [ ] Add tests for explicit exit behavior and bad-argument handling.
+- [x] Add an `exit` handler to the command registry.
+- [x] Define the shell-level mechanism for a handler to request process termination without throwing an unhandled exception.
+- [x] Add tests for explicit exit behavior and bad-argument handling.
 
 ## Dependencies
 

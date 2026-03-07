@@ -22,13 +22,17 @@ class BrainCliRegistryTests(unittest.TestCase):
     def test_default_registry_exposes_multiword_command_metadata(self) -> None:
         registry = build_default_registry()
 
+        exit_command = registry.get("exit")
         generate_start = registry.get(("generate", "start"))
         quality_report = registry.get("quality report")
         coverage_plan = registry.get(("coverage", "plan"))
 
+        self.assertIsNotNone(exit_command)
         self.assertIsNotNone(generate_start)
         self.assertIsNotNone(quality_report)
         self.assertIsNotNone(coverage_plan)
+        self.assertIn("Ctrl+D", exit_command.arg_contract.notes)
+        self.assertIn("Ctrl+C", exit_command.arg_contract.notes)
         self.assertEqual(generate_start.canonical_name, "generate start")
         self.assertEqual(quality_report.arg_contract.synopsis, "quality report [--input <file> ...] [--mode <auto|raw|cleaned>] [options]")
         self.assertEqual(coverage_plan.summary, "Preview the two-phase coverage workflow without executing it.")
@@ -84,6 +88,49 @@ class BrainCliRegistryTests(unittest.TestCase):
         self.assertEqual(result.returncode, 1)
         self.assertIn("Command 'generate start' is registered but not implemented yet.", result.stderr)
 
+    def test_main_help_lists_commands_from_registry_metadata(self) -> None:
+        stdout = io.StringIO()
+
+        exit_code = main(["help"], stdout=stdout)
+
+        rendered = stdout.getvalue()
+        self.assertEqual(exit_code, 0)
+        self.assertIn("Available commands:", rendered)
+        self.assertIn("- exit: Exit the brain shell.", rendered)
+        self.assertIn("Usage: quality report [--input <file> ...] [--mode <auto|raw|cleaned>] [options]", rendered)
+
+    def test_main_help_for_exact_multiword_command_uses_metadata(self) -> None:
+        stdout = io.StringIO()
+
+        exit_code = main(["help", "quality", "report"], stdout=stdout)
+
+        rendered = stdout.getvalue()
+        self.assertEqual(exit_code, 0)
+        self.assertIn("Command: quality report", rendered)
+        self.assertIn("Summary: Generate a graph quality report.", rendered)
+        self.assertIn("Usage: quality report [--input <file> ...] [--mode <auto|raw|cleaned>] [options]", rendered)
+
+    def test_main_help_exit_documents_exit_vs_ctrl_d_vs_ctrl_c(self) -> None:
+        stdout = io.StringIO()
+
+        exit_code = main(["help", "exit"], stdout=stdout)
+
+        rendered = stdout.getvalue()
+        self.assertEqual(exit_code, 0)
+        self.assertIn("Command: exit", rendered)
+        self.assertIn("Ctrl+D", rendered)
+        self.assertIn("Ctrl+C", rendered)
+
+    def test_main_exit_returns_zero(self) -> None:
+        stdout = io.StringIO()
+        stderr = io.StringIO()
+
+        exit_code = main(["exit"], stdout=stdout, stderr=stderr)
+
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(stdout.getvalue(), "")
+        self.assertEqual(stderr.getvalue(), "")
+
     def test_main_returns_usage_error_for_unknown_command(self) -> None:
         stderr = io.StringIO()
         with contextlib.redirect_stderr(stderr):
@@ -91,6 +138,14 @@ class BrainCliRegistryTests(unittest.TestCase):
 
         self.assertEqual(exit_code, 2)
         self.assertIn("Unknown command: unknown.", stderr.getvalue())
+
+    def test_main_returns_usage_error_for_unknown_help_topic(self) -> None:
+        stderr = io.StringIO()
+
+        exit_code = main(["help", "missing"], stderr=stderr)
+
+        self.assertEqual(exit_code, 2)
+        self.assertIn("Unknown help topic: missing", stderr.getvalue())
 
 
 if __name__ == "__main__":
