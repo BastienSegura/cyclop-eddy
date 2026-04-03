@@ -49,3 +49,8 @@ This is the canonical backlog for implementation stories.
 | STORY-041 | Add brain quality report command | ready | P1 | [STORY-041](STORY-041-brain-quality-report-command.md) |
 | STORY-042 | Add brain frontier command | ready | P1 | [STORY-042](STORY-042-brain-frontier-command.md) |
 | STORY-043 | Add brain coverage plan command | ready | P2 | [STORY-043](STORY-043-brain-coverage-plan-command.md) |
+| STORY-044 | Add goal route planning foundation | ready | P1 | [STORY-044](STORY-044-goal-route-planning-foundation.md) |
+| STORY-045 | Add goal target selection and route preview | ready | P1 | [STORY-045](STORY-045-goal-target-selection-and-route-preview.md) |
+| STORY-046 | Add goal route guidance mode | ready | P1 | [STORY-046](STORY-046-goal-route-guidance-mode.md) |
+| STORY-047 | Persist active goal routes | ready | P1 | [STORY-047](STORY-047-persist-active-goal-routes.md) |
+| STORY-048 | Add goal route branching and rerouting | ready | P2 | [STORY-048](STORY-048-goal-route-branching-and-rerouting.md) |
