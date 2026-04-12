@@ -1,8 +1,9 @@
-# cyclop-eddy
+# <center>Cyclop Eddy</center>
 
-Cyclop Eddy is a concept-universe project focused on making learning feel engaging, exploratory, and game-like.
+Cyclop Eddy is an attempt to build the map of human knowledge.
+Displayed through a web app, it allows the user to explore it, and to learn any concept using a generated LLM prompt.
 
-## Vision
+## <center>I. UX Vision</center>
 
 - Move through connected concepts like traveling a skill tree.
 - Stop at any node and use prompt templates to learn deeper with an LLM.
