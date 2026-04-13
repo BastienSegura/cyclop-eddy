@@ -9,18 +9,14 @@ Displayed through a web app, it allows the user to explore it, and to learn any 
 - Stop at any node and use prompt templates to learn deeper with an LLM.
 - Build toward a Skyrim-like constellation navigation experience.
 
-## Repository layout
+## <center>II. Repo layout</center>
 
-- `brain/`: active Python engine, shared graph utilities, and generator internals.
-- `gui/`: Next.js App Router prototype for concept constellation exploration plus auth pages/routes.
-- `memory/`: runtime pipeline outputs under `memory/runtime/` and committed example artifacts under `memory/fixtures/`.
-- `archive/`: old experiments, historical snapshots, deprecated material.
-- `docs/`: active project documentation.
+- **`brain/`** : active Python engine, shared graph utilities, and generator internals.
+- **`gui/`**: Next.js App Router prototype for concept constellation exploration plus auth pages/routes.
+- **`memory/`**: runtime pipeline outputs under `memory/runtime/` and committed example artifacts under `memory/fixtures/`.
+- **`archive/`**: old experiments, historical snapshots, deprecated material.
+- **`docs/`**: active project documentation.
 
-## Start here
-
-- Project documentation index: [`docs/README.md`](docs/README.md)
-- Project manifest: [`docs/manifest.md`](docs/manifest.md)
 
 ## Local Bootstrap
 
