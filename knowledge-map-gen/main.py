@@ -5,6 +5,7 @@ import os
 
 import requests
 
+ROOT_CONCEPT = "Machine Learning"
 
 class KMGenerator:
     def __init__(self, ollama_url: str = "http://localhost:11434", model: str | None = None) -> None:
@@ -40,4 +41,4 @@ class KMGenerator:
 
 if __name__ == "__main__":
     generator = KMGenerator()
-    print(generator.expand_map("Computer Science"))
+    print(generator.expand_map(ROOT_CONCEPT))
