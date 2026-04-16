@@ -18,7 +18,7 @@ class KMGenerator:
             raise ValueError("word must not be empty")
 
         prompt = (
-            f"Give exactly 10 important sub-concepts of '{concept}'. "
+            f"Give exactly 10 important concepts closest to the concept : '{concept}'. "
             "Return only a JSON array of strings. No markdown, no explanation."
         )
         response = requests.post(
@@ -40,4 +40,4 @@ class KMGenerator:
 
 if __name__ == "__main__":
     generator = KMGenerator()
-    print(generator.expand_map("Computer Science"))
+    print(generator.expand_map("Napoleon Bonaparte"))
