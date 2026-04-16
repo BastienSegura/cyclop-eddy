@@ -1,14 +1,15 @@
 from __future__ import annotations
 
 import json
+import os
 
 import requests
 
 
 class KMGenerator:
-    def __init__(self, ollama_url: str = "http://localhost:11434", model: str = "llama3.1") -> None:
+    def __init__(self, ollama_url: str = "http://localhost:11434", model: str | None = None) -> None:
         self.ollama_url = ollama_url.rstrip("/")
-        self.model = model
+        self.model = model or os.environ.get("OLLAMA_MODEL", "llama3:8b")
         self.knowledge_map: dict[str, list[str]] = {}
 
     def expand_map(self, word: str) -> list[str]:
@@ -25,7 +26,8 @@ class KMGenerator:
             json={"model": self.model, "prompt": prompt, "stream": False},
             timeout=120,
         )
-        response.raise_for_status()
+        if not response.ok:
+            raise RuntimeError(f"Ollama request failed for model '{self.model}': {response.text}")
 
         raw_text = response.json()["response"].strip()
         sub_concepts = json.loads(raw_text)
