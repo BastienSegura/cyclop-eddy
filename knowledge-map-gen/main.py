@@ -40,4 +40,4 @@ class KMGenerator:
 
 if __name__ == "__main__":
     generator = KMGenerator()
-    print(generator.expand_map("Napoleon Bonaparte"))
+    print(generator.expand_map("Computer Science"))
