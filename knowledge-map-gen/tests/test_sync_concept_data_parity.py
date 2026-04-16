@@ -24,7 +24,7 @@ Algorithms: Graph Theory
             result = subprocess.run(
                 [
                     sys.executable,
-                    "brain/sync_concept_data.py",
+                    "knowledge-map-gen/sync_concept_data.py",
                     "--input",
                     str(input_path),
                     "--cleaned-output",

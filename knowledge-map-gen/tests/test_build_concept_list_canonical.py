@@ -274,7 +274,7 @@ class BuildConceptListCanonicalTests(unittest.TestCase):
                 temp_path = Path(temp_dir)
                 legacy_memory_dir = temp_path / "memory"
                 legacy_memory_dir.mkdir()
-                runtime_memory_dir = legacy_memory_dir / "runtime"
+                runtime_store_dir = temp_path / "knowledge-map-gen" / "map-store" / "runtime"
                 state_path = temp_path / "state.json"
 
                 cwd = Path.cwd()
@@ -294,21 +294,21 @@ class BuildConceptListCanonicalTests(unittest.TestCase):
                         root_concept="Computer Science",
                         concept_list_length=2,
                         max_depth=1,
-                        output_path="memory/runtime/concept_list.txt",
+                        output_path="knowledge-map-gen/map-store/runtime/concept_list.txt",
                         state_file=str(state_path),
                         resume=True,
                     )
                 finally:
                     os.chdir(cwd)
 
-                migrated_output_path = runtime_memory_dir / "concept_list.txt"
+                migrated_output_path = runtime_store_dir / "concept_list.txt"
                 migrated_output_exists = migrated_output_path.exists()
         finally:
             builder.simple_prompt = original_prompt
             builder.save_generation_state = original_save_state
 
         self.assertEqual(len(prompts), 1)
-        self.assertIn("memory/runtime/concept_list.txt", persisted_output_paths)
+        self.assertIn("knowledge-map-gen/map-store/runtime/concept_list.txt", persisted_output_paths)
         self.assertTrue(migrated_output_exists)
 
 

@@ -123,8 +123,8 @@ def generate_concept_graph(
     root_concept: str,
     concept_list_length: int,
     max_depth: int,
-    output_path: str = "memory/runtime/concept_list.txt",
-    state_file: str = "memory/runtime/concept_list_state.json",
+    output_path: str = "knowledge-map-gen/map-store/runtime/concept_list.txt",
+    state_file: str = "knowledge-map-gen/map-store/runtime/concept_list_state.json",
     resume: bool = False,
     exclude_strategy: str | None = None,
     exclude_local_limit: int | None = None,
@@ -331,7 +331,7 @@ def generate_concept_graph(
         persist_state()
         printer(
             "\nGeneration paused by user. "
-            f"Resume with: python brain/build_concept_list.py --resume --state-file {state_file}",
+            f"Resume with: python knowledge-map-gen/build_concept_list.py --resume --state-file {state_file}",
             flush=True,
         )
         return

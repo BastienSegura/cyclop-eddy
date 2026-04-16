@@ -1,6 +1,6 @@
 # Concept Quality Report
 
-## memory/concept_list.txt
+## knowledge-map-gen/map-store/runtime/concept_list.txt
 
 - Mode: requested `auto`, detected `raw`
 - Lines: `476`
@@ -38,7 +38,7 @@
 
 - Computer Science
 
-## memory/concept_list_cleaned.txt
+## knowledge-map-gen/map-store/runtime/concept_list_cleaned.txt
 
 - Mode: requested `auto`, detected `cleaned`
 - Lines: `295`

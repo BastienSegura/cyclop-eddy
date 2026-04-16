@@ -1,4 +1,4 @@
-# GUI Prototype (Next.js App Router)
+# App Prototype (Next.js App Router)
 
 This folder contains a maintainable frontend prototype for Cyclop Eddy.
 
@@ -11,7 +11,7 @@ This folder contains a maintainable frontend prototype for Cyclop Eddy.
 ## Run
 
 ```bash
-cd gui
+cd app
 npm install
 npm run dev
 ```
@@ -31,7 +31,7 @@ npm run test
 ```
 
 For the full repository bootstrap order, use the root [`README.md`](../README.md):
-Python environment first, then GUI environment, then regression tests, then app commands.
+Python environment first, then App environment, then regression tests, then app commands.
 
 ## Auth Foundation (Story 11)
 
@@ -166,16 +166,16 @@ Path prefix compatibility:
 - A regression fixture is available at `public/data/fixtures/concept_list_cleaned_hyphen_fixture.txt`.
 
 Runtime artifact policy:
-- `public/data/concept_list_cleaned.txt` is a derived file written by `brain/sync_concept_data.py` and is git-ignored.
-- `public/data/fixtures/` contains the committed GUI data fixtures that remain versioned.
+- `public/data/concept_list_cleaned.txt` is a derived file written by `knowledge-map-gen/sync_concept_data.py` and is git-ignored.
+- `public/data/fixtures/` contains the committed App data fixtures that remain versioned.
 
-Refresh the derived GUI data from the canonical cleaned artifact from the repo root:
+Refresh the derived App data from the canonical cleaned artifact from the repo root:
 
 Example:
 
 ```bash
 cd ..
-python brain/sync_concept_data.py
+python knowledge-map-gen/sync_concept_data.py
 ```
 
 ## Current UX

@@ -24,7 +24,7 @@ class RunTwoPhaseCoverageTests(unittest.TestCase):
             result = subprocess.run(
                 [
                     sys.executable,
-                    "brain/run_two_phase_coverage.py",
+                    "knowledge-map-gen/run_two_phase_coverage.py",
                     "--phase2-roots",
                     "Algorithms",
                     "algorithms",
@@ -54,7 +54,7 @@ class RunTwoPhaseCoverageTests(unittest.TestCase):
         result = subprocess.run(
             [
                 sys.executable,
-                "brain/run_two_phase_coverage.py",
+                "knowledge-map-gen/run_two_phase_coverage.py",
                 "--dry-run",
             ],
             capture_output=True,

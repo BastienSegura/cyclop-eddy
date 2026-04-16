@@ -1,7 +1,7 @@
 {
   "files": [
     {
-      "path": "memory/concept_list.txt",
+      "path": "knowledge-map-gen/map-store/runtime/concept_list.txt",
       "mode_requested": "auto",
       "mode_detected": "raw",
       "line_count": 476,
@@ -46,7 +46,7 @@
       }
     },
     {
-      "path": "memory/concept_list_cleaned.txt",
+      "path": "knowledge-map-gen/map-store/runtime/concept_list_cleaned.txt",
       "mode_requested": "auto",
       "mode_detected": "cleaned",
       "line_count": 295,

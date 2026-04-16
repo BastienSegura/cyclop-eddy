@@ -8,6 +8,8 @@ from pathlib import Path
 import tempfile
 import unittest
 
+import package_alias  # noqa: F401
+
 from brain.cli.app import main
 from brain.cli.graph_lookup import search_labels
 from brain.cli.session import BrainCliSession
@@ -46,7 +48,7 @@ class BrainCliSearchTests(unittest.TestCase):
     def test_search_uses_active_graph_source_and_respects_limit(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
-            runtime_dir = temp_path / "memory" / "runtime"
+            runtime_dir = temp_path / "knowledge-map-gen" / "map-store" / "runtime"
             runtime_dir.mkdir(parents=True)
             (runtime_dir / "concept_list_cleaned.txt").write_text(
                 "\n".join(
@@ -78,12 +80,12 @@ class BrainCliSearchTests(unittest.TestCase):
             self.assertNotIn("Database Systems", rendered)
             self.assertEqual(session.current_concept, "Operating Systems")
             self.assertIsNotNone(session.parsed_graph_cache)
-            self.assertEqual(session.parsed_graph_cache.source_path, Path("memory/runtime/concept_list_cleaned.txt"))
+            self.assertEqual(session.parsed_graph_cache.source_path, Path("knowledge-map-gen/map-store/runtime/concept_list_cleaned.txt"))
 
     def test_search_json_reports_match_types(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
-            runtime_dir = temp_path / "memory" / "runtime"
+            runtime_dir = temp_path / "knowledge-map-gen" / "map-store" / "runtime"
             runtime_dir.mkdir(parents=True)
             (runtime_dir / "concept_list_cleaned.txt").write_text(
                 "~Computer%20Science: Operating Systems\n~Computer%20Science: Distributed Systems\n",

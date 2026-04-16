@@ -35,7 +35,7 @@ class BuildConceptListStateTests(unittest.TestCase):
                 resumed = state_utils.prepare_resumed_state(
                     state=state,
                     root_concept="Computer Science",
-                    output_path="memory/runtime/concept_list.txt",
+                    output_path="memory/concept_list.txt",
                     requested_exclude_strategy=None,
                     requested_exclude_local_limit=None,
                 )
@@ -43,7 +43,7 @@ class BuildConceptListStateTests(unittest.TestCase):
                 os.chdir(cwd)
 
         self.assertEqual(resumed["version"], 5)
-        self.assertEqual(resumed["output_path"], "memory/runtime/concept_list.txt")
+        self.assertEqual(resumed["output_path"], "knowledge-map-gen/map-store/runtime/concept_list.txt")
         self.assertEqual(resumed["exclude_strategy"], "local")
 
     def test_prepare_resumed_state_rejects_conflicting_exclude_strategy(self) -> None:
@@ -51,7 +51,7 @@ class BuildConceptListStateTests(unittest.TestCase):
             root_concept="Computer Science",
             concept_list_length=2,
             max_depth=1,
-            output_path="memory/runtime/concept_list.txt",
+            output_path="knowledge-map-gen/map-store/runtime/concept_list.txt",
             exclude_strategy="global",
             exclude_local_limit=5,
         )
@@ -60,7 +60,7 @@ class BuildConceptListStateTests(unittest.TestCase):
             state_utils.prepare_resumed_state(
                 state=state,
                 root_concept="Computer Science",
-                output_path="memory/runtime/concept_list.txt",
+                output_path="knowledge-map-gen/map-store/runtime/concept_list.txt",
                 requested_exclude_strategy="local",
                 requested_exclude_local_limit=None,
             )

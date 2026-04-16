@@ -32,7 +32,7 @@ ARTIFACT_DEFINITIONS = (
         "Canonical cleaned artifact",
         DEFAULT_CANONICAL_CLEANED_ARTIFACT_PATH,
     ),
-    StatusArtifactDefinition("derived_gui_target", "Derived GUI target", DEFAULT_GUI_SYNC_TARGET_PATH),
+    StatusArtifactDefinition("derived_gui_target", "Derived app target", DEFAULT_GUI_SYNC_TARGET_PATH),
     StatusArtifactDefinition("checkpoint_state_file", "Checkpoint state file", DEFAULT_CHECKPOINT_STATE_PATH),
     StatusArtifactDefinition("fixture_fallback", "Fixture fallback", DEFAULT_FIXTURE_GRAPH_PATH),
 )

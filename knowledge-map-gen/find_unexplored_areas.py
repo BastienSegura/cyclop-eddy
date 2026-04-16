@@ -2,9 +2,9 @@
 """Rank under-explored concept areas to guide refinement generation.
 
 Examples:
-    python brain/find_unexplored_areas.py --input memory/runtime/concept_list_cleaned.txt
-    python brain/find_unexplored_areas.py --input memory/runtime/concept_list_cleaned.txt --target-children 10 --top-n 30
-    python brain/find_unexplored_areas.py --input memory/runtime/concept_list.txt --mode raw --output-format json
+    python knowledge-map-gen/find_unexplored_areas.py --input knowledge-map-gen/map-store/runtime/concept_list_cleaned.txt
+    python knowledge-map-gen/find_unexplored_areas.py --input knowledge-map-gen/map-store/runtime/concept_list_cleaned.txt --target-children 10 --top-n 30
+    python knowledge-map-gen/find_unexplored_areas.py --input knowledge-map-gen/map-store/runtime/concept_list.txt --mode raw --output-format json
 """
 
 from __future__ import annotations
@@ -226,8 +226,8 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Find and rank under-explored concept graph areas.")
     parser.add_argument(
         "--input",
-        default="memory/runtime/concept_list_cleaned.txt",
-        help="Concept edge file path (default: memory/runtime/concept_list_cleaned.txt).",
+        default="knowledge-map-gen/map-store/runtime/concept_list_cleaned.txt",
+        help="Concept edge file path (default: knowledge-map-gen/map-store/runtime/concept_list_cleaned.txt).",
     )
     parser.add_argument(
         "--mode",

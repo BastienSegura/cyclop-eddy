@@ -1,1 +1,1 @@
-"""Brain package for graph tooling and the interactive CLI foundation."""
+"""Knowledge map generation tools and interactive CLI foundation."""

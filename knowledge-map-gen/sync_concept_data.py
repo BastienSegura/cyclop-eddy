@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Clean generated concept data, sync the canonical cleaned artifact to the GUI, and verify parity.
+"""Clean generated concept data, sync the canonical cleaned artifact to the app, and verify parity.
 
 Usage:
-    python brain/sync_concept_data.py
+    python knowledge-map-gen/sync_concept_data.py
 """
 
 from __future__ import annotations
@@ -20,22 +20,22 @@ def line_count(path: Path) -> int:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Clean concept data, write the canonical cleaned artifact, sync it to the derived GUI file, and verify parity.",
+        description="Clean concept data, write the canonical cleaned artifact, sync it to the derived app file, and verify parity.",
     )
     parser.add_argument(
         "--input",
-        default="memory/runtime/concept_list.txt",
-        help="Raw concept edge list (default: memory/runtime/concept_list.txt)",
+        default="knowledge-map-gen/map-store/runtime/concept_list.txt",
+        help="Raw concept edge list (default: knowledge-map-gen/map-store/runtime/concept_list.txt)",
     )
     parser.add_argument(
         "--cleaned-output",
-        default="memory/runtime/concept_list_cleaned.txt",
-        help="Canonical cleaned artifact output (default: memory/runtime/concept_list_cleaned.txt)",
+        default="knowledge-map-gen/map-store/runtime/concept_list_cleaned.txt",
+        help="Canonical cleaned artifact output (default: knowledge-map-gen/map-store/runtime/concept_list_cleaned.txt)",
     )
     parser.add_argument(
         "--gui-output",
-        default="gui/public/data/concept_list_cleaned.txt",
-        help="Derived GUI data target (default: gui/public/data/concept_list_cleaned.txt)",
+        default="app/public/data/concept_list_cleaned.txt",
+        help="Derived App data target (default: app/public/data/concept_list_cleaned.txt)",
     )
     parser.add_argument(
         "--root",
@@ -80,13 +80,13 @@ def main() -> None:
 
     shutil.copyfile(cleaned_output_path, gui_output_path)
 
-    memory_line_count = line_count(cleaned_output_path)
+    store_line_count = line_count(cleaned_output_path)
     gui_line_count = line_count(gui_output_path)
 
-    if memory_line_count != gui_line_count:
+    if store_line_count != gui_line_count:
         raise SystemExit(
             "Sync parity check failed: "
-            f"memory lines={memory_line_count}, gui lines={gui_line_count}."
+            f"store lines={store_line_count}, gui lines={gui_line_count}."
         )
 
     if cleaned_output_path.read_bytes() != gui_output_path.read_bytes():
@@ -105,8 +105,8 @@ def main() -> None:
         f"dropped={stats['dropped_cycle_edge_count']})"
     )
     print(f"[sync] Canonical cleaned artifact: {cleaned_output_path}")
-    print(f"[sync] Derived GUI target: {gui_output_path}")
-    print(f"[sync] Line parity: {memory_line_count} == {gui_line_count} (OK)")
+    print(f"[sync] Derived app target: {gui_output_path}")
+    print(f"[sync] Line parity: {store_line_count} == {gui_line_count} (OK)")
     print("[sync] Byte parity: OK")
 
 

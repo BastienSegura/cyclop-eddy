@@ -131,16 +131,31 @@ def normalize_queue(raw_queue: list[dict[str, Any]]) -> list[dict[str, Any]]:
 def migrate_output_path(output_path: str) -> str:
     migrated_output_path = output_path
     if migrated_output_path.startswith("src/"):
-        candidate = migrated_output_path.replace("src/", "memory/", 1)
+        candidate = migrated_output_path.replace("src/", "knowledge-map-gen/map-store/runtime/", 1)
+        if Path(candidate).exists() or not Path(migrated_output_path).exists():
+            migrated_output_path = candidate
+
+    if migrated_output_path.startswith("memory/runtime/"):
+        candidate = migrated_output_path.replace("memory/runtime/", "knowledge-map-gen/map-store/runtime/", 1)
+        if Path(candidate).exists() or not Path(migrated_output_path).exists():
+            migrated_output_path = candidate
+
+    if migrated_output_path.startswith("memory/fixtures/"):
+        candidate = migrated_output_path.replace("memory/fixtures/", "knowledge-map-gen/map-store/fixtures/", 1)
+        if Path(candidate).exists() or not Path(migrated_output_path).exists():
+            migrated_output_path = candidate
+
+    if migrated_output_path.startswith("memory/"):
+        candidate = migrated_output_path.replace("memory/", "knowledge-map-gen/map-store/runtime/", 1)
         if Path(candidate).exists() or not Path(migrated_output_path).exists():
             migrated_output_path = candidate
 
     if (
-        migrated_output_path.startswith("memory/")
-        and not migrated_output_path.startswith("memory/runtime/")
-        and not migrated_output_path.startswith("memory/fixtures/")
+        migrated_output_path.startswith("knowledge-map-gen/map-store/")
+        and not migrated_output_path.startswith("knowledge-map-gen/map-store/runtime/")
+        and not migrated_output_path.startswith("knowledge-map-gen/map-store/fixtures/")
     ):
-        candidate = migrated_output_path.replace("memory/", "memory/runtime/", 1)
+        candidate = migrated_output_path.replace("knowledge-map-gen/map-store/", "knowledge-map-gen/map-store/runtime/", 1)
         if Path(candidate).exists() or not Path(migrated_output_path).exists():
             migrated_output_path = candidate
 

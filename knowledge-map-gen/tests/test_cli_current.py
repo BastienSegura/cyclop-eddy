@@ -4,6 +4,8 @@ import io
 import json
 import unittest
 
+import package_alias  # noqa: F401
+
 from brain.cli.app import main
 from brain.cli.load import build_graph_cache, resolve_load_target
 from brain.cli.session import BrainCliSession
@@ -21,7 +23,7 @@ class BrainCliCurrentTests(unittest.TestCase):
         self.assertEqual(exit_code, 0)
         self.assertEqual(stderr.getvalue(), "")
         self.assertIn("Current session:", rendered)
-        self.assertIn("- Active graph source: memory/runtime/concept_list_cleaned.txt", rendered)
+        self.assertIn("- Active graph source: knowledge-map-gen/map-store/runtime/concept_list_cleaned.txt", rendered)
         self.assertIn("- Active graph alias: cleaned", rendered)
         self.assertIn("- Active graph mode: cleaned", rendered)
         self.assertIn("- Current concept: (none selected)", rendered)
@@ -42,12 +44,12 @@ class BrainCliCurrentTests(unittest.TestCase):
         payload = json.loads(stdout.getvalue())
         self.assertEqual(exit_code, 0)
         self.assertEqual(stderr.getvalue(), "")
-        self.assertEqual(payload["active_graph_source_path"], "memory/fixtures/demo/concept_list_cleaned.txt")
+        self.assertEqual(payload["active_graph_source_path"], "knowledge-map-gen/map-store/fixtures/demo/concept_list_cleaned.txt")
         self.assertEqual(payload["active_graph_source_alias"], "fixture")
         self.assertEqual(payload["active_graph_mode"], "cleaned")
         self.assertEqual(payload["current_concept"], "Databases")
         self.assertTrue(payload["parsed_graph_cache_loaded"])
-        self.assertEqual(payload["parsed_graph_cache_source_path"], "memory/fixtures/demo/concept_list_cleaned.txt")
+        self.assertEqual(payload["parsed_graph_cache_source_path"], "knowledge-map-gen/map-store/fixtures/demo/concept_list_cleaned.txt")
         self.assertEqual(
             payload["parsed_graph_cache_node_count"],
             len(session.parsed_graph_cache.payload.nodes),

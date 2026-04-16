@@ -11,9 +11,9 @@ Displayed through a web app, it allows the user to explore it, and to learn any 
 
 ## <center>II. Repo layout</center>
 
-- **`brain/`** : active Python engine, shared graph utilities, and generator internals.
-- **`gui/`**: Next.js App Router prototype for concept constellation exploration plus auth pages/routes.
-- **`memory/`**: runtime pipeline outputs under `memory/runtime/` and committed example artifacts under `memory/fixtures/`.
+- **`knowledge-map-gen/`** : active Python engine, shared graph utilities, and generator internals.
+- **`app/`**: Next.js App Router prototype for concept constellation exploration plus auth pages/routes.
+- **`knowledge-map-gen/map-store/`**: runtime pipeline outputs under `knowledge-map-gen/map-store/runtime/` and committed example artifacts under `knowledge-map-gen/map-store/fixtures/`.
 - **`archive/`**: old experiments, historical snapshots, deprecated material.
 - **`docs/`**: active project documentation.
 
@@ -31,10 +31,10 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
-2. GUI environment
+2. App environment
 
 ```bash
-cd gui
+cd app
 npm install
 cp .env.example .env
 npm run db:migrate:dev
@@ -45,11 +45,11 @@ cd ..
 3. Regression tests
 
 ```bash
-# Brain tests
-python -m unittest discover -s brain/tests -p 'test_*.py'
+# Generator tests
+python -m unittest discover -s knowledge-map-gen/tests -p 'test_*.py'
 
-# GUI tests
-cd gui
+# App tests
+cd app
 npm test
 npm run typecheck
 npm run build
@@ -60,57 +60,57 @@ cd ..
 
 ```bash
 # Refresh graph data
-python brain/sync_concept_data.py
+python knowledge-map-gen/sync_concept_data.py
 
-# Run the GUI
-cd gui
+# Run the app
+cd app
 npm run dev
 ```
 
-`python brain/sync_concept_data.py` writes the canonical cleaned artifact to
-`memory/runtime/concept_list_cleaned.txt` and syncs the derived GUI file at
-`gui/public/data/concept_list_cleaned.txt`. On a fresh clone, the GUI falls back
-to `gui/public/data/fixtures/demo_concept_list_cleaned.txt` until that derived file
+`python knowledge-map-gen/sync_concept_data.py` writes the canonical cleaned artifact to
+`knowledge-map-gen/map-store/runtime/concept_list_cleaned.txt` and syncs the derived app file at
+`app/public/data/concept_list_cleaned.txt`. On a fresh clone, the app falls back
+to `app/public/data/fixtures/demo_concept_list_cleaned.txt` until that derived file
 is regenerated.
 
 Local-only files produced by the current workflow are ignored in git, including
-`gui/.env`, `gui/.next/`, `gui/node_modules/`, and local Prisma SQLite files.
+`app/.env`, `app/.next/`, `app/node_modules/`, and local Prisma SQLite files.
 
 ## Quick commands
 
 Generate concept graph edges:
 
 ```bash
-python brain/build_concept_list.py
+python knowledge-map-gen/build_concept_list.py
 ```
 
 Resume paused generation:
 
 ```bash
-python brain/build_concept_list.py --resume --state-file memory/runtime/concept_list_state.json
+python knowledge-map-gen/build_concept_list.py --resume --state-file knowledge-map-gen/map-store/runtime/concept_list_state.json
 ```
 
 Two-phase coverage workflow (recommended for broad concept coverage growth):
 
 ```bash
-python brain/run_two_phase_coverage.py \
+python knowledge-map-gen/run_two_phase_coverage.py \
   --phase2-roots "Operating Systems" "Databases" "Computer Networks"
 ```
 
 Find under-explored graph zones and get ranked refinement roots:
 
 ```bash
-python brain/find_unexplored_areas.py --input memory/runtime/concept_list_cleaned.txt --target-children 8 --top-n 20
+python knowledge-map-gen/find_unexplored_areas.py --input knowledge-map-gen/map-store/runtime/concept_list_cleaned.txt --target-children 8 --top-n 20
 ```
 
 When to use each mode:
 - Single run (`build_concept_list.py`): fast iteration on prompt/parameter tuning.
 - Two-phase (`run_two_phase_coverage.py`): planned coverage expansion with merge + quality checkpoints.
 
-After generation completes (new run or resumed run), clean the canonical artifact and sync the derived GUI target:
+After generation completes (new run or resumed run), clean the canonical artifact and sync the derived app target:
 
 ```bash
-python brain/sync_concept_data.py
+python knowledge-map-gen/sync_concept_data.py
 ```
 
 Example output:
@@ -118,27 +118,27 @@ Example output:
 ```text
 [sync] Input lines: 417
 [sync] Cleaned lines: 413
-[sync] Canonical cleaned artifact: memory/runtime/concept_list_cleaned.txt
-[sync] Derived GUI target: gui/public/data/concept_list_cleaned.txt
+[sync] Canonical cleaned artifact: knowledge-map-gen/map-store/runtime/concept_list_cleaned.txt
+[sync] Derived app target: app/public/data/concept_list_cleaned.txt
 [sync] Line parity: 413 == 413 (OK)
 [sync] Byte parity: OK
 ```
 
-Run GUI prototype:
+Run app prototype:
 
 ```bash
-cd gui
+cd app
 npm run dev
 ```
 
 Run regression tests:
 
 ```bash
-# Brain tests
-python -m unittest discover -s brain/tests -p 'test_*.py'
+# Generator tests
+python -m unittest discover -s knowledge-map-gen/tests -p 'test_*.py'
 
-# GUI tests
-cd gui
+# App tests
+cd app
 npm run test
 ```
 

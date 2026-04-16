@@ -2,10 +2,10 @@
 """Merge multiple raw concept edge files with deterministic canonical dedup.
 
 Usage:
-    python brain/merge_concept_edges.py \
-      --input memory/phase1.txt memory/phase2_a.txt memory/phase2_b.txt \
-      --output memory/runtime/concept_list_merged.txt \
-      --json-output memory/runtime/concept_list_merged.stats.json
+    python knowledge-map-gen/merge_concept_edges.py \
+      --input knowledge-map-gen/map-store/phase1.txt knowledge-map-gen/map-store/phase2_a.txt knowledge-map-gen/map-store/phase2_b.txt \
+      --output knowledge-map-gen/map-store/runtime/concept_list_merged.txt \
+      --json-output knowledge-map-gen/map-store/runtime/concept_list_merged.stats.json
 """
 
 from __future__ import annotations
@@ -117,8 +117,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--output",
-        default="memory/runtime/concept_list_merged.txt",
-        help="Merged raw output file path (default: memory/runtime/concept_list_merged.txt).",
+        default="knowledge-map-gen/map-store/runtime/concept_list_merged.txt",
+        help="Merged raw output file path (default: knowledge-map-gen/map-store/runtime/concept_list_merged.txt).",
     )
     parser.add_argument(
         "--json-output",

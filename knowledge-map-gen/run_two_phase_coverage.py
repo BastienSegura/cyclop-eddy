@@ -2,7 +2,7 @@
 """Run a two-phase concept coverage workflow and merge raw outputs.
 
 Usage example:
-    python brain/run_two_phase_coverage.py \
+    python knowledge-map-gen/run_two_phase_coverage.py \
       --root-concept "Computer Science" \
       --phase2-roots "Operating Systems" "Databases" "Computer Networks"
 """
@@ -113,8 +113,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--work-dir",
-        default="memory/runtime/two_phase",
-        help="Workspace directory for phase artifacts (default: memory/runtime/two_phase).",
+        default="knowledge-map-gen/map-store/runtime/two_phase",
+        help="Workspace directory for phase artifacts (default: knowledge-map-gen/map-store/runtime/two_phase).",
     )
     parser.add_argument(
         "--baseline-input",
@@ -161,9 +161,9 @@ def main() -> None:
         raise SystemExit("No phase2 roots resolved. Pass --phase2-roots and/or --phase2-roots-file.")
 
     project_root = Path(__file__).resolve().parents[1]
-    build_script = project_root / "brain" / "build_concept_list.py"
-    merge_script = project_root / "brain" / "merge_concept_edges.py"
-    report_script = project_root / "brain" / "report_concept_quality.py"
+    build_script = project_root / "knowledge-map-gen" / "build_concept_list.py"
+    merge_script = project_root / "knowledge-map-gen" / "merge_concept_edges.py"
+    report_script = project_root / "knowledge-map-gen" / "report_concept_quality.py"
 
     work_dir = Path(args.work_dir)
     phase2_dir = work_dir / "phase2"

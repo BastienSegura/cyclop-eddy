@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""Clean and restructure concept graph edges produced by brain/build_concept_list.py.
+"""Clean and restructure concept graph edges produced by knowledge-map-gen/build_concept_list.py.
 
 How to run
 ----------
 1. Clean with defaults:
-   python brain/clean_concept_list.py
+   python knowledge-map-gen/clean_concept_list.py
 
 2. Clean with explicit paths and root override:
-   python brain/clean_concept_list.py \
-     --input memory/runtime/concept_list.txt \
-     --output memory/runtime/concept_list_cleaned.txt \
+   python knowledge-map-gen/clean_concept_list.py \
+     --input knowledge-map-gen/map-store/runtime/concept_list.txt \
+     --output knowledge-map-gen/map-store/runtime/concept_list_cleaned.txt \
      --root "Computer Science"
 
 Input lines are expected in the shape:
@@ -238,13 +238,13 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Clean concept graph edge list.")
     parser.add_argument(
         "--input",
-        default="memory/runtime/concept_list.txt",
-        help="Input edge list file (default: memory/runtime/concept_list.txt)",
+        default="knowledge-map-gen/map-store/runtime/concept_list.txt",
+        help="Input edge list file (default: knowledge-map-gen/map-store/runtime/concept_list.txt)",
     )
     parser.add_argument(
         "--output",
-        default="memory/runtime/concept_list_cleaned.txt",
-        help="Output cleaned edge list file (default: memory/runtime/concept_list_cleaned.txt)",
+        default="knowledge-map-gen/map-store/runtime/concept_list_cleaned.txt",
+        help="Output cleaned edge list file (default: knowledge-map-gen/map-store/runtime/concept_list_cleaned.txt)",
     )
     parser.add_argument(
         "--root",

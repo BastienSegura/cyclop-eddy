@@ -8,6 +8,8 @@ from pathlib import Path
 import tempfile
 import unittest
 
+import package_alias  # noqa: F401
+
 from brain.cli.app import main
 from brain.cli.session import BrainCliSession
 
@@ -38,20 +40,20 @@ class BrainCliStatusTests(unittest.TestCase):
             self.assertEqual(exit_code, 0)
             self.assertEqual(stderr.getvalue(), "")
             self.assertIn("Session:", rendered)
-            self.assertIn("- Active graph source: memory/runtime/concept_list_cleaned.txt", rendered)
+            self.assertIn("- Active graph source: knowledge-map-gen/map-store/runtime/concept_list_cleaned.txt", rendered)
             self.assertIn("- Current concept: Databases", rendered)
-            self.assertIn("Raw artifact: memory/runtime/concept_list.txt (missing)", rendered)
-            self.assertIn("Canonical cleaned artifact: memory/runtime/concept_list_cleaned.txt (missing)", rendered)
-            self.assertIn("Derived GUI target: gui/public/data/concept_list_cleaned.txt (missing)", rendered)
-            self.assertIn("Checkpoint state file: memory/runtime/concept_list_state.json (missing)", rendered)
-            self.assertIn("Fixture fallback: memory/fixtures/demo/concept_list_cleaned.txt (missing)", rendered)
+            self.assertIn("Raw artifact: knowledge-map-gen/map-store/runtime/concept_list.txt (missing)", rendered)
+            self.assertIn("Canonical cleaned artifact: knowledge-map-gen/map-store/runtime/concept_list_cleaned.txt (missing)", rendered)
+            self.assertIn("Derived app target: app/public/data/concept_list_cleaned.txt (missing)", rendered)
+            self.assertIn("Checkpoint state file: knowledge-map-gen/map-store/runtime/concept_list_state.json (missing)", rendered)
+            self.assertIn("Fixture fallback: knowledge-map-gen/map-store/fixtures/demo/concept_list_cleaned.txt (missing)", rendered)
 
     def test_status_json_reports_existing_artifacts_metadata(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
-            runtime_dir = temp_path / "memory" / "runtime"
-            fixture_dir = temp_path / "memory" / "fixtures" / "demo"
-            gui_dir = temp_path / "gui" / "public" / "data"
+            runtime_dir = temp_path / "knowledge-map-gen" / "map-store" / "runtime"
+            fixture_dir = temp_path / "knowledge-map-gen" / "map-store" / "fixtures" / "demo"
+            gui_dir = temp_path / "app" / "public" / "data"
 
             runtime_dir.mkdir(parents=True)
             fixture_dir.mkdir(parents=True)
@@ -83,7 +85,7 @@ class BrainCliStatusTests(unittest.TestCase):
             self.assertEqual(payload["session"]["current_concept"], None)
             self.assertEqual(
                 payload["artifacts"]["canonical_cleaned_artifact"]["path"],
-                "memory/runtime/concept_list_cleaned.txt",
+                "knowledge-map-gen/map-store/runtime/concept_list_cleaned.txt",
             )
             self.assertTrue(payload["artifacts"]["raw_artifact"]["exists"])
             self.assertEqual(

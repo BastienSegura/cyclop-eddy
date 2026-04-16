@@ -1,7 +1,7 @@
 {
   "files": [
     {
-      "path": "memory/two_phase/concept_list_two_phase.txt",
+      "path": "knowledge-map-gen/map-store/two_phase/concept_list_two_phase.txt",
       "mode_requested": "raw",
       "mode_detected": "raw",
       "line_count": 2863,

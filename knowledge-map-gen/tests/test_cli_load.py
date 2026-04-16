@@ -7,6 +7,8 @@ from pathlib import Path
 import tempfile
 import unittest
 
+import package_alias  # noqa: F401
+
 from brain.cli.app import main
 from brain.cli.session import BrainCliSession
 
@@ -25,8 +27,8 @@ class BrainCliLoadTests(unittest.TestCase):
     def test_load_aliases_update_session_and_cache(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
-            runtime_dir = temp_path / "memory" / "runtime"
-            fixture_dir = temp_path / "memory" / "fixtures" / "demo"
+            runtime_dir = temp_path / "knowledge-map-gen" / "map-store" / "runtime"
+            fixture_dir = temp_path / "knowledge-map-gen" / "map-store" / "fixtures" / "demo"
 
             runtime_dir.mkdir(parents=True)
             fixture_dir.mkdir(parents=True)
@@ -50,7 +52,7 @@ class BrainCliLoadTests(unittest.TestCase):
             with pushd(temp_path):
                 exit_code = main(["load", "raw"], session=session, stdout=stdout, stderr=stderr)
                 self.assertEqual(exit_code, 0)
-                self.assertEqual(session.active_graph_source_path, Path("memory/runtime/concept_list.txt"))
+                self.assertEqual(session.active_graph_source_path, Path("knowledge-map-gen/map-store/runtime/concept_list.txt"))
                 self.assertEqual(session.active_graph_source_alias, "raw")
                 self.assertEqual(session.active_graph_mode, "raw")
                 self.assertIsNotNone(session.parsed_graph_cache)
@@ -60,7 +62,7 @@ class BrainCliLoadTests(unittest.TestCase):
                 stdout = io.StringIO()
                 exit_code = main(["load", "cleaned"], session=session, stdout=stdout, stderr=stderr)
                 self.assertEqual(exit_code, 0)
-                self.assertEqual(session.active_graph_source_path, Path("memory/runtime/concept_list_cleaned.txt"))
+                self.assertEqual(session.active_graph_source_path, Path("knowledge-map-gen/map-store/runtime/concept_list_cleaned.txt"))
                 self.assertEqual(session.active_graph_source_alias, "cleaned")
                 self.assertEqual(session.active_graph_mode, "cleaned")
                 self.assertEqual(session.parsed_graph_cache.payload.unique_edge_count, 2)
@@ -68,7 +70,7 @@ class BrainCliLoadTests(unittest.TestCase):
                 stdout = io.StringIO()
                 exit_code = main(["load", "fixture"], session=session, stdout=stdout, stderr=stderr)
                 self.assertEqual(exit_code, 0)
-                self.assertEqual(session.active_graph_source_path, Path("memory/fixtures/demo/concept_list_cleaned.txt"))
+                self.assertEqual(session.active_graph_source_path, Path("knowledge-map-gen/map-store/fixtures/demo/concept_list_cleaned.txt"))
                 self.assertEqual(session.active_graph_source_alias, "fixture")
                 self.assertEqual(session.active_graph_mode, "cleaned")
                 self.assertEqual(session.parsed_graph_cache.payload.nodes, ("Algorithms", "Computer Science"))
@@ -103,7 +105,7 @@ class BrainCliLoadTests(unittest.TestCase):
     def test_load_missing_path_preserves_previous_session_state(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
-            runtime_dir = temp_path / "memory" / "runtime"
+            runtime_dir = temp_path / "knowledge-map-gen" / "map-store" / "runtime"
             runtime_dir.mkdir(parents=True)
             (runtime_dir / "concept_list_cleaned.txt").write_text(
                 "~Computer%20Science: Databases\n",
@@ -125,7 +127,7 @@ class BrainCliLoadTests(unittest.TestCase):
             self.assertEqual(first_exit_code, 0)
             self.assertEqual(second_exit_code, 2)
             self.assertIn("Cannot load graph source because the file does not exist", stderr.getvalue())
-            self.assertEqual(session.active_graph_source_path, Path("memory/runtime/concept_list_cleaned.txt"))
+            self.assertEqual(session.active_graph_source_path, Path("knowledge-map-gen/map-store/runtime/concept_list_cleaned.txt"))
             self.assertEqual(session.active_graph_source_alias, "cleaned")
             self.assertEqual(session.active_graph_mode, "cleaned")
             self.assertEqual(session.current_concept, "Databases")

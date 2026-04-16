@@ -2,11 +2,11 @@
 """Generate deterministic quality reports for concept graph edge files.
 
 Examples:
-    python brain/report_concept_quality.py --input memory/runtime/concept_list.txt
-    python brain/report_concept_quality.py --input memory/runtime/concept_list_cleaned.txt --mode cleaned
-    python brain/report_concept_quality.py --input memory/runtime/concept_list.txt memory/runtime/concept_list_cleaned.txt \
-      --output memory/runtime/concept_quality_report.md --json-output memory/runtime/concept_quality_report.json
-    python brain/report_concept_quality.py --input memory/runtime/concept_list.txt --fail-on-threshold
+    python knowledge-map-gen/report_concept_quality.py --input knowledge-map-gen/map-store/runtime/concept_list.txt
+    python knowledge-map-gen/report_concept_quality.py --input knowledge-map-gen/map-store/runtime/concept_list_cleaned.txt --mode cleaned
+    python knowledge-map-gen/report_concept_quality.py --input knowledge-map-gen/map-store/runtime/concept_list.txt knowledge-map-gen/map-store/runtime/concept_list_cleaned.txt \
+      --output knowledge-map-gen/map-store/runtime/concept_quality_report.md --json-output knowledge-map-gen/map-store/runtime/concept_quality_report.json
+    python knowledge-map-gen/report_concept_quality.py --input knowledge-map-gen/map-store/runtime/concept_list.txt --fail-on-threshold
 """
 
 from __future__ import annotations
@@ -23,8 +23,8 @@ from graph_analysis import analyze_cycle_edges, build_adjacency_list, build_inde
 from graph_file_utils import infer_file_mode, parse_graph_edge_line, split_edge_line
 
 DEFAULT_INPUT_CANDIDATES = [
-    "memory/runtime/concept_list.txt",
-    "memory/runtime/concept_list_cleaned.txt",
+    "knowledge-map-gen/map-store/runtime/concept_list.txt",
+    "knowledge-map-gen/map-store/runtime/concept_list_cleaned.txt",
 ]
 
 MAX_ROOT_CANDIDATES = 20

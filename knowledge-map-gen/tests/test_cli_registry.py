@@ -7,6 +7,8 @@ import subprocess
 import sys
 import unittest
 
+import package_alias  # noqa: F401
+
 from brain.cli.app import main
 from brain.cli.commands import build_default_registry
 from brain.cli.errors import UnknownCommandError
@@ -69,7 +71,7 @@ class BrainCliRegistryTests(unittest.TestCase):
     def test_session_defaults_match_story_contract(self) -> None:
         session = BrainCliSession()
 
-        self.assertEqual(session.active_graph_source_path, Path("memory/runtime/concept_list_cleaned.txt"))
+        self.assertEqual(session.active_graph_source_path, Path("knowledge-map-gen/map-store/runtime/concept_list_cleaned.txt"))
         self.assertEqual(session.active_graph_source_alias, "cleaned")
         self.assertEqual(session.active_graph_mode, "cleaned")
         self.assertIsNone(session.parsed_graph_cache)
@@ -78,7 +80,7 @@ class BrainCliRegistryTests(unittest.TestCase):
 
     def test_one_shot_main_still_dispatches_registered_command(self) -> None:
         result = subprocess.run(
-            [sys.executable, "-m", "brain.cli", "generate", "start"],
+            [sys.executable, "-m", "knowledge-map-gen.cli", "generate", "start"],
             cwd=REPO_ROOT,
             capture_output=True,
             text=True,
@@ -96,7 +98,7 @@ class BrainCliRegistryTests(unittest.TestCase):
         rendered = stdout.getvalue()
         self.assertEqual(exit_code, 0)
         self.assertIn("Available commands:", rendered)
-        self.assertIn("- exit: Exit the brain shell.", rendered)
+        self.assertIn("- exit: Exit the map shell.", rendered)
         self.assertIn("Usage: quality report [--input <file> ...] [--mode <auto|raw|cleaned>] [options]", rendered)
 
     def test_main_help_for_exact_multiword_command_uses_metadata(self) -> None:

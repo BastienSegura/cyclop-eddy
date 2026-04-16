@@ -7,6 +7,8 @@ import os
 from pathlib import Path
 import tempfile
 import unittest
+
+import package_alias  # noqa: F401
 from unittest.mock import patch
 
 from brain.cli.app import main
@@ -69,22 +71,22 @@ class BrainCliDoctorTests(unittest.TestCase):
             self.assertEqual(statuses["runtime_directory"], STATUS_PASS)
             self.assertEqual(statuses["fixture_fallback"], STATUS_WARN)
             self.assertEqual(statuses["ollama_reachability"], STATUS_FAIL)
-            self.assertTrue((temp_path / "memory" / "runtime").exists())
+            self.assertTrue((temp_path / "knowledge-map-gen" / "map-store" / "runtime").exists())
 
     def test_doctor_passes_when_runtime_and_optional_paths_exist_and_ollama_is_reachable(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
-            (temp_path / "memory" / "runtime").mkdir(parents=True)
-            (temp_path / "memory" / "fixtures" / "demo").mkdir(parents=True)
-            (temp_path / "gui" / "public" / "data").mkdir(parents=True)
-            (temp_path / "memory" / "runtime" / "concept_list.txt").write_text("raw\n", encoding="utf-8")
-            (temp_path / "memory" / "runtime" / "concept_list_cleaned.txt").write_text("cleaned\n", encoding="utf-8")
-            (temp_path / "memory" / "runtime" / "concept_list_state.json").write_text("{}", encoding="utf-8")
-            (temp_path / "memory" / "fixtures" / "demo" / "concept_list_cleaned.txt").write_text(
+            (temp_path / "knowledge-map-gen" / "map-store" / "runtime").mkdir(parents=True)
+            (temp_path / "knowledge-map-gen" / "map-store" / "fixtures" / "demo").mkdir(parents=True)
+            (temp_path / "app" / "public" / "data").mkdir(parents=True)
+            (temp_path / "knowledge-map-gen" / "map-store" / "runtime" / "concept_list.txt").write_text("raw\n", encoding="utf-8")
+            (temp_path / "knowledge-map-gen" / "map-store" / "runtime" / "concept_list_cleaned.txt").write_text("cleaned\n", encoding="utf-8")
+            (temp_path / "knowledge-map-gen" / "map-store" / "runtime" / "concept_list_state.json").write_text("{}", encoding="utf-8")
+            (temp_path / "knowledge-map-gen" / "map-store" / "fixtures" / "demo" / "concept_list_cleaned.txt").write_text(
                 "fixture\n",
                 encoding="utf-8",
             )
-            (temp_path / "gui" / "public" / "data" / "concept_list_cleaned.txt").write_text(
+            (temp_path / "app" / "public" / "data" / "concept_list_cleaned.txt").write_text(
                 "gui\n",
                 encoding="utf-8",
             )
@@ -145,7 +147,7 @@ class BrainCliDoctorTests(unittest.TestCase):
                 exit_code = main([], input_func=input_func, stdout=stdout, stderr=stderr)
 
             self.assertEqual(exit_code, 0)
-            self.assertEqual(input_func.prompts, ["brain> ", "brain> "])
+            self.assertEqual(input_func.prompts, ["map> ", "map> "])
             self.assertEqual(stderr.getvalue(), "")
             self.assertIn("Doctor summary: FAIL", stdout.getvalue())
 

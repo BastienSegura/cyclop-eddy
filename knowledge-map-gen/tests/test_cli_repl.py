@@ -8,6 +8,8 @@ import sys
 import tempfile
 import unittest
 
+import package_alias  # noqa: F401
+
 from brain.cli.app import main
 from brain.cli.commands import build_default_registry
 from brain.cli.output import CommandOutput, CommandResult
@@ -51,7 +53,7 @@ class BrainCliReplTests(unittest.TestCase):
             )
 
             self.assertEqual(exit_code, 0)
-            self.assertEqual(input_func.prompts, ["brain> "])
+            self.assertEqual(input_func.prompts, ["map> "])
             self.assertTrue(history_path.exists())
             self.assertEqual(stderr.getvalue(), "")
 
@@ -126,7 +128,7 @@ class BrainCliReplTests(unittest.TestCase):
             )
 
         self.assertEqual(exit_code, 0)
-        self.assertEqual(input_func.prompts, ["brain> ", "brain> ", "brain> "])
+        self.assertEqual(input_func.prompts, ["map> ", "map> ", "map> "])
         self.assertEqual(stderr.getvalue(), "")
         self.assertEqual(stdout.getvalue(), "\n\n")
 
@@ -148,7 +150,7 @@ class BrainCliReplTests(unittest.TestCase):
 
         self.assertEqual(exit_code, 0)
         self.assertIn("Parse error:", stderr.getvalue())
-        self.assertEqual(input_func.prompts, ["brain> ", "brain> "])
+        self.assertEqual(input_func.prompts, ["map> ", "map> "])
 
     def test_repl_reports_command_errors_and_keeps_running(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -168,7 +170,7 @@ class BrainCliReplTests(unittest.TestCase):
 
         self.assertEqual(exit_code, 0)
         self.assertIn("Unknown command: unknown.", stderr.getvalue())
-        self.assertEqual(input_func.prompts, ["brain> ", "brain> "])
+        self.assertEqual(input_func.prompts, ["map> ", "map> "])
 
     def test_repl_exit_command_exits_zero_and_flushes_history(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -187,7 +189,7 @@ class BrainCliReplTests(unittest.TestCase):
             )
 
             self.assertEqual(exit_code, 0)
-            self.assertEqual(input_func.prompts, ["brain> "])
+            self.assertEqual(input_func.prompts, ["map> "])
             self.assertEqual(stdout.getvalue(), "")
             self.assertEqual(stderr.getvalue(), "")
             self.assertEqual(history_path.read_text(encoding="utf-8"), "exit\n")
@@ -209,18 +211,18 @@ class BrainCliReplTests(unittest.TestCase):
             )
 
             self.assertEqual(exit_code, 0)
-            self.assertEqual(input_func.prompts, ["brain> ", "brain> "])
+            self.assertEqual(input_func.prompts, ["map> ", "map> "])
             self.assertEqual(stdout.getvalue(), "\n")
             self.assertIn("exit does not accept arguments. Usage: exit", stderr.getvalue())
 
-    def test_python_m_brain_cli_opens_prompt_and_creates_history_file(self) -> None:
+    def test_python_m_knowledge_map_gen_cli_opens_prompt_and_creates_history_file(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             history_path = Path(temp_dir) / "history.txt"
             env = os.environ.copy()
             env["BRAIN_CLI_HISTORY_PATH"] = str(history_path)
 
             result = subprocess.run(
-                [sys.executable, "-m", "brain.cli"],
+                [sys.executable, "-m", "knowledge-map-gen.cli"],
                 cwd=REPO_ROOT,
                 input="",
                 capture_output=True,
@@ -230,7 +232,7 @@ class BrainCliReplTests(unittest.TestCase):
             )
 
             self.assertEqual(result.returncode, 0)
-            self.assertIn("brain> ", result.stdout)
+            self.assertIn("map> ", result.stdout)
             self.assertTrue(history_path.exists())
 
 

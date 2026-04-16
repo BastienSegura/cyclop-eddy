@@ -1,6 +1,6 @@
 # Concept Quality Report
 
-## memory/two_phase/phase1_raw.txt
+## knowledge-map-gen/map-store/two_phase/phase1_raw.txt
 
 - Mode: requested `raw`, detected `raw`
 - Lines: `156`

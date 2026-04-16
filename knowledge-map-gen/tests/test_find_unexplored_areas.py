@@ -78,7 +78,7 @@ Algorithms: Graph Theory
             result = subprocess.run(
                 [
                     sys.executable,
-                    "brain/find_unexplored_areas.py",
+                    "knowledge-map-gen/find_unexplored_areas.py",
                     "--input",
                     str(input_path),
                     "--mode",

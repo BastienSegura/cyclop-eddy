@@ -1,4 +1,4 @@
-"""Repo-local brain CLI package."""
+"""Repo-local knowledge map generator CLI package."""
 
 from .app import main
 

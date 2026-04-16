@@ -36,7 +36,7 @@ COMMAND_DEFINITIONS = (
     CommandDefinition("help", "Show command help.", "help [command ...]"),
     CommandDefinition(
         "exit",
-        "Exit the brain shell.",
+        "Exit the map shell.",
         "exit",
         notes="Use `exit` or `Ctrl+D` to leave the shell. `Ctrl+C` cancels the current input or command and returns to the prompt.",
     ),
@@ -69,7 +69,7 @@ COMMAND_DEFINITIONS = (
     ),
     CommandDefinition(
         "sync",
-        "Clean runtime graph data and sync it to the GUI artifact.",
+        "Clean runtime graph data and sync it to the app artifact.",
         "sync [--input <path>] [--cleaned-output <path>] [--gui-output <path>] [options]",
     ),
     CommandDefinition(

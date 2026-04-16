@@ -4,15 +4,15 @@ Build a concept graph with Ollama.
 How to run
 ----------
 1. Start a new generation:
-   python brain/build_concept_list.py \
+   python knowledge-map-gen/build_concept_list.py \
      --root-concept "Computer Science" \
      --concept-list-length 25 \
      --max-depth 3 \
-     --output memory/runtime/concept_list.txt \
-     --state-file memory/runtime/concept_list_state.json
+     --output knowledge-map-gen/map-store/runtime/concept_list.txt \
+     --state-file knowledge-map-gen/map-store/runtime/concept_list_state.json
 
 2. Resume after interruption (Ctrl+C):
-   python brain/build_concept_list.py --resume --state-file memory/runtime/concept_list_state.json
+   python knowledge-map-gen/build_concept_list.py --resume --state-file knowledge-map-gen/map-store/runtime/concept_list_state.json
 
 What this script provides
 -------------------------
@@ -71,8 +71,8 @@ def generate_concept_graph(
     root_concept: str,
     concept_list_length: int,
     max_depth: int,
-    output_path: str = "memory/runtime/concept_list.txt",
-    state_file: str = "memory/runtime/concept_list_state.json",
+    output_path: str = "knowledge-map-gen/map-store/runtime/concept_list.txt",
+    state_file: str = "knowledge-map-gen/map-store/runtime/concept_list_state.json",
     resume: bool = False,
     exclude_strategy: str | None = None,
     exclude_local_limit: int | None = None,
@@ -100,8 +100,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--root-concept", default="Computer Science")
     parser.add_argument("--concept-list-length", type=int, default=25)
     parser.add_argument("--max-depth", type=int, default=3)
-    parser.add_argument("--output", default="memory/runtime/concept_list.txt")
-    parser.add_argument("--state-file", default="memory/runtime/concept_list_state.json")
+    parser.add_argument("--output", default="knowledge-map-gen/map-store/runtime/concept_list.txt")
+    parser.add_argument("--state-file", default="knowledge-map-gen/map-store/runtime/concept_list_state.json")
     parser.add_argument("--resume", action="store_true")
     parser.add_argument(
         "--exclude-strategy",
