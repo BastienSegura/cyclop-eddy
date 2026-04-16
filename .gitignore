@@ -6,7 +6,7 @@ __pycache__/
 .mypy_cache/
 .coverage
 coverage/
-knowledge-map-gen/map-store/runtime/
+knowledge-map-gen/old-generator/map-store/runtime/
 
 app/.env
 app/.env.local
