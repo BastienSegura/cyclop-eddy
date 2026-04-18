@@ -237,16 +237,24 @@ class KMGenerator:
     def _parse_loose_list(self, text: str) -> list[str]:
         start = text.find("[")
         end = text.rfind("]")
-        if start == -1 or end == -1 or start >= end:
-            return []
+        if start != -1 and end != -1 and start < end:
+            body = text[start + 1 : end]
+        elif start != -1:
+            body = text[start + 1 :]
+        else:
+            body = text
 
         items: list[str] = []
-        body = text[start + 1 : end]
-        for line in body.splitlines():
-            for part in line.split(","):
-                item = part.strip().strip(",").strip()
-                item = item.strip("\"'").strip()
-                if item:
-                    items.append(item)
+        lines = [line.strip() for line in body.splitlines() if line.strip()]
+        parts = lines if len(lines) > 1 else body.split(",")
+
+        for part in parts:
+            item = part.strip().strip(",").strip()
+            item = re.sub(r"^[-*]?\s*\d+[.)]\s*", "", item)
+            item = item.removeprefix("-").removeprefix("*").strip()
+            item = item.strip("[]").strip()
+            item = item.strip("\"'").strip()
+            if item:
+                items.append(item)
 
         return items

@@ -52,12 +52,16 @@ if __name__ == "__main__":
         else:
             print(f"Knowledge map not found: {args.clear}", file=sys.stderr)
     else:
-        knowledge_map = generator.generate_map(
-            args.root,
-            children=args.children,
-            depth=args.depth,
-            progress_callback=print_progress,
-        )
-        for message in generator.messages:
-            print(message, file=sys.stderr)
-        print(json.dumps(knowledge_map, indent=2))
+        try:
+            knowledge_map = generator.generate_map(
+                args.root,
+                children=args.children,
+                depth=args.depth,
+                progress_callback=print_progress,
+            )
+            for message in generator.messages:
+                print(message, file=sys.stderr)
+            print(json.dumps(knowledge_map, indent=2))
+        except Exception as exc:
+            print(f"\nError: {exc}", file=sys.stderr)
+            sys.exit(1)
