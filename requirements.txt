@@ -1,2 +1,3 @@
-# Active Python dependency manifest for the `brain/` scripts and tests.
+# Active Python dependency manifest for the knowledge map scripts.
 requests>=2.31,<3.0
+pyvis>=0.3,<0.4
