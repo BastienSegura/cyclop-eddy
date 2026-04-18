@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 
 from km_generator import KMGenerator
 
@@ -35,4 +36,7 @@ if __name__ == "__main__":
     elif args.show:
         print(json.dumps(generator.load_map(args.show), indent=2))
     else:
-        print(json.dumps(generator.generate_map(args.root, children=args.children, depth=args.depth), indent=2))
+        knowledge_map = generator.generate_map(args.root, children=args.children, depth=args.depth)
+        for message in generator.messages:
+            print(message, file=sys.stderr)
+        print(json.dumps(knowledge_map, indent=2))

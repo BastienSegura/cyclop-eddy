@@ -16,25 +16,29 @@ class KMGenerator:
         self.root_concept: str | None = None
         self.map_file: Path | None = None
         self.knowledge_map: dict[str, list[str]] = {}
+        self.messages: list[str] = []
 
     def generate_map(self, root: str, children: int = 10, depth: int = 1) -> dict[str, list[str]]:
         if depth < 1:
             raise ValueError("depth must be at least 1")
 
+        self._load_existing_map(root)
         queue = [root]
+        expanded_this_run: set[str] = set()
+
         for _ in range(depth):
             next_queue: list[str] = []
-            expanded_keys = {self._normalize_key(concept) for concept in self.knowledge_map}
 
             for concept in queue:
-                if self._normalize_key(concept) in expanded_keys:
+                concept_key = self._normalize_key(concept)
+                if concept_key in expanded_this_run:
                     continue
 
                 sub_concepts = self.expand_map(concept, children=children)
-                expanded_keys.add(self._normalize_key(concept))
+                expanded_this_run.add(concept_key)
 
                 for sub_concept in sub_concepts:
-                    if self._normalize_key(sub_concept) not in expanded_keys:
+                    if self._normalize_key(sub_concept) not in expanded_this_run:
                         next_queue.append(sub_concept)
 
             queue = next_queue
@@ -50,7 +54,14 @@ class KMGenerator:
 
         existing_concept = self._find_existing_concept(concept)
         if existing_concept is not None:
-            return self.knowledge_map[existing_concept]
+            existing_children = self.knowledge_map[existing_concept]
+            if len(existing_children) >= children:
+                self.messages.append(
+                    f"'{existing_concept}' already has {len(existing_children)} children. "
+                    f"Requested {children}; keeping the existing map."
+                )
+                return existing_children
+            concept = existing_concept
 
         if self.root_concept is None:
             self.root_concept = concept
@@ -110,6 +121,23 @@ class KMGenerator:
 
         return json.loads(map_file.read_text(encoding="utf-8"))
 
+    def _load_existing_map(self, root: str) -> None:
+        root_concept = self._clean_label(root)
+        self.root_concept = root_concept
+        self.map_file = self.maps_dir / f"{self._slugify(root_concept)}.json"
+
+        if not self.map_file.exists():
+            return
+
+        data = json.loads(self.map_file.read_text(encoding="utf-8"))
+        concepts = data.get("concepts", {})
+        if isinstance(concepts, dict):
+            self.knowledge_map = {
+                self._clean_label(str(concept)): self._clean_children(list(children), limit=len(children))
+                for concept, children in concepts.items()
+                if isinstance(children, list)
+            }
+
     def _slugify(self, text: str) -> str:
         slug = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
         return slug or "knowledge-map"
@@ -131,7 +159,7 @@ class KMGenerator:
         cleaned: list[str] = []
         seen: set[str] = set()
         for child in children:
-            label = self._clean_label(child)
+            label = self._clean_label(str(child))
             key = self._normalize_key(label)
             if not label or key in seen:
                 continue
