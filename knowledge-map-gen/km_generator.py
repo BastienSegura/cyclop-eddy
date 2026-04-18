@@ -53,6 +53,7 @@ class KMGenerator:
             raise ValueError("children must be at least 1")
 
         existing_concept = self._find_existing_concept(concept)
+        existing_children: list[str] | None = None
         if existing_concept is not None:
             existing_children = self.knowledge_map[existing_concept]
             if len(existing_children) >= children:
@@ -80,11 +81,26 @@ class KMGenerator:
             raise RuntimeError(f"Ollama request failed for model '{self.model}': {response.text}")
 
         raw_text = response.json()["response"].strip()
-        sub_concepts = json.loads(raw_text)
-        if not isinstance(sub_concepts, list) or not all(isinstance(item, str) for item in sub_concepts):
-            raise ValueError("Ollama response must be a JSON array of strings")
+        sub_concepts = self._parse_concept_list(raw_text)
 
-        self.knowledge_map[concept] = self._clean_children(sub_concepts, limit=children)
+        new_children = self._clean_children(sub_concepts, limit=children)
+        if existing_children is not None:
+            merged_children = self._clean_children(existing_children + new_children, limit=children)
+            if len(merged_children) <= len(existing_children):
+                self.messages.append(
+                    f"'{concept}' could not be expanded beyond {len(existing_children)} children. "
+                    f"Requested {children}; keeping the existing map."
+                )
+                return existing_children
+
+            new_children = merged_children
+
+        if len(new_children) < children:
+            self.messages.append(
+                f"'{concept}' has {len(new_children)} children after cleanup. Requested {children}."
+            )
+
+        self.knowledge_map[concept] = new_children
         self.save_map()
         return self.knowledge_map[concept]
 
@@ -170,3 +186,23 @@ class KMGenerator:
                 break
 
         return cleaned
+
+    def _parse_concept_list(self, text: str) -> list[str]:
+        candidates = [text]
+
+        start = text.find("[")
+        end = text.rfind("]")
+        if start != -1 and end != -1 and start < end:
+            candidates.append(text[start : end + 1])
+
+        for candidate in candidates:
+            try:
+                parsed = json.loads(candidate)
+            except json.JSONDecodeError:
+                continue
+
+            if isinstance(parsed, list) and all(isinstance(item, str) for item in parsed):
+                return parsed
+
+        preview = text[:300].replace("\n", "\\n")
+        raise ValueError(f"Ollama did not return a JSON array of strings. Response starts with: {preview}")
