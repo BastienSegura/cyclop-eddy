@@ -17,12 +17,40 @@ class KMGenerator:
         self.map_file: Path | None = None
         self.knowledge_map: dict[str, list[str]] = {}
 
+    def generate_map(self, root: str, children: int = 10, depth: int = 1) -> dict[str, list[str]]:
+        if depth < 1:
+            raise ValueError("depth must be at least 1")
+
+        queue = [root]
+        for _ in range(depth):
+            next_queue: list[str] = []
+            expanded_keys = {self._normalize_key(concept) for concept in self.knowledge_map}
+
+            for concept in queue:
+                if self._normalize_key(concept) in expanded_keys:
+                    continue
+
+                sub_concepts = self.expand_map(concept, children=children)
+                expanded_keys.add(self._normalize_key(concept))
+
+                for sub_concept in sub_concepts:
+                    if self._normalize_key(sub_concept) not in expanded_keys:
+                        next_queue.append(sub_concept)
+
+            queue = next_queue
+
+        return self.knowledge_map
+
     def expand_map(self, word: str, children: int = 10) -> list[str]:
-        concept = word.strip()
+        concept = self._clean_label(word)
         if not concept:
             raise ValueError("word must not be empty")
         if children < 1:
             raise ValueError("children must be at least 1")
+
+        existing_concept = self._find_existing_concept(concept)
+        if existing_concept is not None:
+            return self.knowledge_map[existing_concept]
 
         if self.root_concept is None:
             self.root_concept = concept
@@ -45,7 +73,7 @@ class KMGenerator:
         if not isinstance(sub_concepts, list) or not all(isinstance(item, str) for item in sub_concepts):
             raise ValueError("Ollama response must be a JSON array of strings")
 
-        self.knowledge_map[concept] = sub_concepts[:children]
+        self.knowledge_map[concept] = self._clean_children(sub_concepts, limit=children)
         self.save_map()
         return self.knowledge_map[concept]
 
@@ -85,3 +113,32 @@ class KMGenerator:
     def _slugify(self, text: str) -> str:
         slug = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
         return slug or "knowledge-map"
+
+    def _clean_label(self, text: str) -> str:
+        return " ".join(text.strip().split())
+
+    def _normalize_key(self, text: str) -> str:
+        return self._clean_label(text).casefold()
+
+    def _find_existing_concept(self, text: str) -> str | None:
+        key = self._normalize_key(text)
+        for concept in self.knowledge_map:
+            if self._normalize_key(concept) == key:
+                return concept
+        return None
+
+    def _clean_children(self, children: list[str], limit: int) -> list[str]:
+        cleaned: list[str] = []
+        seen: set[str] = set()
+        for child in children:
+            label = self._clean_label(child)
+            key = self._normalize_key(label)
+            if not label or key in seen:
+                continue
+
+            seen.add(key)
+            cleaned.append(label)
+            if len(cleaned) == limit:
+                break
+
+        return cleaned
