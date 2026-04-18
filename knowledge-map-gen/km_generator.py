@@ -137,6 +137,14 @@ class KMGenerator:
 
         return json.loads(map_file.read_text(encoding="utf-8"))
 
+    def clear_map(self, name: str) -> bool:
+        map_file = self.maps_dir / f"{self._slugify(name)}.json"
+        if not map_file.exists():
+            return False
+
+        map_file.unlink()
+        return True
+
     def _load_existing_map(self, root: str) -> None:
         root_concept = self._clean_label(root)
         self.root_concept = root_concept
