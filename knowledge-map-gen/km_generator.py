@@ -24,14 +24,18 @@ class KMGenerator:
         root: str,
         children: int = 10,
         depth: int = 1,
-        progress_callback: Callable[[int, int, int, int, str], None] | None = None,
+        progress_callback: Callable[[int, int, str], None] | None = None,
     ) -> dict[str, list[str]]:
         if depth < 1:
             raise ValueError("depth must be at least 1")
+        if children < 1:
+            raise ValueError("children must be at least 1")
 
         self._load_existing_map(root)
         queue = [root]
         expanded_this_run: set[str] = set()
+        generated_count = 0
+        estimated_total = self._estimate_generated_concepts(children=children, depth=depth)
 
         for _ in range(depth):
             next_queue: list[str] = []
@@ -45,11 +49,11 @@ class KMGenerator:
                 seen_in_level.add(concept_key)
                 level_concepts.append(concept)
 
-            total = len(level_concepts)
-            for index, concept in enumerate(level_concepts, start=1):
+            for concept in level_concepts:
                 sub_concepts = self.expand_map(concept, children=children)
+                generated_count += len(sub_concepts)
                 if progress_callback is not None:
-                    progress_callback(_ + 1, depth, index, total, concept)
+                    progress_callback(generated_count, estimated_total, concept)
 
                 expanded_this_run.add(self._normalize_key(concept))
                 for sub_concept in sub_concepts:
@@ -180,6 +184,9 @@ class KMGenerator:
     def _slugify(self, text: str) -> str:
         slug = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
         return slug or "knowledge-map"
+
+    def _estimate_generated_concepts(self, children: int, depth: int) -> int:
+        return sum(children**level for level in range(1, depth + 1))
 
     def _clean_label(self, text: str) -> str:
         return " ".join(text.strip().split())
