@@ -65,6 +65,23 @@ class KMGenerator:
             encoding="utf-8",
         )
 
+    def list_maps(self) -> list[str]:
+        if not self.maps_dir.exists():
+            return []
+
+        maps: list[str] = []
+        for path in sorted(self.maps_dir.glob("*.json")):
+            data = json.loads(path.read_text(encoding="utf-8"))
+            maps.append(str(data.get("root") or path.stem))
+        return maps
+
+    def load_map(self, name: str) -> dict[str, object]:
+        map_file = self.maps_dir / f"{self._slugify(name)}.json"
+        if not map_file.exists():
+            raise FileNotFoundError(f"Knowledge map not found: {name}")
+
+        return json.loads(map_file.read_text(encoding="utf-8"))
+
     def _slugify(self, text: str) -> str:
         slug = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
         return slug or "knowledge-map"
