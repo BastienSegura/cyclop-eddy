@@ -7,6 +7,15 @@ import sys
 from km_generator import KMGenerator
 
 
+def print_progress(level: int, depth: int, current: int, total: int, concept: str) -> None:
+    bar_width = 24
+    filled = int(bar_width * current / total) if total else bar_width
+    bar = "#" * filled + "-" * (bar_width - filled)
+    short_concept = concept if len(concept) <= 40 else f"{concept[:37]}..."
+    message = f"[{bar}] level {level}/{depth} {current}/{total} {short_concept}"
+    print(f"\r{message:<90}", end="\n" if current == total else "", file=sys.stderr, flush=True)
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Generate a small knowledge map from a root concept.",
@@ -43,7 +52,12 @@ if __name__ == "__main__":
         else:
             print(f"Knowledge map not found: {args.clear}", file=sys.stderr)
     else:
-        knowledge_map = generator.generate_map(args.root, children=args.children, depth=args.depth)
+        knowledge_map = generator.generate_map(
+            args.root,
+            children=args.children,
+            depth=args.depth,
+            progress_callback=print_progress,
+        )
         for message in generator.messages:
             print(message, file=sys.stderr)
         print(json.dumps(knowledge_map, indent=2))

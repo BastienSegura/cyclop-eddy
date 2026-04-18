@@ -4,6 +4,7 @@ import json
 import os
 import re
 from pathlib import Path
+from typing import Callable
 
 import requests
 
@@ -18,7 +19,13 @@ class KMGenerator:
         self.knowledge_map: dict[str, list[str]] = {}
         self.messages: list[str] = []
 
-    def generate_map(self, root: str, children: int = 10, depth: int = 1) -> dict[str, list[str]]:
+    def generate_map(
+        self,
+        root: str,
+        children: int = 10,
+        depth: int = 1,
+        progress_callback: Callable[[int, int, int, int, str], None] | None = None,
+    ) -> dict[str, list[str]]:
         if depth < 1:
             raise ValueError("depth must be at least 1")
 
@@ -28,15 +35,23 @@ class KMGenerator:
 
         for _ in range(depth):
             next_queue: list[str] = []
+            level_concepts: list[str] = []
+            seen_in_level: set[str] = set()
 
             for concept in queue:
                 concept_key = self._normalize_key(concept)
-                if concept_key in expanded_this_run:
+                if concept_key in expanded_this_run or concept_key in seen_in_level:
                     continue
+                seen_in_level.add(concept_key)
+                level_concepts.append(concept)
 
+            total = len(level_concepts)
+            for index, concept in enumerate(level_concepts, start=1):
                 sub_concepts = self.expand_map(concept, children=children)
-                expanded_this_run.add(concept_key)
+                if progress_callback is not None:
+                    progress_callback(_ + 1, depth, index, total, concept)
 
+                expanded_this_run.add(self._normalize_key(concept))
                 for sub_concept in sub_concepts:
                     if self._normalize_key(sub_concept) not in expanded_this_run:
                         next_queue.append(sub_concept)
@@ -212,5 +227,26 @@ class KMGenerator:
             if isinstance(parsed, list) and all(isinstance(item, str) for item in parsed):
                 return parsed
 
+        loose_list = self._parse_loose_list(text)
+        if loose_list:
+            return loose_list
+
         preview = text[:300].replace("\n", "\\n")
         raise ValueError(f"Ollama did not return a JSON array of strings. Response starts with: {preview}")
+
+    def _parse_loose_list(self, text: str) -> list[str]:
+        start = text.find("[")
+        end = text.rfind("]")
+        if start == -1 or end == -1 or start >= end:
+            return []
+
+        items: list[str] = []
+        body = text[start + 1 : end]
+        for line in body.splitlines():
+            for part in line.split(","):
+                item = part.strip().strip(",").strip()
+                item = item.strip("\"'").strip()
+                if item:
+                    items.append(item)
+
+        return items
