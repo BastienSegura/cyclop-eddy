@@ -17,17 +17,19 @@ class KMGenerator:
         self.map_file: Path | None = None
         self.knowledge_map: dict[str, list[str]] = {}
 
-    def expand_map(self, word: str) -> list[str]:
+    def expand_map(self, word: str, children: int = 10) -> list[str]:
         concept = word.strip()
         if not concept:
             raise ValueError("word must not be empty")
+        if children < 1:
+            raise ValueError("children must be at least 1")
 
         if self.root_concept is None:
             self.root_concept = concept
             self.map_file = self.maps_dir / f"{self._slugify(concept)}.json"
 
         prompt = (
-            f"Give exactly 10 important concepts closest to the concept : '{concept}'. "
+            f"Give exactly {children} important concepts closest to the concept : '{concept}'. "
             "Return only a JSON array of strings. No markdown, no explanation."
         )
         response = requests.post(
@@ -43,7 +45,7 @@ class KMGenerator:
         if not isinstance(sub_concepts, list) or not all(isinstance(item, str) for item in sub_concepts):
             raise ValueError("Ollama response must be a JSON array of strings")
 
-        self.knowledge_map[concept] = sub_concepts[:10]
+        self.knowledge_map[concept] = sub_concepts[:children]
         self.save_map()
         return self.knowledge_map[concept]
 

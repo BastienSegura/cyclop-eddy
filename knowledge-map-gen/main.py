@@ -11,10 +11,11 @@ def parse_args() -> argparse.Namespace:
         epilog='Example: python main.py --root "Computer Science"',
     )
     parser.add_argument("--root", default="Computer Science", help="Root concept to expand.")
+    parser.add_argument("--children", type=int, default=10, help="Number of child concepts to generate.")
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     args = parse_args()
     generator = KMGenerator()
-    print(generator.expand_map(args.root))
+    print(generator.expand_map(args.root, children=args.children))
