@@ -7,6 +7,8 @@ __pycache__/
 .coverage
 coverage/
 knowledge-map-gen/maps/
+knowledge-map-gen/renders/
+knowledge-map-gen/knowledge-map-gen/
 knowledge-map-gen/old-generator/map-store/runtime/
 
 app/.env

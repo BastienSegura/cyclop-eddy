@@ -10,10 +10,10 @@ import requests
 
 
 class KMGenerator:
-    def __init__(self, model: str | None = None, maps_dir: str = "knowledge-map-gen/maps") -> None:
+    def __init__(self, model: str | None = None, maps_dir: str | Path | None = None) -> None:
         self.ollama_url = "http://localhost:11434"
         self.model = model or os.environ.get("OLLAMA_MODEL", "llama3:8b")
-        self.maps_dir = Path(maps_dir)
+        self.maps_dir = Path(maps_dir) if maps_dir is not None else Path(__file__).resolve().parent / "maps"
         self.root_concept: str | None = None
         self.map_file: Path | None = None
         self.knowledge_map: dict[str, list[str]] = {}
