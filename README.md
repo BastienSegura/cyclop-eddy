@@ -11,11 +11,38 @@ Displayed through a web app, it allows the user to explore it, and to learn any 
 
 ## <center>II. Repo layout</center>
 
-- **`knowledge-map-gen/`** : active Python engine, shared graph utilities, and generator internals.
+- **`knowledge-map-gen/`**: current lightweight Python knowledge map generator and renderer.
 - **`app/`**: Next.js App Router prototype for concept constellation exploration plus auth pages/routes.
 - **`knowledge-map-gen/map-store/`**: runtime pipeline outputs under `knowledge-map-gen/map-store/runtime/` and committed example artifacts under `knowledge-map-gen/map-store/fixtures/`.
 - **`archive/`**: old experiments, historical snapshots, deprecated material.
 - **`docs/`**: active project documentation.
+
+## Knowledge Map Gen
+
+Current contents of `knowledge-map-gen/`:
+
+- `main.py`: small CLI entry point for generating a knowledge map from a root concept.
+- `km_generator.py`: Ollama-backed generator that expands concepts, stores JSON maps, and reloads existing maps safely.
+- `maps/`: local generated knowledge maps as one JSON file per root concept.
+- `render_map.py`: PyVis-based renderer that turns a saved map into an interactive HTML graph.
+- `renders/`: local generated HTML graph renders.
+- `old-generator/`: archived previous generator implementation kept for reference.
+
+Current workflow:
+
+```bash
+# Generate or expand a map
+python knowledge-map-gen/main.py --root "Computer Science" --children 7 --depth 2
+
+# List saved maps
+python knowledge-map-gen/main.py --list
+
+# Show one saved map
+python knowledge-map-gen/main.py --show "Computer Science"
+
+# Render one saved map to HTML
+python knowledge-map-gen/render_map.py --map "Computer Science"
+```
 
 
 ## Local Bootstrap
