@@ -1,17 +1,17 @@
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --background: #04111c;
+  --surface: rgba(10, 24, 39, 0.88);
+  --surface-strong: rgba(14, 29, 45, 0.96);
+  --border: rgba(135, 170, 211, 0.18);
+  --text: #eaf4ff;
+  --muted: #9ab0c7;
+  --accent: #78d5ff;
+  --accent-strong: #f4be5c;
 }
 
 html {
   height: 100%;
+  color-scheme: dark;
 }
 
 html,
@@ -24,9 +24,12 @@ body {
   min-height: 100%;
   display: flex;
   flex-direction: column;
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(circle at top, rgba(84, 151, 220, 0.2), transparent 28%),
+    radial-gradient(circle at 80% 10%, rgba(244, 190, 92, 0.08), transparent 22%),
+    linear-gradient(180deg, #06131f 0%, #03101a 100%);
+  font-family: var(--font-geist-sans), sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -42,8 +45,54 @@ a {
   text-decoration: none;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
+.react-flow {
+  background:
+    radial-gradient(circle at center, rgba(120, 213, 255, 0.06), transparent 34%),
+    linear-gradient(180deg, rgba(7, 19, 31, 0.96), rgba(3, 16, 26, 0.98));
+}
+
+.react-flow__pane {
+  cursor: grab;
+}
+
+.react-flow__pane.dragging {
+  cursor: grabbing;
+}
+
+.react-flow__node {
+  font-family: var(--font-geist-sans), sans-serif;
+}
+
+.react-flow__node-default {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.react-flow__edge-path {
+  stroke-linecap: round;
+}
+
+.react-flow__controls {
+  border: 1px solid rgba(135, 170, 211, 0.22);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 18px 30px rgba(0, 0, 0, 0.24);
+}
+
+.react-flow__controls-button {
+  border: none;
+  background: rgba(7, 19, 31, 0.96);
+  color: var(--text);
+}
+
+.react-flow__controls-button:hover {
+  background: rgba(22, 39, 59, 0.98);
+}
+
+.react-flow__attribution {
+  background: rgba(7, 19, 31, 0.9);
+  color: var(--muted);
+  border-top-left-radius: 10px;
+  border: 1px solid rgba(135, 170, 211, 0.12);
 }

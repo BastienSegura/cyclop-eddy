@@ -1,66 +1,93 @@
-import Image from "next/image";
 import styles from "./page.module.css";
+import { KnowledgeMapFlow } from "@/components/knowledge-map-flow";
+import { loadComputerScienceFlow } from "@/lib/computer-science-flow";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  let flow = null;
+  let loadError = null;
+
+  try {
+    flow = await loadComputerScienceFlow();
+  } catch (error) {
+    loadError = error instanceof Error ? error.message : "Unknown error";
+  }
+
+  if (!flow) {
+    return (
+      <main className={styles.page}>
+        <section className={styles.hero}>
+          <div className={styles.eyebrow}>
+            <span>React Flow</span>
+            <span>+</span>
+            <span>ELK Layered</span>
+          </div>
+          <div className={styles.titleRow}>
+            <h1 className={styles.title}>Computer Science Map</h1>
+            <p className={styles.subtitle}>
+              The new homepage is wired to read the local JSON map directly from the repository.
+            </p>
+          </div>
+        </section>
+
+        <section className={styles.errorCard}>
+          <h2>Unable to load the source map</h2>
+          <p>{loadError}</p>
+          <code>knowledge-map-gen/maps/computer-science.json</code>
+        </section>
+      </main>
+    );
+  }
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.tsx file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <main className={styles.page}>
+      <section className={styles.hero}>
+        <div className={styles.eyebrow}>
+          <span>React Flow</span>
+          <span>+</span>
+          <span>ELK Layered</span>
+        </div>
+
+        <div className={styles.titleRow}>
+          <h1 className={styles.title}>Computer Science Map</h1>
+          <p className={styles.subtitle}>
+            Fresh Next.js prototype using <code>@xyflow/react</code> for rendering and{" "}
+            <code>elkjs</code> for layout. Source data comes directly from{" "}
+            <code>{flow.sourcePath}</code>.
           </p>
         </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </section>
+
+      <section className={styles.stats}>
+        <article className={styles.statCard}>
+          <span className={styles.statLabel}>Nodes</span>
+          <strong className={styles.statValue}>{flow.stats.nodeCount}</strong>
+        </article>
+        <article className={styles.statCard}>
+          <span className={styles.statLabel}>Edges</span>
+          <strong className={styles.statValue}>{flow.stats.edgeCount}</strong>
+        </article>
+        <article className={styles.statCard}>
+          <span className={styles.statLabel}>Leaves</span>
+          <strong className={styles.statValue}>{flow.stats.leafCount}</strong>
+        </article>
+        <article className={styles.statCard}>
+          <span className={styles.statLabel}>Max Depth</span>
+          <strong className={styles.statValue}>{flow.stats.maxDepth}</strong>
+        </article>
+      </section>
+
+      <section className={styles.canvasShell}>
+        <div className={styles.canvasCard}>
+          <KnowledgeMapFlow
+            root={flow.root}
+            nodes={flow.nodes}
+            edges={flow.edges}
+            branchCount={flow.stats.branchCount}
+          />
         </div>
-      </main>
-    </div>
+      </section>
+    </main>
   );
 }
