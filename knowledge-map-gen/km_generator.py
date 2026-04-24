@@ -23,6 +23,7 @@ class KMGenerator:
         self,
         root: str,
         children: int = 10,
+        descendant_children: int | None = None,
         depth: int = 1,
         progress_callback: Callable[[int, int, str], None] | None = None,
     ) -> dict[str, list[str]]:
@@ -30,14 +31,21 @@ class KMGenerator:
             raise ValueError("depth must be at least 1")
         if children < 1:
             raise ValueError("children must be at least 1")
+        if descendant_children is not None and descendant_children < 1:
+            raise ValueError("descendant_children must be at least 1")
 
         self._load_existing_map(root)
         queue = [root]
         expanded_this_run: set[str] = set()
         generated_count = 0
-        estimated_total = self._estimate_generated_concepts(children=children, depth=depth)
+        children_by_level = self._children_by_level(
+            root_children=children,
+            descendant_children=descendant_children,
+            depth=depth,
+        )
+        estimated_total = self._estimate_generated_concepts(children_by_level)
 
-        for _ in range(depth):
+        for level_children in children_by_level:
             next_queue: list[str] = []
             level_concepts: list[str] = []
             seen_in_level: set[str] = set()
@@ -50,7 +58,7 @@ class KMGenerator:
                 level_concepts.append(concept)
 
             for concept in level_concepts:
-                sub_concepts = self.expand_map(concept, children=children)
+                sub_concepts = self.expand_map(concept, children=level_children)
                 generated_count += len(sub_concepts)
                 if progress_callback is not None:
                     progress_callback(generated_count, estimated_total, concept)
@@ -185,8 +193,24 @@ class KMGenerator:
         slug = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
         return slug or "knowledge-map"
 
-    def _estimate_generated_concepts(self, children: int, depth: int) -> int:
-        return sum(children**level for level in range(1, depth + 1))
+    def _children_by_level(
+        self,
+        root_children: int,
+        descendant_children: int | None,
+        depth: int,
+    ) -> list[int]:
+        children_by_level = [root_children]
+        if depth > 1:
+            children_by_level.extend([descendant_children or root_children] * (depth - 1))
+        return children_by_level
+
+    def _estimate_generated_concepts(self, children_by_level: list[int]) -> int:
+        total = 0
+        concepts_at_level = 1
+        for children in children_by_level:
+            concepts_at_level *= children
+            total += concepts_at_level
+        return total
 
     def _clean_label(self, text: str) -> str:
         return " ".join(text.strip().split())

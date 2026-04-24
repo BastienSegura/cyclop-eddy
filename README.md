@@ -34,6 +34,9 @@ Current workflow:
 # Generate or expand a map
 python knowledge-map-gen/main.py --root "Computer Science" --children 7 --depth 2
 
+# Generate a star-like map: root has 10 children, each child has 4 children
+python knowledge-map-gen/main.py --root "Computer Science" --children 10 --descendant-children 4 --depth 2
+
 # List saved maps
 python knowledge-map-gen/main.py --list
 
