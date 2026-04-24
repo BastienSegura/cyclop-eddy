@@ -12,6 +12,9 @@ import type { Edge, Node } from "@xyflow/react";
 
 import type { FlowNodeData } from "@/lib/computer-science-flow";
 
+const CENTER_NODE_ORIGIN: [number, number] = [0.5, 0.5];
+const INITIAL_ZOOM = 0.72;
+
 interface KnowledgeMapFlowProps {
   root: string;
   branchCount: number;
@@ -37,9 +40,12 @@ function KnowledgeMapCanvas({
     <ReactFlow
       nodes={nodes}
       edges={edges}
-      fitView
-      fitViewOptions={{ padding: 0.14 }}
-      minZoom={0.04}
+      nodeOrigin={CENTER_NODE_ORIGIN}
+      defaultViewport={{ x: 0, y: 0, zoom: INITIAL_ZOOM }}
+      onInit={(instance) => {
+        void instance.setCenter(0, 0, { zoom: INITIAL_ZOOM, duration: 0 });
+      }}
+      minZoom={0.16}
       maxZoom={1.4}
       onlyRenderVisibleElements
       nodesDraggable={false}
@@ -82,7 +88,7 @@ function KnowledgeMapCanvas({
         </span>
       </Panel>
 
-      <Controls showInteractive={false} />
+      <Controls showInteractive={false} fitViewOptions={{ padding: 0.18, maxZoom: 0.72 }} />
       <Background
         id="major-grid"
         variant={BackgroundVariant.Dots}

@@ -2,11 +2,15 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 
 import type { Edge, Node } from "@xyflow/react";
-import ELK from "elkjs/lib/elk.bundled.js";
-import type { ElkExtendedEdge, ElkNode } from "elkjs/lib/elk.bundled.js";
 
 const NODE_WIDTH = 188;
 const NODE_HEIGHT = 56;
+const ROOT_CHILD_RADIUS = 640;
+const BRANCH_CHILD_RADIUS = 430;
+const OUTER_CHILD_RADIUS = 360;
+const MIN_SIBLING_ARC = 220;
+const MIN_DESCENDANT_SPAN = Math.PI / 5;
+const MAX_DESCENDANT_SPAN = Math.PI * 0.95;
 const COMPUTER_SCIENCE_MAP_PATH = path.resolve(
   process.cwd(),
   "..",
@@ -14,8 +18,6 @@ const COMPUTER_SCIENCE_MAP_PATH = path.resolve(
   "maps",
   "computer-science.json",
 );
-
-const elk = new ELK();
 
 interface KnowledgeMapFile {
   root: string;
@@ -42,6 +44,18 @@ export interface ComputerScienceFlow {
   };
 }
 
+interface RadialLayout {
+  angles: Map<string, number>;
+  positions: Map<string, { x: number; y: number }>;
+}
+
+type FlowNodePosition = NonNullable<Node<FlowNodeData>["sourcePosition"]>;
+
+const HANDLE_TOP = "top" as FlowNodePosition;
+const HANDLE_RIGHT = "right" as FlowNodePosition;
+const HANDLE_BOTTOM = "bottom" as FlowNodePosition;
+const HANDLE_LEFT = "left" as FlowNodePosition;
+
 export async function loadComputerScienceFlow(): Promise<ComputerScienceFlow> {
   const input = await readKnowledgeMapFile();
   const depths = computeDepths(input.root, input.concepts);
@@ -58,12 +72,13 @@ export async function loadComputerScienceFlow(): Promise<ComputerScienceFlow> {
 
   const degreeByLabel = buildDegreeIndex(labels, input.concepts);
   const edges = buildFlowEdges(input.concepts);
-  const positions = await computeNodePositions(labels, edges);
+  const layout = computeRadialLayout(input.root, labels, input.concepts);
 
   const nodes = labels.map((label) => {
     const depth = depths.get(label) ?? null;
     const kind = resolveNodeKind(label, input.root, degreeByLabel.outdegree);
-    const position = positions.get(label) ?? { x: 0, y: 0 };
+    const position = layout.positions.get(label) ?? { x: 0, y: 0 };
+    const angle = layout.angles.get(label) ?? 0;
 
     return {
       id: label,
@@ -77,8 +92,8 @@ export async function loadComputerScienceFlow(): Promise<ComputerScienceFlow> {
       draggable: false,
       selectable: false,
       focusable: false,
-      sourcePosition: "right" as Node<FlowNodeData>["sourcePosition"],
-      targetPosition: "left" as Node<FlowNodeData>["targetPosition"],
+      sourcePosition: label === input.root ? HANDLE_RIGHT : handlePositionFromAngle(angle),
+      targetPosition: label === input.root ? HANDLE_LEFT : handlePositionFromAngle(angle + Math.PI),
       style: buildNodeStyle(kind),
     } satisfies Node<FlowNodeData>;
   });
@@ -206,44 +221,156 @@ function computeDepths(root: string, concepts: Record<string, string[]>): Map<st
   return depths;
 }
 
-async function computeNodePositions(
+function computeRadialLayout(
+  root: string,
   labels: string[],
-  edges: Edge[],
-): Promise<Map<string, { x: number; y: number }>> {
-  const elkEdges: ElkExtendedEdge[] = edges.map((edge) => ({
-    id: edge.id,
-    sources: [edge.source],
-    targets: [edge.target],
-  }));
-
-  const graph: ElkNode = {
-    id: "computer-science-map",
-    layoutOptions: {
-      "elk.algorithm": "layered",
-      "elk.direction": "RIGHT",
-      "elk.layered.spacing.nodeNodeBetweenLayers": "120",
-      "elk.spacing.nodeNode": "40",
-      "elk.padding": "[top=32,left=32,bottom=32,right=32]",
-    },
-    children: labels.map((label) => ({
-      id: label,
-      width: NODE_WIDTH,
-      height: NODE_HEIGHT,
-    })),
-    edges: elkEdges,
-  };
-
-  const layout = await elk.layout(graph);
+  concepts: Record<string, string[]>,
+): RadialLayout {
   const positions = new Map<string, { x: number; y: number }>();
+  const angles = new Map<string, number>();
+  const treeChildren = buildTreeChildren(root, labels, concepts);
 
-  for (const child of layout.children ?? []) {
-    positions.set(child.id, {
-      x: child.x ?? 0,
-      y: child.y ?? 0,
-    });
+  positions.set(root, { x: 0, y: 0 });
+  angles.set(root, -Math.PI / 2);
+  placeRadialChildren(root, -Math.PI / 2, 0, treeChildren, positions, angles);
+
+  const disconnectedLabels = labels.filter((label) => !positions.has(label));
+  const disconnectedRadius = ROOT_CHILD_RADIUS + BRANCH_CHILD_RADIUS + OUTER_CHILD_RADIUS;
+
+  for (const [index, label] of disconnectedLabels.entries()) {
+    const angle = Math.PI / 2 + (2 * Math.PI * index) / Math.max(disconnectedLabels.length, 1);
+    positions.set(label, polarPoint({ x: 0, y: 0 }, disconnectedRadius, angle));
+    angles.set(label, angle);
   }
 
-  return positions;
+  return { angles, positions };
+}
+
+function buildTreeChildren(
+  root: string,
+  labels: string[],
+  concepts: Record<string, string[]>,
+): Map<string, string[]> {
+  const labelSet = new Set(labels);
+  const visited = new Set<string>([root]);
+  const queue = [root];
+  const treeChildren = new Map<string, string[]>();
+
+  for (const label of labels) {
+    treeChildren.set(label, []);
+  }
+
+  while (queue.length > 0) {
+    const current = queue.shift();
+    if (!current) {
+      continue;
+    }
+
+    for (const child of concepts[current] ?? []) {
+      if (!labelSet.has(child) || visited.has(child)) {
+        continue;
+      }
+
+      visited.add(child);
+      treeChildren.get(current)?.push(child);
+      queue.push(child);
+    }
+  }
+
+  return treeChildren;
+}
+
+function placeRadialChildren(
+  parent: string,
+  parentAngle: number,
+  depth: number,
+  treeChildren: Map<string, string[]>,
+  positions: Map<string, { x: number; y: number }>,
+  angles: Map<string, number>,
+): void {
+  const children = treeChildren.get(parent) ?? [];
+  const parentPosition = positions.get(parent);
+
+  if (!parentPosition || children.length === 0) {
+    return;
+  }
+
+  const radius = childRadiusForDepth(depth);
+  const span = depth === 0 ? 2 * Math.PI : descendantSpan(children.length, radius);
+
+  for (const [index, child] of children.entries()) {
+    const angle =
+      depth === 0
+        ? -Math.PI / 2 + (2 * Math.PI * index) / children.length
+        : childAngle(parentAngle, span, index, children.length);
+
+    positions.set(child, polarPoint(parentPosition, radius, angle));
+    angles.set(child, angle);
+    placeRadialChildren(child, angle, depth + 1, treeChildren, positions, angles);
+  }
+}
+
+function childRadiusForDepth(depth: number): number {
+  if (depth === 0) {
+    return ROOT_CHILD_RADIUS;
+  }
+
+  return depth === 1 ? BRANCH_CHILD_RADIUS : OUTER_CHILD_RADIUS;
+}
+
+function descendantSpan(childCount: number, radius: number): number {
+  if (childCount <= 1) {
+    return 0;
+  }
+
+  const requiredSpan = ((childCount - 1) * MIN_SIBLING_ARC) / radius;
+  return clamp(requiredSpan, MIN_DESCENDANT_SPAN, MAX_DESCENDANT_SPAN);
+}
+
+function childAngle(
+  parentAngle: number,
+  span: number,
+  index: number,
+  siblingCount: number,
+): number {
+  if (siblingCount === 1) {
+    return parentAngle;
+  }
+
+  return parentAngle - span / 2 + (span * index) / (siblingCount - 1);
+}
+
+function polarPoint(
+  origin: { x: number; y: number },
+  radius: number,
+  angle: number,
+): { x: number; y: number } {
+  return {
+    x: origin.x + Math.cos(angle) * radius,
+    y: origin.y + Math.sin(angle) * radius,
+  };
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
+}
+
+function handlePositionFromAngle(angle: number): FlowNodePosition {
+  const normalized = ((angle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+
+  if (normalized < Math.PI / 4 || normalized >= (7 * Math.PI) / 4) {
+    return HANDLE_RIGHT;
+  }
+
+  if (normalized < (3 * Math.PI) / 4) {
+    return HANDLE_BOTTOM;
+  }
+
+  if (normalized < (5 * Math.PI) / 4) {
+    return HANDLE_LEFT;
+  }
+
+  return HANDLE_TOP;
 }
 
 function resolveNodeKind(
@@ -262,6 +389,7 @@ function buildNodeStyle(kind: FlowNodeData["kind"]): Node<FlowNodeData>["style"]
   if (kind === "root") {
     return {
       width: NODE_WIDTH,
+      minHeight: NODE_HEIGHT,
       padding: "14px 16px",
       borderRadius: "18px",
       border: "1px solid rgba(244, 190, 92, 0.72)",
@@ -278,6 +406,7 @@ function buildNodeStyle(kind: FlowNodeData["kind"]): Node<FlowNodeData>["style"]
   if (kind === "leaf") {
     return {
       width: NODE_WIDTH,
+      minHeight: NODE_HEIGHT,
       padding: "14px 16px",
       borderRadius: "16px",
       border: "1px solid rgba(134, 162, 194, 0.28)",
@@ -292,6 +421,7 @@ function buildNodeStyle(kind: FlowNodeData["kind"]): Node<FlowNodeData>["style"]
 
   return {
     width: NODE_WIDTH,
+    minHeight: NODE_HEIGHT,
     padding: "14px 16px",
     borderRadius: "16px",
     border: "1px solid rgba(92, 149, 214, 0.4)",

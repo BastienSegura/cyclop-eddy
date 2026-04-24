@@ -19,9 +19,9 @@ export default async function Home() {
       <main className={styles.page}>
         <section className={styles.hero}>
           <div className={styles.eyebrow}>
-            <span>React Flow</span>
+            <span>Computer Science</span>
             <span>+</span>
-            <span>ELK Layered</span>
+            <span>Knowledge Map</span>
           </div>
           <div className={styles.titleRow}>
             <h1 className={styles.title}>Computer Science Map</h1>
@@ -44,17 +44,15 @@ export default async function Home() {
     <main className={styles.page}>
       <section className={styles.hero}>
         <div className={styles.eyebrow}>
-          <span>React Flow</span>
+          <span>Computer Science</span>
           <span>+</span>
-          <span>ELK Layered</span>
+          <span>Knowledge Map</span>
         </div>
 
         <div className={styles.titleRow}>
           <h1 className={styles.title}>Computer Science Map</h1>
           <p className={styles.subtitle}>
-            Fresh Next.js prototype using <code>@xyflow/react</code> for rendering and{" "}
-            <code>elkjs</code> for layout. Source data comes directly from{" "}
-            <code>{flow.sourcePath}</code>.
+            Source data comes directly from <code>{flow.sourcePath}</code>.
           </p>
         </div>
       </section>
