@@ -1,149 +1,33 @@
-.page {
-  display: grid;
-  grid-template-rows: auto auto 1fr;
-  min-height: 100vh;
-  gap: 18px;
-  padding: clamp(18px, 3vw, 32px);
+.graphPage {
+  width: 100vw;
+  height: 100svh;
+  overflow: hidden;
   font-family: var(--font-geist-sans), sans-serif;
 }
 
-.hero {
+.errorPage {
+  min-height: 100svh;
   display: grid;
-  gap: 14px;
+  place-items: center;
+  padding: 24px;
+  font-family: var(--font-geist-sans), sans-serif;
 }
 
-.eyebrow {
-  display: inline-flex;
-  width: fit-content;
-  align-items: center;
-  gap: 0.55rem;
-  padding: 0.5rem 0.8rem;
-  border-radius: 999px;
-  border: 1px solid rgba(135, 170, 211, 0.18);
-  background: rgba(7, 19, 31, 0.74);
-  color: #cfe3f7;
-  font-size: 0.78rem;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-}
-
-.titleRow {
-  display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.title {
-  font-size: clamp(2.2rem, 5vw, 4.8rem);
-  line-height: 0.95;
-  letter-spacing: -0.05em;
-  max-width: 10ch;
-}
-
-.subtitle {
-  max-width: 72ch;
-  color: var(--muted);
-  line-height: 1.6;
-  font-size: 1rem;
-}
-
-.stats {
+.errorMessage {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.statCard {
-  padding: 0.95rem 1rem;
-  border-radius: 18px;
-  border: 1px solid rgba(135, 170, 211, 0.16);
-  background: linear-gradient(
-    180deg,
-    rgba(10, 24, 39, 0.72),
-    rgba(10, 24, 39, 0.9)
-  );
-  backdrop-filter: blur(10px);
-}
-
-.statLabel {
-  display: block;
-  color: var(--muted);
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-}
-
-.statValue {
-  display: block;
-  margin-top: 0.4rem;
-  font-size: clamp(1.35rem, 2.5vw, 2rem);
-  font-weight: 700;
-  letter-spacing: -0.04em;
-}
-
-.canvasShell {
-  min-height: 0;
-  display: grid;
-}
-
-.canvasCard {
-  min-height: clamp(560px, 72vh, 920px);
-  border-radius: 26px;
-  overflow: hidden;
-  border: 1px solid rgba(135, 170, 211, 0.18);
-  background: linear-gradient(
-    180deg,
-    rgba(10, 24, 39, 0.78),
-    rgba(6, 17, 28, 0.92)
-  );
-  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.34);
-}
-
-.errorCard {
-  display: grid;
-  gap: 0.85rem;
-  padding: clamp(1.2rem, 2.5vw, 1.8rem);
-  border-radius: 22px;
+  gap: 0.75rem;
+  width: min(100%, 560px);
+  padding: 1.25rem;
+  border-radius: 8px;
   border: 1px solid rgba(255, 120, 120, 0.28);
   background: rgba(51, 16, 20, 0.7);
 }
 
-.errorCard h2 {
-  font-size: 1.2rem;
+.errorMessage h1 {
+  font-size: 1.15rem;
 }
 
-.errorCard p,
-.errorCard code {
+.errorMessage p {
   color: #f8d7d7;
-}
-
-.errorCard code {
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 0.92rem;
-}
-
-@media (max-width: 980px) {
-  .stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .canvasCard {
-    min-height: 70vh;
-  }
-}
-
-@media (max-width: 640px) {
-  .page {
-    padding: 14px;
-  }
-
-  .stats {
-    grid-template-columns: 1fr;
-  }
-
-  .subtitle {
-    font-size: 0.95rem;
-  }
+  line-height: 1.5;
 }
