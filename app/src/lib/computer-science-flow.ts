@@ -5,18 +5,9 @@ import type { Edge, Node } from "@xyflow/react";
 
 const NODE_WIDTH = 188;
 const NODE_HEIGHT = 56;
-const ROOT_CHILD_RADIUS = 540;
-const BRANCH_CHILD_RADIUS = 520;
-const OUTER_CHILD_RADIUS = 420;
-const MIN_SIBLING_ARC = 240;
 const MIN_DESCENDANT_SPAN = Math.PI / 5;
 const MAX_DESCENDANT_SPAN = Math.PI * 0.95;
 const ROOT_START_ANGLE = -Math.PI / 2;
-const ROOT_CHILD_MIN_ARC = NODE_WIDTH + 32;
-const COLLISION_PADDING = 28;
-const COLLISION_ITERATIONS = 36;
-const MAX_COLLISION_SHIFT = 60;
-const MAX_COLLISION_OFFSET = 180;
 const COMPUTER_SCIENCE_MAP_PATH = path.resolve(
   process.cwd(),
   "..",
@@ -24,6 +15,51 @@ const COMPUTER_SCIENCE_MAP_PATH = path.resolve(
   "maps",
   "computer-science.json",
 );
+
+export interface RadialLayoutOptions {
+  rootChildRadius: number;
+  branchChildRadius: number;
+  outerChildRadius: number;
+  minSiblingArc: number;
+  rootChildMinArc: number;
+  collisionPadding: number;
+  collisionIterations: number;
+  maxCollisionShift: number;
+  maxCollisionOffset: number;
+}
+
+interface RadialLayoutTuningField {
+  key: keyof RadialLayoutOptions;
+  label: string;
+  min: number;
+  max: number;
+  step: number;
+  integer?: boolean;
+}
+
+export const DEFAULT_RADIAL_LAYOUT_OPTIONS: RadialLayoutOptions = {
+  rootChildRadius: 540,
+  branchChildRadius: 520,
+  outerChildRadius: 420,
+  minSiblingArc: 240,
+  rootChildMinArc: NODE_WIDTH + 32,
+  collisionPadding: 28,
+  collisionIterations: 36,
+  maxCollisionShift: 60,
+  maxCollisionOffset: 180,
+};
+
+export const RADIAL_LAYOUT_TUNING_FIELDS: RadialLayoutTuningField[] = [
+  { key: "rootChildRadius", label: "Root radius", min: 320, max: 900, step: 10 },
+  { key: "branchChildRadius", label: "Branch radius", min: 280, max: 900, step: 10 },
+  { key: "outerChildRadius", label: "Outer radius", min: 240, max: 760, step: 10 },
+  { key: "minSiblingArc", label: "Sibling arc", min: 160, max: 420, step: 10 },
+  { key: "rootChildMinArc", label: "Root min arc", min: 160, max: 420, step: 10 },
+  { key: "collisionPadding", label: "Collision pad", min: 0, max: 80, step: 2 },
+  { key: "collisionIterations", label: "Collision passes", min: 0, max: 80, step: 1, integer: true },
+  { key: "maxCollisionShift", label: "Max shift", min: 10, max: 140, step: 5 },
+  { key: "maxCollisionOffset", label: "Max offset", min: 40, max: 420, step: 10 },
+];
 
 interface KnowledgeMapFile {
   root: string;
@@ -62,8 +98,11 @@ const HANDLE_RIGHT = "right" as FlowNodePosition;
 const HANDLE_BOTTOM = "bottom" as FlowNodePosition;
 const HANDLE_LEFT = "left" as FlowNodePosition;
 
-export async function loadComputerScienceFlow(): Promise<ComputerScienceFlow> {
+export async function loadComputerScienceFlow(
+  options: Partial<RadialLayoutOptions> = {},
+): Promise<ComputerScienceFlow> {
   const input = await readKnowledgeMapFile();
+  const layoutOptions = resolveRadialLayoutOptions(options);
   const depths = computeDepths(input.root, input.concepts);
   const labels = collectLabels(input.concepts).sort((left, right) => {
     const leftDepth = depths.get(left) ?? Number.POSITIVE_INFINITY;
@@ -78,7 +117,7 @@ export async function loadComputerScienceFlow(): Promise<ComputerScienceFlow> {
 
   const degreeByLabel = buildDegreeIndex(labels, input.concepts);
   const edges = buildFlowEdges(input.concepts);
-  const layout = computeRadialLayout(input.root, labels, input.concepts);
+  const layout = computeRadialLayout(input.root, labels, input.concepts, layoutOptions);
 
   const nodes = labels.map((label) => {
     const depth = depths.get(label) ?? null;
@@ -133,6 +172,25 @@ export async function loadComputerScienceFlow(): Promise<ComputerScienceFlow> {
       maxDepth,
     },
   };
+}
+
+export function resolveRadialLayoutOptions(
+  options: Partial<RadialLayoutOptions> = {},
+): RadialLayoutOptions {
+  const resolved = { ...DEFAULT_RADIAL_LAYOUT_OPTIONS };
+
+  for (const field of RADIAL_LAYOUT_TUNING_FIELDS) {
+    const value = options[field.key];
+
+    if (typeof value !== "number" || !Number.isFinite(value)) {
+      continue;
+    }
+
+    const clampedValue = clamp(value, field.min, field.max);
+    resolved[field.key] = field.integer ? Math.round(clampedValue) : clampedValue;
+  }
+
+  return resolved;
 }
 
 async function readKnowledgeMapFile(): Promise<KnowledgeMapFile> {
@@ -231,6 +289,7 @@ function computeRadialLayout(
   root: string,
   labels: string[],
   concepts: Record<string, string[]>,
+  options: RadialLayoutOptions,
 ): RadialLayout {
   const positions = new Map<string, { x: number; y: number }>();
   const angles = new Map<string, number>();
@@ -248,12 +307,14 @@ function computeRadialLayout(
     0,
     treeChildren,
     subtreeSizes,
+    options,
     positions,
     angles,
   );
 
   const disconnectedLabels = labels.filter((label) => !positions.has(label));
-  const disconnectedRadius = ROOT_CHILD_RADIUS + BRANCH_CHILD_RADIUS + OUTER_CHILD_RADIUS;
+  const disconnectedRadius =
+    options.rootChildRadius + options.branchChildRadius + options.outerChildRadius;
 
   for (const [index, label] of disconnectedLabels.entries()) {
     const angle = Math.PI / 2 + (2 * Math.PI * index) / Math.max(disconnectedLabels.length, 1);
@@ -269,6 +330,7 @@ function computeRadialLayout(
     treeDepths,
     treeRootBranches,
     treeParents,
+    options,
     positions,
     angles,
   );
@@ -397,6 +459,7 @@ function placeRadialChildren(
   depth: number,
   treeChildren: Map<string, string[]>,
   subtreeSizes: Map<string, number>,
+  options: RadialLayoutOptions,
   positions: Map<string, { x: number; y: number }>,
   angles: Map<string, number>,
 ): void {
@@ -407,11 +470,11 @@ function placeRadialChildren(
     return;
   }
 
-  const radius = childRadiusForDepth(depth);
-  const span = depth === 0 ? 2 * Math.PI : descendantSpan(children.length, radius);
+  const radius = childRadiusForDepth(depth, options);
+  const span = depth === 0 ? 2 * Math.PI : descendantSpan(children.length, radius, options);
 
   if (depth === 0) {
-    const sectorSpans = rootSectorSpans(children, subtreeSizes, radius);
+    const sectorSpans = rootSectorSpans(children, subtreeSizes, radius, options);
     let sectorStart = parentAngle - (sectorSpans[0] ?? 0) / 2;
 
     for (const [index, child] of children.entries()) {
@@ -420,7 +483,16 @@ function placeRadialChildren(
 
       positions.set(child, polarPoint(parentPosition, radius, angle));
       angles.set(child, angle);
-      placeRadialChildren(child, angle, depth + 1, treeChildren, subtreeSizes, positions, angles);
+      placeRadialChildren(
+        child,
+        angle,
+        depth + 1,
+        treeChildren,
+        subtreeSizes,
+        options,
+        positions,
+        angles,
+      );
 
       sectorStart += sectorSpan;
     }
@@ -433,7 +505,16 @@ function placeRadialChildren(
 
     positions.set(child, polarPoint(parentPosition, radius, angle));
     angles.set(child, angle);
-    placeRadialChildren(child, angle, depth + 1, treeChildren, subtreeSizes, positions, angles);
+    placeRadialChildren(
+      child,
+      angle,
+      depth + 1,
+      treeChildren,
+      subtreeSizes,
+      options,
+      positions,
+      angles,
+    );
   }
 }
 
@@ -441,6 +522,7 @@ function rootSectorSpans(
   children: string[],
   subtreeSizes: Map<string, number>,
   radius: number,
+  options: RadialLayoutOptions,
 ): number[] {
   if (children.length === 0) {
     return [];
@@ -448,7 +530,7 @@ function rootSectorSpans(
 
   const totalSpan = 2 * Math.PI;
   const equalSpan = totalSpan / children.length;
-  const minSpan = Math.min(ROOT_CHILD_MIN_ARC / radius, equalSpan);
+  const minSpan = Math.min(options.rootChildMinArc / radius, equalSpan);
   const availableSpan = Math.max(totalSpan - minSpan * children.length, 0);
   const weights = children.map((child) => subtreeSizes.get(child) ?? 1);
   const totalWeight = weights.reduce((currentTotal, weight) => currentTotal + weight, 0);
@@ -460,20 +542,24 @@ function rootSectorSpans(
   return weights.map((weight) => minSpan + (availableSpan * weight) / totalWeight);
 }
 
-function childRadiusForDepth(depth: number): number {
+function childRadiusForDepth(depth: number, options: RadialLayoutOptions): number {
   if (depth === 0) {
-    return ROOT_CHILD_RADIUS;
+    return options.rootChildRadius;
   }
 
-  return depth === 1 ? BRANCH_CHILD_RADIUS : OUTER_CHILD_RADIUS;
+  return depth === 1 ? options.branchChildRadius : options.outerChildRadius;
 }
 
-function descendantSpan(childCount: number, radius: number): number {
+function descendantSpan(
+  childCount: number,
+  radius: number,
+  options: RadialLayoutOptions,
+): number {
   if (childCount <= 1) {
     return 0;
   }
 
-  const requiredSpan = ((childCount - 1) * MIN_SIBLING_ARC) / radius;
+  const requiredSpan = ((childCount - 1) * options.minSiblingArc) / radius;
   return clamp(requiredSpan, MIN_DESCENDANT_SPAN, MAX_DESCENDANT_SPAN);
 }
 
@@ -511,6 +597,7 @@ function resolveLayoutCollisions(
   treeDepths: Map<string, number>,
   treeRootBranches: Map<string, string>,
   treeParents: Map<string, string>,
+  options: RadialLayoutOptions,
   positions: Map<string, { x: number; y: number }>,
   angles: Map<string, number>,
 ): void {
@@ -538,7 +625,7 @@ function resolveLayoutCollisions(
     labelsByGroup.set(groupKey, groupLabels);
   }
 
-  for (let iteration = 0; iteration < COLLISION_ITERATIONS; iteration += 1) {
+  for (let iteration = 0; iteration < options.collisionIterations; iteration += 1) {
     let didShift = false;
 
     for (const groupLabels of labelsByGroup.values()) {
@@ -558,17 +645,17 @@ function resolveLayoutCollisions(
           }
 
           const overlapX =
-            NODE_WIDTH + COLLISION_PADDING - Math.abs(leftPosition.x - rightPosition.x);
+            NODE_WIDTH + options.collisionPadding - Math.abs(leftPosition.x - rightPosition.x);
           const overlapY =
-            NODE_HEIGHT + COLLISION_PADDING - Math.abs(leftPosition.y - rightPosition.y);
+            NODE_HEIGHT + options.collisionPadding - Math.abs(leftPosition.y - rightPosition.y);
 
           if (overlapX <= 0 || overlapY <= 0) {
             continue;
           }
 
-          pushApartTangentially(leftPosition, rightPosition, overlapX, overlapY);
-          clampCollisionOffset(leftPosition, originalPositions.get(leftLabel));
-          clampCollisionOffset(rightPosition, originalPositions.get(rightLabel));
+          pushApartTangentially(leftPosition, rightPosition, overlapX, overlapY, options);
+          clampCollisionOffset(leftPosition, originalPositions.get(leftLabel), options);
+          clampCollisionOffset(rightPosition, originalPositions.get(rightLabel), options);
           didShift = true;
         }
       }
@@ -587,6 +674,7 @@ function pushApartTangentially(
   rightPosition: { x: number; y: number },
   overlapX: number,
   overlapY: number,
+  options: RadialLayoutOptions,
 ): void {
   const midpointAngle = Math.atan2(
     (leftPosition.y + rightPosition.y) / 2,
@@ -601,7 +689,7 @@ function pushApartTangentially(
     y: rightPosition.y - leftPosition.y,
   };
   const direction = delta.x * tangent.x + delta.y * tangent.y >= 0 ? 1 : -1;
-  const shift = clamp(Math.max(overlapX, overlapY) / 2 + 4, 2, MAX_COLLISION_SHIFT);
+  const shift = clamp(Math.max(overlapX, overlapY) / 2 + 4, 2, options.maxCollisionShift);
 
   leftPosition.x -= tangent.x * shift * direction;
   leftPosition.y -= tangent.y * shift * direction;
@@ -612,8 +700,9 @@ function pushApartTangentially(
 function clampCollisionOffset(
   position: { x: number; y: number },
   originalPosition?: { x: number; y: number },
+  options?: RadialLayoutOptions,
 ): void {
-  if (!originalPosition) {
+  if (!originalPosition || !options) {
     return;
   }
 
@@ -621,11 +710,11 @@ function clampCollisionOffset(
   const offsetY = position.y - originalPosition.y;
   const distance = Math.hypot(offsetX, offsetY);
 
-  if (distance <= MAX_COLLISION_OFFSET) {
+  if (distance <= options.maxCollisionOffset) {
     return;
   }
 
-  const scale = MAX_COLLISION_OFFSET / distance;
+  const scale = options.maxCollisionOffset / distance;
   position.x = originalPosition.x + offsetX * scale;
   position.y = originalPosition.y + offsetY * scale;
 }
