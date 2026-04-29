@@ -5,12 +5,18 @@ import type { Edge, Node } from "@xyflow/react";
 
 const NODE_WIDTH = 188;
 const NODE_HEIGHT = 56;
-const ROOT_CHILD_RADIUS = 640;
-const BRANCH_CHILD_RADIUS = 430;
-const OUTER_CHILD_RADIUS = 360;
-const MIN_SIBLING_ARC = 220;
+const ROOT_CHILD_RADIUS = 540;
+const BRANCH_CHILD_RADIUS = 520;
+const OUTER_CHILD_RADIUS = 420;
+const MIN_SIBLING_ARC = 240;
 const MIN_DESCENDANT_SPAN = Math.PI / 5;
 const MAX_DESCENDANT_SPAN = Math.PI * 0.95;
+const ROOT_START_ANGLE = -Math.PI / 2;
+const ROOT_CHILD_MIN_ARC = NODE_WIDTH + 32;
+const COLLISION_PADDING = 28;
+const COLLISION_ITERATIONS = 36;
+const MAX_COLLISION_SHIFT = 60;
+const MAX_COLLISION_OFFSET = 180;
 const COMPUTER_SCIENCE_MAP_PATH = path.resolve(
   process.cwd(),
   "..",
@@ -229,10 +235,22 @@ function computeRadialLayout(
   const positions = new Map<string, { x: number; y: number }>();
   const angles = new Map<string, number>();
   const treeChildren = buildTreeChildren(root, labels, concepts);
+  const subtreeSizes = buildSubtreeSizeIndex(root, treeChildren);
+  const treeParents = buildTreeParentIndex(treeChildren);
+  const treeDepths = buildTreeDepthIndex(root, treeChildren);
+  const treeRootBranches = buildTreeRootBranchIndex(root, treeChildren);
 
   positions.set(root, { x: 0, y: 0 });
-  angles.set(root, -Math.PI / 2);
-  placeRadialChildren(root, -Math.PI / 2, 0, treeChildren, positions, angles);
+  angles.set(root, ROOT_START_ANGLE);
+  placeRadialChildren(
+    root,
+    ROOT_START_ANGLE,
+    0,
+    treeChildren,
+    subtreeSizes,
+    positions,
+    angles,
+  );
 
   const disconnectedLabels = labels.filter((label) => !positions.has(label));
   const disconnectedRadius = ROOT_CHILD_RADIUS + BRANCH_CHILD_RADIUS + OUTER_CHILD_RADIUS;
@@ -241,7 +259,19 @@ function computeRadialLayout(
     const angle = Math.PI / 2 + (2 * Math.PI * index) / Math.max(disconnectedLabels.length, 1);
     positions.set(label, polarPoint({ x: 0, y: 0 }, disconnectedRadius, angle));
     angles.set(label, angle);
+    treeDepths.set(label, 1);
+    treeRootBranches.set(label, label);
   }
+
+  resolveLayoutCollisions(
+    labels,
+    root,
+    treeDepths,
+    treeRootBranches,
+    treeParents,
+    positions,
+    angles,
+  );
 
   return { angles, positions };
 }
@@ -280,11 +310,93 @@ function buildTreeChildren(
   return treeChildren;
 }
 
+function buildSubtreeSizeIndex(
+  root: string,
+  treeChildren: Map<string, string[]>,
+): Map<string, number> {
+  const subtreeSizes = new Map<string, number>();
+
+  function visit(label: string): number {
+    const size =
+      1 +
+      (treeChildren.get(label) ?? []).reduce(
+        (currentSize, child) => currentSize + visit(child),
+        0,
+      );
+
+    subtreeSizes.set(label, size);
+    return size;
+  }
+
+  visit(root);
+  return subtreeSizes;
+}
+
+function buildTreeParentIndex(treeChildren: Map<string, string[]>): Map<string, string> {
+  const treeParents = new Map<string, string>();
+
+  for (const [parent, children] of treeChildren) {
+    for (const child of children) {
+      treeParents.set(child, parent);
+    }
+  }
+
+  return treeParents;
+}
+
+function buildTreeDepthIndex(
+  root: string,
+  treeChildren: Map<string, string[]>,
+): Map<string, number> {
+  const treeDepths = new Map<string, number>([[root, 0]]);
+  const queue = [root];
+
+  while (queue.length > 0) {
+    const current = queue.shift();
+    if (!current) {
+      continue;
+    }
+
+    const nextDepth = (treeDepths.get(current) ?? 0) + 1;
+
+    for (const child of treeChildren.get(current) ?? []) {
+      treeDepths.set(child, nextDepth);
+      queue.push(child);
+    }
+  }
+
+  return treeDepths;
+}
+
+function buildTreeRootBranchIndex(
+  root: string,
+  treeChildren: Map<string, string[]>,
+): Map<string, string> {
+  const rootBranches = new Map<string, string>([[root, root]]);
+
+  for (const rootChild of treeChildren.get(root) ?? []) {
+    const queue = [rootChild];
+
+    while (queue.length > 0) {
+      const current = queue.shift();
+      if (!current) {
+        continue;
+      }
+
+      rootBranches.set(current, rootChild);
+      queue.push(...(treeChildren.get(current) ?? []));
+    }
+  }
+
+  return rootBranches;
+}
+
 function placeRadialChildren(
   parent: string,
   parentAngle: number,
   depth: number,
   treeChildren: Map<string, string[]>,
+  subtreeSizes: Map<string, number>,
   positions: Map<string, { x: number; y: number }>,
   angles: Map<string, number>,
 ): void {
@@ -298,16 +410,54 @@ function placeRadialChildren(
   const radius = childRadiusForDepth(depth);
   const span = depth === 0 ? 2 * Math.PI : descendantSpan(children.length, radius);
 
+  if (depth === 0) {
+    const sectorSpans = rootSectorSpans(children, subtreeSizes, radius);
+    let sectorStart = parentAngle - (sectorSpans[0] ?? 0) / 2;
+
+    for (const [index, child] of children.entries()) {
+      const sectorSpan = sectorSpans[index] ?? 0;
+      const angle = sectorStart + sectorSpan / 2;
+
+      positions.set(child, polarPoint(parentPosition, radius, angle));
+      angles.set(child, angle);
+      placeRadialChildren(child, angle, depth + 1, treeChildren, subtreeSizes, positions, angles);
+
+      sectorStart += sectorSpan;
+    }
+
+    return;
+  }
+
   for (const [index, child] of children.entries()) {
-    const angle =
-      depth === 0
-        ? -Math.PI / 2 + (2 * Math.PI * index) / children.length
-        : childAngle(parentAngle, span, index, children.length);
+    const angle = childAngle(parentAngle, span, index, children.length);
 
     positions.set(child, polarPoint(parentPosition, radius, angle));
     angles.set(child, angle);
-    placeRadialChildren(child, angle, depth + 1, treeChildren, positions, angles);
+    placeRadialChildren(child, angle, depth + 1, treeChildren, subtreeSizes, positions, angles);
   }
+}
+
+function rootSectorSpans(
+  children: string[],
+  subtreeSizes: Map<string, number>,
+  radius: number,
+): number[] {
+  if (children.length === 0) {
+    return [];
+  }
+
+  const totalSpan = 2 * Math.PI;
+  const equalSpan = totalSpan / children.length;
+  const minSpan = Math.min(ROOT_CHILD_MIN_ARC / radius, equalSpan);
+  const availableSpan = Math.max(totalSpan - minSpan * children.length, 0);
+  const weights = children.map((child) => subtreeSizes.get(child) ?? 1);
+  const totalWeight = weights.reduce((currentTotal, weight) => currentTotal + weight, 0);
+
+  if (availableSpan === 0 || totalWeight === 0) {
+    return children.map(() => equalSpan);
+  }
+
+  return weights.map((weight) => minSpan + (availableSpan * weight) / totalWeight);
 }
 
 function childRadiusForDepth(depth: number): number {
@@ -353,6 +503,161 @@ function polarPoint(
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
+}
+
+function resolveLayoutCollisions(
+  labels: string[],
+  root: string,
+  treeDepths: Map<string, number>,
+  treeRootBranches: Map<string, string>,
+  treeParents: Map<string, string>,
+  positions: Map<string, { x: number; y: number }>,
+  angles: Map<string, number>,
+): void {
+  const labelsByGroup = new Map<string, string[]>();
+  const originalPositions = new Map<string, { x: number; y: number }>();
+
+  for (const label of labels) {
+    const depth = treeDepths.get(label);
+    const position = positions.get(label);
+
+    if (!position) {
+      continue;
+    }
+
+    originalPositions.set(label, { ...position });
+
+    if (!depth || label === root) {
+      continue;
+    }
+
+    const rootBranch = depth === 1 ? root : (treeRootBranches.get(label) ?? label);
+    const groupKey = `${depth}:${rootBranch}`;
+    const groupLabels = labelsByGroup.get(groupKey) ?? [];
+    groupLabels.push(label);
+    labelsByGroup.set(groupKey, groupLabels);
+  }
+
+  for (let iteration = 0; iteration < COLLISION_ITERATIONS; iteration += 1) {
+    let didShift = false;
+
+    for (const groupLabels of labelsByGroup.values()) {
+      for (let leftIndex = 0; leftIndex < groupLabels.length; leftIndex += 1) {
+        for (
+          let rightIndex = leftIndex + 1;
+          rightIndex < groupLabels.length;
+          rightIndex += 1
+        ) {
+          const leftLabel = groupLabels[leftIndex];
+          const rightLabel = groupLabels[rightIndex];
+          const leftPosition = positions.get(leftLabel);
+          const rightPosition = positions.get(rightLabel);
+
+          if (!leftPosition || !rightPosition) {
+            continue;
+          }
+
+          const overlapX =
+            NODE_WIDTH + COLLISION_PADDING - Math.abs(leftPosition.x - rightPosition.x);
+          const overlapY =
+            NODE_HEIGHT + COLLISION_PADDING - Math.abs(leftPosition.y - rightPosition.y);
+
+          if (overlapX <= 0 || overlapY <= 0) {
+            continue;
+          }
+
+          pushApartTangentially(leftPosition, rightPosition, overlapX, overlapY);
+          clampCollisionOffset(leftPosition, originalPositions.get(leftLabel));
+          clampCollisionOffset(rightPosition, originalPositions.get(rightLabel));
+          didShift = true;
+        }
+      }
+    }
+
+    if (!didShift) {
+      break;
+    }
+  }
+
+  refreshAnglesFromPositions(root, labels, treeParents, positions, angles);
+}
+
+function pushApartTangentially(
+  leftPosition: { x: number; y: number },
+  rightPosition: { x: number; y: number },
+  overlapX: number,
+  overlapY: number,
+): void {
+  const midpointAngle = Math.atan2(
+    (leftPosition.y + rightPosition.y) / 2,
+    (leftPosition.x + rightPosition.x) / 2,
+  );
+  const tangent = {
+    x: -Math.sin(midpointAngle),
+    y: Math.cos(midpointAngle),
+  };
+  const delta = {
+    x: rightPosition.x - leftPosition.x,
+    y: rightPosition.y - leftPosition.y,
+  };
+  const direction = delta.x * tangent.x + delta.y * tangent.y >= 0 ? 1 : -1;
+  const shift = clamp(Math.max(overlapX, overlapY) / 2 + 4, 2, MAX_COLLISION_SHIFT);
+
+  leftPosition.x -= tangent.x * shift * direction;
+  leftPosition.y -= tangent.y * shift * direction;
+  rightPosition.x += tangent.x * shift * direction;
+  rightPosition.y += tangent.y * shift * direction;
+}
+
+function clampCollisionOffset(
+  position: { x: number; y: number },
+  originalPosition?: { x: number; y: number },
+): void {
+  if (!originalPosition) {
+    return;
+  }
+
+  const offsetX = position.x - originalPosition.x;
+  const offsetY = position.y - originalPosition.y;
+  const distance = Math.hypot(offsetX, offsetY);
+
+  if (distance <= MAX_COLLISION_OFFSET) {
+    return;
+  }
+
+  const scale = MAX_COLLISION_OFFSET / distance;
+  position.x = originalPosition.x + offsetX * scale;
+  position.y = originalPosition.y + offsetY * scale;
+}
+
+function refreshAnglesFromPositions(
+  root: string,
+  labels: string[],
+  treeParents: Map<string, string>,
+  positions: Map<string, { x: number; y: number }>,
+  angles: Map<string, number>,
+): void {
+  for (const label of labels) {
+    if (label === root) {
+      angles.set(label, ROOT_START_ANGLE);
+      continue;
+    }
+
+    const position = positions.get(label);
+    const parent = treeParents.get(label);
+    const parentPosition = parent ? positions.get(parent) : undefined;
+
+    if (!position) {
+      continue;
+    }
+
+    if (!parentPosition) {
+      angles.set(label, Math.atan2(position.y, position.x));
+      continue;
+    }
+
+    angles.set(label, Math.atan2(position.y - parentPosition.y, position.x - parentPosition.x));
+  }
 }
 
 function handlePositionFromAngle(angle: number): FlowNodePosition {
