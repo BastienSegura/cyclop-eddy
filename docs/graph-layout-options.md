@@ -11,6 +11,8 @@ straight lines. That creates three visible flaws:
 
 ## Option 1: Tune The Existing Radial Layout
 
+Status: tested. Score: 3/10.
+
 Keep the current radial approach, but improve spacing with better radius and
 angle rules.
 
@@ -34,6 +36,15 @@ Best when:
 Risk:
 
 - tuning constants can move clutter around rather than solving it globally
+
+Test result:
+
+- Tuned radii, subtree-weighted root sectors, and a bounded collision pass were
+  tried.
+- The changes improved some local spacing, but the overall graph still felt too
+  cluttered and uneven.
+- Verdict: not enough. Keep this as a documented baseline rather than the final
+  layout direction.
 
 ## Option 2: Use A Layered DAG Layout
 
@@ -163,10 +174,9 @@ Risk:
 
 ## Practical Recommendation
 
-Start with Option 4 plus a small part of Option 1. Keep the current radial
-layout, reserve larger angular sectors by subtree size, and visually separate
-tree edges from secondary edges. That should address the immediate overlap and
-edge clutter without throwing away the existing implementation.
+Option 1 has been tested and was not strong enough on its own. The next useful
+experiments are likely Option 4 or Option 2.
 
-If the graph still feels hard to read after that, move to Option 2 and use a
-layered DAG layout as the default.
+Option 4 keeps a readable overview by separating tree edges from secondary
+relationships. Option 2 is the cleaner layout-algorithm change if hierarchy and
+edge-crossing reduction matter more than preserving the circular shape.
