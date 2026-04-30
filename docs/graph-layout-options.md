@@ -48,7 +48,7 @@ Test result:
 
 ## Option 2: Use A Layered DAG Layout
 
-Status: implemented for testing.
+Status: tested. Score: 2/10.
 
 Replace the radial placement with a top-down or left-to-right graph layout using
 ELK, Dagre, or another layered layout engine.
@@ -81,7 +81,17 @@ Implementation notes:
 - The initial viewport now uses fit-view because the layered graph is much
   taller than the old radial layout.
 
+Test result:
+
+- The layered layout removed obvious node overlaps and made hierarchy clearer.
+- The map became too long vertically, making it awkward to inspect as an
+  overview.
+- Verdict: not the best solution. Keep this as a useful reference point, but do
+  not pursue this direction as-is.
+
 ## Option 3: Use A Force Layout With Collision
+
+Status: untested. Closest match to the existing generated renders.
 
 Use a force simulation so nodes repel each other, edges pull related nodes
 together, and labels reserve real space.
@@ -90,6 +100,10 @@ Technical guidance:
 
 - Build a simulation with forces for link distance, charge, center, and
   collision.
+- Mirror the physics settings used by `knowledge-map-gen/renders/*.html` as a
+  starting point: `forceAtlas2Based`, negative gravitational constant,
+  low central gravity, spring length/constant, overlap avoidance, and a fixed
+  stabilization pass.
 - Use node dimensions in the collision radius, not just a point radius.
 - Pin the root near the center or top-left depending on the preferred shape.
 - Seed initial positions from the current radial layout so the simulation starts
@@ -184,9 +198,11 @@ Risk:
 
 ## Practical Recommendation
 
-Option 1 has been tested and was not strong enough on its own. The next useful
-experiments are likely Option 4 or Option 2.
+Option 1 has been tested at 3/10 and Option 2 has been tested at 2/10. The next
+useful experiment is likely Option 3.
 
-Option 4 keeps a readable overview by separating tree edges from secondary
-relationships. Option 2 is the cleaner layout-algorithm change if hierarchy and
-edge-crossing reduction matter more than preserving the circular shape.
+Option 3 is the closest match to the generated renders in
+`knowledge-map-gen/renders/`, which use a `vis-network` force simulation with
+repulsion, central gravity, spring links, overlap avoidance, and stabilization.
+Option 4 remains useful later if the force layout still needs help reducing
+secondary-edge clutter.
