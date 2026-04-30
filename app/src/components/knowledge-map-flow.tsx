@@ -13,6 +13,7 @@ import type { FlowNodeData } from "@/lib/computer-science-flow";
 
 const CENTER_NODE_ORIGIN: [number, number] = [0.5, 0.5];
 const INITIAL_ZOOM = 0.72;
+const FIT_VIEW_OPTIONS = { padding: 0.18, maxZoom: INITIAL_ZOOM };
 
 interface KnowledgeMapFlowProps {
   nodes: Array<Node<FlowNodeData>>;
@@ -33,11 +34,9 @@ function KnowledgeMapCanvas({ nodes, edges }: KnowledgeMapFlowProps) {
       nodes={nodes}
       edges={edges}
       nodeOrigin={CENTER_NODE_ORIGIN}
-      defaultViewport={{ x: 0, y: 0, zoom: INITIAL_ZOOM }}
-      onInit={(instance) => {
-        void instance.setCenter(0, 0, { zoom: INITIAL_ZOOM, duration: 0 });
-      }}
-      minZoom={0.16}
+      fitView
+      fitViewOptions={FIT_VIEW_OPTIONS}
+      minZoom={0.08}
       maxZoom={1.4}
       onlyRenderVisibleElements
       nodesDraggable={false}
@@ -56,7 +55,7 @@ function KnowledgeMapCanvas({ nodes, edges }: KnowledgeMapFlowProps) {
         },
       }}
     >
-      <Controls showInteractive={false} fitViewOptions={{ padding: 0.18, maxZoom: 0.72 }} />
+      <Controls showInteractive={false} fitViewOptions={FIT_VIEW_OPTIONS} />
       <Background
         id="major-grid"
         variant={BackgroundVariant.Dots}

@@ -1,6 +1,6 @@
 # Graph Layout Options
 
-The current graph uses a simple radial tree placement in
+The original graph used a simple radial tree placement in
 `app/src/lib/computer-science-flow.ts`: root children are placed on one full
 circle, descendants fan out around their parent, and all edges are rendered as
 straight lines. That creates three visible flaws:
@@ -48,6 +48,8 @@ Test result:
 
 ## Option 2: Use A Layered DAG Layout
 
+Status: implemented for testing.
+
 Replace the radial placement with a top-down or left-to-right graph layout using
 ELK, Dagre, or another layered layout engine.
 
@@ -70,6 +72,14 @@ Best when:
 Risk:
 
 - the map may become wide or tall, so fit-view and viewport defaults need care
+
+Implementation notes:
+
+- The first Option 2 pass uses ELK's layered algorithm in a left-to-right
+  direction.
+- React Flow remains the renderer; ELK only computes node positions.
+- The initial viewport now uses fit-view because the layered graph is much
+  taller than the old radial layout.
 
 ## Option 3: Use A Force Layout With Collision
 
