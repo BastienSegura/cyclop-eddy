@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Cyclop Eddy Graph Prototype",
-  description: "Computer Science knowledge map rendered with React Flow and ELK",
+  description: "Computer Science knowledge map rendered with React Flow and force layout",
 };
 
 export default function RootLayout({

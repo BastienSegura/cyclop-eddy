@@ -91,7 +91,7 @@ Test result:
 
 ## Option 3: Use A Force Layout With Collision
 
-Status: untested. Closest match to the existing generated renders.
+Status: implemented. Closest match to the existing generated renders.
 
 Use a force simulation so nodes repel each other, edges pull related nodes
 together, and labels reserve real space.
@@ -120,6 +120,20 @@ Risk:
 
 - force layouts can be less deterministic unless the simulation is seeded and
   stopped after a fixed number of ticks
+
+Implementation notes:
+
+- The app now computes the force layout server-side in
+  `app/src/lib/computer-science-flow.ts`, then passes fixed React Flow node
+  positions to the client.
+- Initial positions are seeded from a radial breadth-first tree so the
+  simulation starts with useful branch locality instead of random noise.
+- The simulation mirrors the PyVis render settings as constants:
+  `gravitationalConstant = -70`, `centralGravity = 0.01`,
+  `springLength = 150`, `springConstant = 0.08`, `avoidOverlap = 0.8`, and
+  `250` stabilization ticks.
+- Collision uses estimated label dimensions and a final rectangular relaxation
+  pass so wrapped labels reserve space before rendering.
 
 ## Option 4: Hybrid Tree Layout Plus Secondary Edges
 

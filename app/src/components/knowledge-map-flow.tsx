@@ -46,7 +46,7 @@ function KnowledgeMapCanvas({ nodes, edges }: KnowledgeMapFlowProps) {
       elementsSelectable={false}
       zoomOnDoubleClick={false}
       defaultEdgeOptions={{
-        type: "straight",
+        type: "default",
         selectable: false,
         focusable: false,
         style: {
